@@ -207,6 +207,26 @@
   letter-spacing: 1px;
   color: inherit;
 }
+.v9-ui .combat-recommendation {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 3px 8px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #dac096;
+}
+.v9-ui .combat-recommendation > small {
+  color: #a99d85;
+  font-size: 11px;
+}
+.combat-recommendation-help {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.5;
+}
 .v9-ui .forge-slot-filter {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

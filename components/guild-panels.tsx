@@ -206,7 +206,10 @@ export function GuildTeam({ s, act, go, focus }: Props) {
     ),
     [detail, setDetail] = useState<string | null>(null),
     [recipe, setRecipe] = useState(focus?.recipe || 'blade'),
-    [craftTier, setCraftTier] = useState(G.gearTier(s)),
+    // Navigation remounts this panel; ordinary ticks preserve the player's choice.
+    [craftTier, setCraftTier] = useState(() =>
+      Math.max(1, Math.min(G.gearTier(s), Math.trunc(focus?.tier ?? G.gearTier(s)))),
+    ),
     [slotFilter, setSlotFilter] = useState('all'),
     [picker, setPicker] = useState(focus?.tab === 'inventory'),
     [affix, setAffix] = useState('0');
@@ -622,8 +625,8 @@ export function GuildTeam({ s, act, go, focus }: Props) {
                           label:
                             'T' +
                             (i + 1) +
-                            ' · 基础属性 ×' +
-                            (1.75 ** i).toFixed(2),
+                            ' · 相对T1 ×' +
+                            (G.gearTierScale(i + 1) / G.gearTierScale(1)).toFixed(2),
                         }),
                       )}
                     />

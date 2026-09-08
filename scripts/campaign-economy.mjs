@@ -1,6 +1,8 @@
 import * as G from '../lib/realm.ts';
+import { combatRecommendation } from '../lib/combat-recommendation.ts';
 import assert from 'node:assert/strict';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 
 // Every campaign mutation goes through a public action. Forecasts only inspect clones.
 const routeOrder = process.env.V12_ROUTE_ORDER || 'standard';
@@ -26,9 +28,10 @@ const results = {
   loadoutInvestments: [],
   routePreparation: [],
   seed,
+  combatSources: Object.fromEntries(['guardian-candidates', 'combat-recommendation', 'equipment-growth', 'guild', 'tactics'].map((id) => [id, createHash('sha256').update(readFileSync(new URL(`../lib/${id}.ts`, import.meta.url))).digest('hex')])),
   economySignature:G.productionMultiplier.toString()+G.developmentCost.toString(),
   policy:
-    'Legal steady growth; ordinary random applicant batches, three equipment slots, public recommended combat policy. No injected resources or progression.',
+    'Legal steady growth; four ordinary random recruits, all discovered equipment slots, earned skill points and elemental preparation, public recommended combat policy. No injected resources or progression.',
   warning:
     'All durations are simulated game-clock seconds, not measured human playtime. Forecast calls are not player actions.',
   accounting:
@@ -107,7 +110,7 @@ function act(fn, label) {
     const id=label.slice(9),r=G.RESEARCH.find(r=>r.id===id);
     results.researchInvestments.push({id,time:before.time,rank:G.townRank(before),cost:r.cost,materials:r.materials||{},jobs:{...before.jobs},productionBefore:G.production(before),productionAfter:G.production(next)});
   }
-  if(label.startsWith('gear:craft '))results.gearOrders.push({time:before.time,rank:G.townRank(before),recipe:label.slice(11),tier:G.gearTier(before),cost:G.recipeCost(before,label.slice(11)),materials:G.recipeMaterialCost(before,label.slice(11)),research:[...before.research],production:G.production(before)});
+  if(label.startsWith('gear:craft ')){const tier=next.guild.inventory.at(-1).tier;results.gearOrders.push({time:before.time,rank:G.townRank(before),recipe:label.slice(11),tier,cost:G.recipeCost(before,label.slice(11),tier),materials:G.recipeMaterialCost(before,label.slice(11),tier),research:[...before.research],production:G.production(before)});}
   const materialCategory=label.startsWith('gear:craft')?'craft':label.startsWith('gear:enhance')?'enhance':label.split(':')[0];
   materialAudit.spentByAction[materialCategory]??={};
   for(const k of G.MATERIAL_IDS){const amount=before.world.materials[k]-next.world.materials[k];if(amount>0)materialAudit.spentByAction[materialCategory][k]=(materialAudit.spentByAction[materialCategory][k]||0)+amount;}
@@ -344,6 +347,23 @@ function train(level) {
       ensure(G.trainCost(s.heroes.find((h) => h.id === id)), 'hero training');
       act((x) => G.train(x, id), 'train:hero');
     }
+  learnCombatSkills();
+}
+function learnCombatSkills() {
+  for (const id of s.party) {
+    const hero = s.heroes.find((h) => h.id === id);
+    // Invest in one coherent branch. Unspent points wait for its next level gate.
+    const nodes = G.roleTree(hero.role)
+      .filter((node) => node.branch === 'a')
+      .sort((a, b) => a.depth - b.depth || a.minLevel - b.minLevel);
+    for (const node of nodes)
+      if (!G.learnSkillReason(s, id, node.id))
+        act((x) => G.learnSkill(x, id, node.id), 'skill:learn ' + node.id);
+    const skill = nodes.find((node) => node.type === 'active');
+    const trained = s.heroes.find((h) => h.id === id);
+    if (skill && trained.activeSkill !== skill.skillId && G.unlockedSkills(trained).some((x) => x.id === skill.skillId))
+      act((x) => G.setHeroSkill(x, id, skill.skillId), 'skill:equip ' + skill.skillId);
+  }
 }
 function cleanupInventory() {
   if (s.expedition || s.battle) return;
@@ -354,8 +374,9 @@ function cleanupInventory() {
   while (s.guild.inventory.length >= 25 && spare.length)
     act((x) => G.dismantleGear(x, spare.shift().id), 'gear:dismantle');
 }
-function loadout(r, enhancement = r ? 2 : 0) {
-  if(G.gearTier(s)>=2&&!s.buildings.forge)build('forge',1);
+function loadout(r, enhancement = r ? 2 : 0, tier = G.gearTier(s), minimumRarity = 2) {
+  if(G.townRank(s)>=1&&!s.buildings.forge)build('forge',1);
+  enhancement = Math.min(enhancement, !s.buildings.forge ? 0 : s.world.tech.some((id) => ['metallurgy', 'runecraft'].includes(id)) ? 8 : 3);
   const fundingStart={time:s.time,actions,stats:G.partyStats(s),spent:{...results.totals.spent},wait:{...waitByPurpose},research:[...s.research]};
   stopOrder();
   cleanupInventory();
@@ -380,7 +401,10 @@ function loadout(r, enhancement = r ? 2 : 0) {
       'dawncoat',
     ][r];
     const charm = r >= 3 ? 'wardstone' : 'vitality';
-    for (const recipe of [weapon, armor, charm].map(id=>G.recipeUnlockReason(s,id)?({weapon:r===4?'bow':'blade',armor:'plate',charm:'vitality'}[G.RECIPES.find(x=>x.id===id).slot]):id)) {
+    const recipes = [weapon, armor, charm]
+      .map((id) => G.recipeUnlockReason(s,id) ? ({weapon:r===4?'bow':'blade',armor:'plate',charm:'vitality'}[G.RECIPES.find(x=>x.id===id).slot]) : id)
+      .concat(['cap', 'grips', 'boots'].filter((id) => !G.recipeUnlockReason(s, id)));
+    for (const recipe of recipes) {
       const slot = G.RECIPES.find((x) => x.id === recipe).slot;
       const wornElsewhere = new Set(
         s.heroes
@@ -390,21 +414,22 @@ function loadout(r, enhancement = r ? 2 : 0) {
       let item = s.guild.inventory
         .filter(
           (g) =>
-            g.recipe === recipe && g.tier === G.gearTier(s) && !wornElsewhere.has(g.id),
+            g.recipe === recipe && g.tier >= tier && g.rarity >= minimumRarity && !wornElsewhere.has(g.id),
         )
         .sort((a, b) => b.rarity - a.rarity || b.upgrade - a.upgrade)[0];
-      if (!item) {
+      while (!item) {
         cleanupInventory();
-        ensure(G.recipeCost(s, recipe), 'craft ' + recipe);
-        ensureMaterials(G.recipeMaterialCost(s,recipe,G.gearTier(s)));
-        ensure(G.recipeCost(s,recipe),'reserved craft '+recipe);
-        for(let fundingPass=0;fundingPass<8&&(!G.canPay(s,G.recipeCost(s,recipe))||G.materialReason(s,G.recipeMaterialCost(s,recipe,G.gearTier(s))));fundingPass++){ensure(G.recipeCost(s,recipe),'final craft quote '+recipe);ensureMaterials(G.recipeMaterialCost(s,recipe,G.gearTier(s)));}
-        if (G.forgeReason(s, recipe))
+        ensure(G.recipeCost(s, recipe, tier), 'craft ' + recipe);
+        ensureMaterials(G.recipeMaterialCost(s,recipe,tier));
+        ensure(G.recipeCost(s,recipe,tier),'reserved craft '+recipe);
+        for(let fundingPass=0;fundingPass<8&&(!G.canPay(s,G.recipeCost(s,recipe,tier))||G.materialReason(s,G.recipeMaterialCost(s,recipe,tier)));fundingPass++){ensure(G.recipeCost(s,recipe,tier),'final craft quote '+recipe);ensureMaterials(G.recipeMaterialCost(s,recipe,tier));}
+        if (G.forgeReason(s, recipe, tier))
           diagnostic(
-            'Craft prerequisite ' + recipe + ': ' + G.forgeReason(s, recipe),
+            'Craft prerequisite ' + recipe + ': ' + G.forgeReason(s, recipe, tier),
           );
-        act((x) => G.craftGear(x, recipe), 'gear:craft ' + recipe);
-        item = s.guild.inventory.at(-1);
+        act((x) => G.craftGear(x, recipe, tier), 'gear:craft ' + recipe);
+        const forged = s.guild.inventory.at(-1);
+        if (forged.rarity >= minimumRarity) item = forged;
       }
       if (s.heroes.find((h) => h.id === id).equipment[slot] !== item.id)
         act((x) => G.equipGear(x, id, item.id), 'gear:equip ' + slot);
@@ -424,11 +449,56 @@ function loadout(r, enhancement = r ? 2 : 0) {
   assert.ok(
     s.party.every(
       (id) =>
-        Object.keys(s.heroes.find((h) => h.id === id).equipment).length === 3,
+        Object.keys(s.heroes.find((h) => h.id === id).equipment).length === (s.buildings.forge ? 6 : 3),
     ),
-    'all active adventurers wear three actual items',
+    'all active adventurers equip every discovered slot with actual items',
   );
-  results.loadoutInvestments.push({region:r,tier:G.gearTier(s),enhancement,start:fundingStart,time:s.time,actions:actions-fundingStart.actions,stats:G.partyStats(s),spent:Object.fromEntries(keys.map(k=>[k,results.totals.spent[k]-fundingStart.spent[k]])),wait:Object.fromEntries(Object.keys(waitByPurpose).map(k=>[k,waitByPurpose[k]-(fundingStart.wait[k]||0)]))});
+  results.loadoutInvestments.push({region:r,tier,minimumRarity,enhancement,start:fundingStart,time:s.time,actions:actions-fundingStart.actions,stats:G.partyStats(s),spent:Object.fromEntries(keys.map(k=>[k,results.totals.spent[k]-fundingStart.spent[k]])),wait:Object.fromEntries(Object.keys(waitByPurpose).map(k=>[k,waitByPurpose[k]-(fundingStart.wait[k]||0)]))});
+}
+function prepareRecommendedCombat(r, kind = 'guardian') {
+  stopOrder();
+  const q = combatRecommendation(r, kind === 'boss' ? 6 : s.guild.depths[r] + 1);
+  for (const tech of q.tech) {
+    if (s.world.tech.includes(tech)) continue;
+    const t = G.TECHNOLOGIES.find((entry) => entry.id === tech);
+    const d = t.requires.depth;
+    if (d && d.region !== r && G.regionOpen(s, d.region) && s.guild.depths[d.region] < d.value) {
+      autoUntil(d.region, 'survey', () => G.discoveryCount(s, d.region) >= 1);
+      autoUntil(d.region, 'frontier', () => s.guild.depths[d.region] >= d.value);
+    }
+    technologies();
+    if (!s.world.tech.includes(tech)) throw new NeedProgress('Recommended combat requires ' + tech + ': ' + G.technologyPrerequisiteReason(s, tech));
+  }
+  if (G.townRank(s) >= 1) { build('forge', 1); build('shrine', 1); }
+  train(q.level);
+  loadout(r, q.upgrade, q.tier, q.rarity);
+  for (const research of q.research) if (!s.research.includes(research)) study(research);
+  while (s.guild.doctrine.smithing < q.smithing) {
+    assert.ok(q.smithing <= Math.min(10, 2 + G.townRank(s) * 2), 'recommended smithing fits the current town stage');
+    ensure(G.doctrineCost(s, 'smithing'), 'recommended smithing');
+    act((x) => G.studyDoctrine(x, 'smithing'), 'doctrine:recommended smithing');
+  }
+  if (q.mastery) {
+    build('tavern', 2);
+    for (const id of s.party)
+      while (s.heroes.find((h) => h.id === id).mastery < q.mastery) {
+        ensure(G.masteryCost(s.heroes.find((h) => h.id === id)), 'recommended mastery');
+        act((x) => G.mentorHero(x, id), 'mentor:recommended');
+      }
+  }
+  while (s.kit < q.kit) {
+    build('forge', s.kit + 1);
+    const reason = G.kitReason(s);
+    if (reason) throw new NeedProgress('Recommended kit: ' + reason);
+    ensure(G.kitCost(s), 'recommended kit');
+    ensureMaterials(G.kitMaterialCost(s));
+    ensure(G.kitCost(s), 'reserved recommended kit');
+    act(G.upgradeKit, 'kit:recommended');
+  }
+  act((x) => G.setPreparation(x, { element: q.element, stance: q.stance, remedy: q.remedy }), 'preparation:recommended');
+  rest();
+  ensure(G.battlePreparationCost(s), 'recommended battle supplies');
+  return q;
 }
 function prepareRoute(r,route){
  stopOrder();
@@ -455,8 +525,7 @@ function prepareRoute(r,route){
 }
 function fightGuardian(r){
   stopOrder();rest();
-  // Guardians need the same elemental preparation as bosses; pay its quoted cost below.
-  act(x=>G.setPreparation(x,{element:G.enemyDefinition(x,r,'guardian').element}),'combat:guardian protection');
+  const recommendation = prepareRecommendedCombat(r);
   let tries=0;
   while(G.guardianReady(s,r)){
     ensure(G.battlePreparationCost(s),'guardian preparation');
@@ -469,7 +538,7 @@ function fightGuardian(r){
     if(++tries>8)diagnostic('Guardian preparation failed '+r+'/'+s.guild.depths[r]);
     const target=G.enemyDefinition(s,r,'guardian').targetLevel;
     train(Math.min(G.levelCap(s),Math.max(target,...s.party.map(id=>s.heroes.find(h=>h.id===id).level+2))));
-    loadout(r,Math.min(8,tries>1?tries:0));
+    loadout(r,Math.min(8,recommendation.upgrade+tries));
     if(tries>2&&G.buildingLimit(s,'tavern')>=2){build('tavern',2);for(const id of s.party){const h=s.heroes.find(h=>h.id===id);if(h.mastery<Math.min(5,tries-2)){ensure(G.masteryCost(h),'guardian mastery');act(x=>G.mentorHero(x,id),'mentor:guardian');}}}
   }
 }
@@ -531,21 +600,13 @@ function roundtrip(label) {
 function withoutEquipment(state) {
   let bare = state;
   for (const id of bare.party)
-    for (const slot of ['weapon', 'armor', 'charm'])
+    for (const slot of ['weapon', 'armor', 'charm', 'head', 'hands', 'feet'])
       bare = G.unequipGear(bare, id, slot);
   return bare;
 }
 function resolveChapter(r) {
   rest();
-  act(
-    (x) =>
-      G.setPreparation(x, {
-        stance: 'balanced',
-        element: G.ENEMIES[r].element,
-        remedy: true,
-      }),
-    'preparation:counter enemy',
-  );
+  prepareRecommendedCombat(r, 'boss');
   ensure(G.battlePreparationCost(s), 'battle preparation');
   let forecast = G.forecastBattle(s, r),
     attempts = 0;

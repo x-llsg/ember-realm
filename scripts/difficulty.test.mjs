@@ -1,246 +1,83 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as G from '../lib/realm.ts';
-import { fixture, runBattle } from './combat-matrix.mjs';
 import { GUARDIANS, BOSSES } from '../lib/guardian-candidates.ts';
+import { combatRecommendation } from '../lib/combat-recommendation.ts';
+import { recommendedFixture, difficultyBattle, difficultySeeds, nakedDifficultyVariants } from './difficulty-fixtures.mjs';
 
-// Combat-only fixtures: no claim about a legal campaign's acquisition time.
-// All samples use the shipping engine, deterministic seeds and ordinary traits.
-const seeds = (n) =>
-  Array.from({ length: n }, (_, i) => Math.imul(i + 1, 2654435761) >>> 0);
-function checkpoint(
-  region,
-  node,
-  investment = 'bare',
-  { quality = 3, level = 10, roles } = {},
-) {
-  const s = fixture(region, 1).state;
-  s.guild.depths[region] = node - 1;
-  s.guild.progress[region] = G.FRONTIER_REQUIREMENTS[node - 1];
-  s.guild.inventory = [];
-  s.guild.doctrine.smithing = 0;
-  s.research = [];
-  s.kit = 1;
-  for (const [index, h] of s.heroes.entries()) {
-    h.role = roles?.[index] || h.role;
-    Object.assign(h, {
-      quality,
-      level,
-      mastery: 0,
-      xp: 0,
-      aptitude: { hp: 100, attack: 100, defense: 100 },
-      origin: '行商护卫',
-      talent: 'diligent',
-      talentVersion: 2,
-      flaw: 'overcome',
-      weapon: 0,
-      armor: 0,
-      equipment: {},
-      learnedNodes: [],
-      activeSkill: G.DEFAULT_SKILL[h.role],
-    });
-    delete h.secondarySkill;
-    if (investment !== 'bare') {
-      const recipes = [
-        h.role === 'finn' ? 'bow' : region === 1 ? 'staff' : 'pike',
-        region === 1 ? 'shadowcoat' : 'plate',
-        region === 1 ? 'wardstone' : 'vitality',
-      ];
-      for (const recipe of recipes) {
-        assert.equal(
-          G.recipeUnlockReason(s, recipe),
-          '',
-          `${recipe} is available at this stage`,
-        );
-        const item = {
-          id: `difficulty-${++s.guild.serial}`,
-          recipe,
-          tier: 2,
-          rarity: 2,
-          upgrade: 2,
-          affix: 2,
-        };
-        s.guild.inventory.push(item);
-        h.equipment[G.RECIPES.find((r) => r.id === recipe).slot] = item.id;
+const count = Number(process.env.DIFFICULTY_SEEDS || 32);
+const seeds = difficultySeeds(count);
+const encounters = GUARDIANS.concat(BOSSES).sort((a,b) => a.region-b.region || a.node-b.node);
+
+test('fixed encounters rise within each route, independently of the player', () => {
+  const s=G.freshState(1);
+  for(let region=0;region<6;region++) {
+    const rows=encounters.filter(e=>e.region===region);
+    for(let i=1;i<rows.length;i++) {
+      assert.ok(rows[i].hp>rows[i-1].hp, `route ${region+1} health grows`);
+      assert.ok(rows[i].attack>rows[i-1].attack, `route ${region+1} attack grows`);
+    }
+    const before=G.clone(G.enemyDefinition(s,region,'guardian',2));
+    s.kit=5; s.research=['steel','wards','memory','godslayer'];
+    assert.deepEqual(G.enemyDefinition(s,region,'guardian',2),before);
+  }
+});
+
+for(const {region,node,name} of encounters) {
+  test(`${region+1}-${node} ${name}: published ordinary equipment recommendation is viable`, () => {
+    const q=combatRecommendation(region,node), s=recommendedFixture(region,node);
+    assert.equal(s.party.length,q.count);
+    assert.equal(q.count,4);
+    assert.ok(q.quality<=3, 'never recommends a five-star recruitment wall');
+    assert.ok(q.rarity<=3,'no purple, gold, red, set or lucky affix requirement');
+    for(const h of s.heroes) {
+      assert.equal(h.level,q.level);
+      assert.equal(h.quality,q.quality);
+      assert.equal(h.mastery,q.mastery);
+      assert.deepEqual(Object.keys(h.equipment).sort(),[...q.slots].sort());
+      for(const id of Object.values(h.equipment)) {
+        const item=s.guild.inventory.find(g=>g.id===id);
+        assert.equal(G.recipeUnlockReason(s,item.recipe,item.tier),'');
+        assert.equal(item.tier,q.tier);
+        assert.equal(item.rarity,q.rarity);
+        assert.equal(item.upgrade,q.upgrade);
+        assert.equal(item.setId,undefined);
+        const withAffix=G.itemStats(s,item), withoutAffix=G.itemStats(s,item,false);
+        for(const key of ['hp','attack','defense','pierce','ranged','crit','dodge','critDamage',...(q.element==='physical'?[]:[q.element])]) assert.equal(withAffix[key],withoutAffix[key],`reference affix contributes no ${key}`);
       }
     }
-  }
-  if (investment === 'prepared') {
-    s.guild.preparation.element = region === 1 ? 'shadow' : 'physical';
-    s.guild.preparation.stance = 'cautious';
-    s.research.push(region === 1 ? 'wards' : 'steel');
-    s.kit = 2;
-  }
-  assert.ok(
-    G.decodeSave(JSON.stringify(s)),
-    'fixture survives save validation',
-  );
-  return s;
-}
-function sample(
-  s0,
-  region,
-  node,
-  policy = 'auto',
-  count = 32,
-  kind = 'guardian',
-) {
-  const results = [];
-  for (const seed of seeds(count)) {
-    let s = G.clone(s0);
-    s.rng = seed;
-    s.battle = G.createCombat(s, region, kind, node - 1);
-    let actions = 0;
-    while (s.battle && actions++ < 260) {
-      const actor = s.battle.units.find(
-        (u) => u.hp > 0 && !s.battle.acted.includes(u.id),
-      );
-      const command =
-        policy === 'auto' ? G.autoCommand(s) : G.commandFor(actor.id, 'attack');
-      assert.equal(G.commandReason(s, command), '');
-      s = G.combat(s, command);
-    }
-    assert.equal(s.battle, null, 'fight has a bounded conclusion');
-    assert.ok(s.lastBattle);
-    results.push(s.lastBattle);
-  }
-  return {
-    wins: results.filter((x) => x.won).length,
-    rounds: results.reduce((n, x) => n + x.rounds, 0) / count,
-    casualties:
-      results.reduce((n, x) => n + s0.party.length - x.survivors, 0) / count,
-  };
-}
-
-test('encounters grow within each route, and never scale to the player', () => {
-  const s = G.freshState(12345);
-  for (let region = 0; region < 6; region++) {
-    const route = [
-      ...GUARDIANS.filter((e) => e.region === region),
-      BOSSES[region],
-    ];
-    for (let i = 1; i < route.length; i++) {
-      assert.ok(route[i].hp > route[i - 1].hp);
-      assert.ok(route[i].attack > route[i - 1].attack);
-    }
-    const before = G.clone(G.enemyDefinition(s, region, 'guardian', 2));
-    s.kit = 5;
-    s.research = ['steel', 'wards', 'memory', 'godslayer'];
-    assert.deepEqual(G.enemyDefinition(s, region, 'guardian', 2), before);
-  }
-});
-
-test('first guardian stays approachable with two level-2 one-star heroes', () => {
-  const s = fixture(0, 0).state;
-  for (const h of s.heroes) {
-    h.quality = 1;
-    h.aptitude = { hp: 100, attack: 100, defense: 100 };
-  }
-  assert.ok(sample(s, 0, 1).wins >= 28);
-});
-
-for (const region of [1, 2]) {
-  test(`route ${region + 1}: bare level-10 three-star teams cannot reliably auto-clear the midpoint`, () => {
-    for (const roles of [
-      undefined,
-      ['luna', 'luna', 'luna', 'luna'],
-      ['rhea', 'rhea', 'rhea', 'rhea'],
-    ]) {
-      const result = sample(
-        checkpoint(region, 3, 'bare', { roles }),
-        region,
-        3,
-        'auto',
-        64,
-      );
-      assert.ok(
-        result.wins <= 16,
-        `unprepared midpoint wins ${result.wins}/64`,
-      );
-    }
-    const early = sample(checkpoint(region, 2), region, 2);
-    assert.ok(
-      early.wins >= 24,
-      'earlier foothold remains available before the equipment check',
-    );
+    assert.equal(s.kit,q.kit);
+    assert.deepEqual(s.research,q.research);
+    const wins=seeds.filter(seed=>difficultyBattle(s,region,node,seed).won).length;
+    assert.ok(wins>=Math.ceil(count*.9),`recommended squad ${wins}/${count}`);
   });
-  test(`route ${region + 1}: ordinary green gear works without high potential or rare talents`, () => {
-    const bare = sample(checkpoint(region, 3), region, 3);
-    const geared = sample(checkpoint(region, 3, 'equipped'), region, 3);
-    const trainedTwoStar = sample(
-      checkpoint(region, 3, 'equipped', { quality: 2, level: 12 }),
-      region,
-      3,
-    );
-    assert.ok(geared.wins >= 28 && geared.wins - bare.wins >= 20);
-    assert.ok(
-      trainedTwoStar.wins >= 28,
-      'two-star growth plus equipment is a viable early route',
-    );
+  test(`${region+1}-${node} ${name}: no recommended-level naked squad clears`, () => {
+    const variants=nakedDifficultyVariants(region,node);
+    for(const config of variants) {
+      const s=recommendedFixture(region,node,config);
+      assert.ok(s.heroes.every(h=>Object.keys(h.equipment).length===0));
+      assert.equal(s.guild.inventory.length,0);
+      const wins=seeds.filter(seed=>difficultyBattle(s,region,node,seed).won).length;
+      assert.equal(wins,0,`${JSON.stringify(config)} won ${wins}/${count}; naked means zero, not a low allowance`);
+    }
   });
 }
 
-test('research and preparation matter after the midpoint; defensive skill use beats plain attacking', () => {
-  const ordinary = sample(checkpoint(2, 4, 'equipped'), 2, 4, 'auto', 64);
-  const prepared = sample(checkpoint(2, 4, 'prepared'), 2, 4, 'auto', 64);
-  assert.ok(
-    ordinary.wins <= 48,
-    'equipment alone is not the entire progression route',
-  );
-  assert.ok(prepared.wins >= 56 && prepared.wins - ordinary.wins >= 24);
-  const s = checkpoint(2, 3, 'equipped', { quality: 2, level: 12 });
-  const tactical = sample(s, 2, 3, 'auto');
-  const attacks = sample(s, 2, 3, 'attack');
-  assert.ok(
-    tactical.wins - attacks.wins >= 20,
-    'existing automatic defensive decisions remain useful',
-  );
-});
-
-test('stage-constrained three-star builds can still defeat all thirty guardians and six bosses', () => {
-  for (const enemy of GUARDIANS) {
-    const { region, node } = enemy;
-    let s = fixture(region, node === 1 ? 0 : 1).state;
-    s.guild.depths[region] = node - 1;
-    s.guild.progress[region] = G.FRONTIER_REQUIREMENTS[node - 1];
-    for (const h of s.heroes) {
-      h.level = enemy.targetLevel;
-      h.quality = 3;
-      h.mastery = Math.min(h.mastery, Math.floor(enemy.targetLevel / 6));
-      h.learnedNodes = [];
-      h.activeSkill = G.DEFAULT_SKILL[h.role];
-      delete h.secondarySkill;
-    }
-    for (const item of s.guild.inventory) {
-      item.tier = enemy.targetTier;
-      item.upgrade = enemy.targetUpgrade;
-      item.rarity = 2;
-    }
-    for (const id of s.party) {
-      const role = s.heroes.find((h) => h.id === id).role;
-      const nodes = G.roleTree(role)
-        .filter((n) => n.branch !== 'root')
-        .sort(
-          (a, b) =>
-            (a.branch === 'a' ? 0 : 1) - (b.branch === 'a' ? 0 : 1) ||
-            a.depth - b.depth,
-        );
-      for (const n of nodes)
-        if (!G.learnSkillReason(s, id, n.id)) s = G.learnSkill(s, id, n.id);
-    }
-    assert.ok(
-      sample(s, region, node, 'auto', 8).wins >= 6,
-      `route ${region + 1}, node ${node}`,
-    );
-  }
-  for (let region = 0; region < 6; region++) {
-    const s = fixture(region, 2).state;
-    let wins = 0;
-    for (const seed of seeds(16)) {
-      s.rng = seed;
-      wins += Number(runBattle(s, region, 2, 'auto').won);
-    }
-    assert.ok(wins >= 12, `boss ${region + 1}: ${wins}/16`);
+test('reported level-10 naked midpoint regression has no lucky-seed allowance', () => {
+  for(const region of [1,2]) for(const quality of [3,5]) {
+    const s=recommendedFixture(region,3,{bare:true,quality,aptitude:quality===5?130:100});
+    assert.equal(s.heroes[0].level,10);
+    for(const seed of difficultySeeds(512)) assert.equal(difficultyBattle(s,region,3,seed).won,false,`${region+1}-3 quality ${quality}, seed ${seed}`);
   }
 });
 
+test('opening naked burst regressions remain closed on the previously winning seeds', () => {
+  const cases=[
+    {node:1,role:'kael',branches:['a','b','c'],seeds:[3332467657,3601641187]},
+    {node:4,role:'sylva',branches:['a','c'],seeds:[2528090685,1901463376,4246706327,3493733942,3980676415,455164882,1159876298,2173780524]},
+  ];
+  for(const c of cases) for(const branch of c.branches) {
+    const s=recommendedFixture(0,c.node,{bare:true,quality:5,aptitude:130,roles:Array(4).fill(c.role),branch});
+    for(const seed of c.seeds) assert.equal(difficultyBattle(s,0,c.node,seed).won,false,`1-${c.node} ${c.role}/${branch} formerly won at ${seed}`);
+  }
+});

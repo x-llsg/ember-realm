@@ -1,6 +1,6 @@
 # 余烬之境 · The Ember Realm
 
-**V0.1.1** · 中文西幻增量文字游戏 · MIT
+**V0.1.2** · 中文西幻增量文字游戏 · MIT
 
 ### [⬇ 下载游戏 · Windows 免安装版](https://github.com/xhb697120-png/ember-realm/releases/latest/download/ember-realm-windows-portable.zip)
 

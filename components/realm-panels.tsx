@@ -40,6 +40,7 @@ export type Destination = {
   research?: string;
   hero?: string;
   recipe?: string;
+  tier?: number;
   work?: G.WorkId;
   route?: G.Route;
 };

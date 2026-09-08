@@ -1,4 +1,6 @@
 import * as D from './realm-data.ts';
+import { combatRecommendation } from './combat-recommendation.ts';
+import { skillPoints, roleTree, learnSkillReason } from './skill-tree.ts';
 import * as Guild from './guild.ts';
 import * as Campaign from './campaign.ts';
 import * as Discovery from './discovery.ts';
@@ -1476,6 +1478,7 @@ export type Objective = {
   research?: string;
   hero?: string;
   recipe?: string;
+  tier?: number;
   work?: Campaign.WorkId;
   route?: Route;
 };
@@ -1734,6 +1737,114 @@ function readinessGoal(s: State, r: number): Objective | null {
 function gearSlot(item: Gear) {
   return RECIPES.find((r) => r.id === item.recipe)!.slot;
 }
+function guardianGrowthGoal(s: State, region: number): Objective | null {
+  const target = combatRecommendation(region, s.guild.depths[region] + 1);
+  const members = s.party.map((id) => s.heroes.find((h) => h.id === id)!);
+  if (members.length < target.count) {
+    const reserve = s.heroes.find((h) => !s.party.includes(h.id));
+    if (reserve)
+      return {
+        title: `邀请${reserve.name}参加守敌战`,
+        detail: `调查归来，开始准备真正的战斗。当前${members.length}/${target.count}人；组齐输出、防护与治疗后，为每人配齐装备。`,
+        view: 'heroes',
+        hero: reserve.id,
+      };
+    if (s.heroes.length < 12)
+      return {
+        title: '为守敌战补齐同行者',
+        detail: `当前${members.length}/${target.count}人。培养现有低星伙伴同样有价值；推荐等级以整队配装和技能养成为前提。`,
+        view: 'recruit',
+      };
+  }
+  for (const h of members)
+    for (const slot of target.slots) {
+      if (h.equipment[slot]) continue;
+      const spare = s.guild.inventory.find(
+        (g) =>
+          gearSlot(g) === slot &&
+          !s.heroes.some((other) =>
+            Object.values(other.equipment).includes(g.id),
+          ),
+      );
+      if (spare)
+        return {
+          title: `给${h.name}装备${Guild.gearName(spare)}`,
+          detail:
+            '已有可用的装备。等级只是一部分，裸装无法承担当前守敌的伤害。',
+          view: 'heroes',
+          tab: 'inventory',
+          hero: h.id,
+        };
+      if (s.guild.inventory.length >= 120) return {
+        title: '整理装备库，为守敌配装腾出位置',
+        detail: '先拆解闲置装备，再补齐当前队伍缺少的部位。已穿戴的物品会保留。',
+        view: 'heroes', tab: 'inventory', hero: h.id,
+      };
+      const preferred = {
+        weapon: h.role === 'finn' ? 'bow' : 'blade',
+        armor:
+          target.element === 'shadow'
+            ? 'shadowcoat'
+            : target.element === 'fire'
+              ? 'firecoat'
+              : target.element === 'radiant'
+                ? 'dawncoat'
+                : 'plate',
+        charm: target.element === 'physical' ? 'vitality' : 'wardstone',
+        head: 'cap',
+        hands: 'grips',
+        feet: 'boots',
+      }[slot];
+      const recipe = !Campaign.recipeUnlockReason(s, preferred)
+        ? preferred
+        : RECIPES.find(
+            (r) => r.slot === slot && !Campaign.recipeUnlockReason(s, r.id),
+          )?.id;
+      if (!recipe) continue;
+      const tier = Math.min(target.tier, Campaign.gearTier(s));
+      return fundingGoal(
+        s,
+        Guild.recipeCost(s, recipe, tier),
+        Campaign.recipeMaterialCost(s, recipe, tier),
+        {
+          title: `为${h.name}打造${RECIPES.find((r) => r.id === recipe)!.name}`,
+          detail: `每人配齐${target.slots.length}个装备部位，再按守敌的养成参考强化、学习技能和调整防护。`,
+          view: 'heroes',
+          tab: 'forge',
+          hero: h.id,
+          recipe,
+          tier,
+        },
+      );
+    }
+  const trainee = members.find(
+    (h) => h.level < Math.min(target.level, levelCap(s)),
+  );
+  if (trainee)
+    return fundingGoal(
+      s,
+      trainCost(trainee),
+      {},
+      {
+        title: `训练${trainee.name}，备战当前守敌`,
+        detail: `完整养成参考为Lv.${target.level}。已有装备仍需按阶段强化，学会并携带技能；只提升等级并不能替代配装。`,
+        view: 'heroes',
+        tab: 'training',
+        hero: trainee.id,
+      },
+    );
+  const learner = members.find(
+    (h) => skillPoints(h) > 0 && roleTree(h.role).some(
+      (node) => !learnSkillReason(s, h.id, node.id),
+    ),
+  );
+  if (learner) return {
+    title: `为${learner.name}选择技能分支`,
+    detail: `还有${skillPoints(learner)}点技能未分配。在角色培养中打开技能树，选择一条路线并携带解锁的技能。`,
+    view: 'heroes', tab: 'training', hero: learner.id,
+  };
+  return null;
+}
 export function objective(s: State): Objective {
   if (!s.buildings.fire)
     return {
@@ -1947,14 +2058,16 @@ export function objective(s: State): Objective {
   }
   const r = Campaign.objectiveRegion(s);
   if (Tactics.guardianReady(s, r))
-    return {
-      title: '击败' + Tactics.enemyDefinition(s, r, 'guardian').name,
-      detail:
-        '已抵达守敌。可以直接挑战，也可回城训练、学技能或配装；战败保留路线。',
-      view: 'explore',
-      tab: 'frontier',
-      region: r,
-    };
+    return (
+      guardianGrowthGoal(s, r) || {
+        title: '击败' + Tactics.enemyDefinition(s, r, 'guardian').name,
+        detail:
+          '已抵达守敌。核对养成参考中的装备强化、技能和防护，再选择挑战；战败保留路线。',
+        view: 'explore',
+        tab: 'frontier',
+        region: r,
+      }
+    );
   if (s.guild.depths[r] < 1)
     return (
       readinessGoal(s, r) || {

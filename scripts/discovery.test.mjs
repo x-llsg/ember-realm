@@ -60,10 +60,31 @@ function earlyFlow() {
   checkpoints.companions = s;
   // The first actual return establishes the durable expedition milestone.
   s = expedition(s, 'survey'); checkpoints.firstReturn = s;
+  // The foothold is a combat milestone: prepare a full party using available
+  // recruits and three-slot handcrafting, without inventing gear or later tech.
+  for (const role of ['luna', 'kael']) {
+    let applicant = s.guild.applicants.find(h => h.role === role);
+    for (let refresh = 0; !applicant && refresh < 24; refresh++) {
+      if (s.guild.refreshAt > s.time) s = G.advance(s, s.guild.refreshAt - s.time);
+      s = action(fundOrdinary(s), x => G.refreshApplicants(x), 'ordinary applicant refresh');
+      applicant = s.guild.applicants.find(h => h.role === role);
+    }
+    assert.ok(applicant, `bounded fixture recruitment finds ${role}`);
+    s = action(fundOrdinary(s), x => G.hireApplicant(x, applicant.id), `hire ${role}`);
+  }
   for (const id of s.party) {
     while (s.heroes.find(h => h.id === id).level < Math.min(4, G.levelCap(s)))
       s = action(fundOrdinary(s), x => G.train(x, id), 'train before frontier');
+    const hero = s.heroes.find(h => h.id === id);
+    for (const recipe of [hero.role === 'finn' ? 'bow' : 'blade', 'plate', 'vitality']) {
+      const funded = fundOrdinary(s);
+      assert.equal(G.forgeReason(funded, recipe, 1), '', recipe);
+      s = action(funded, x => G.craftGear(x, recipe, 1), `craft ${recipe}`);
+      const gear = s.guild.inventory.at(-1);
+      s = action(s, x => G.equipGear(x, id, gear.id), `equip ${recipe}`);
+    }
   }
+  s = action(s, x => G.setPreparation(x, { stance: 'cautious' }), 'prepare guarded formation');
   let trips = 0;
   while (!G.guardianReady(s,0) && trips++ < 20) s = expedition(s, 'frontier');
   if(s.recoveryUntil>s.time)s=G.advance(s,s.recoveryUntil-s.time);

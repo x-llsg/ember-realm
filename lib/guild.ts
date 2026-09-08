@@ -5,6 +5,8 @@ import { originEffect } from './origins.ts';
 import * as Skills from './skill-data.ts';
 import { TALENT_RARITY_WEIGHTS } from './talent-data.ts';
 import { GEAR_SLOTS, INVENTORY_CAP, RARITY_SCALE } from './equipment-data.ts';
+import { gearTierScale, EQUIPMENT_DEFENSE_SCALE } from './equipment-growth.ts';
+export { EQUIPMENT_BASE_SCALE, EQUIPMENT_DEFENSE_SCALE, gearTierScale } from './equipment-growth.ts';
 export * from './skill-data.ts';
 export { talentExperience, talentTraining } from './buildcraft.ts';
 export const FIVE_STAR_PITY = 80;
@@ -344,14 +346,14 @@ export function gearName(item: D.Gear) {
 export function itemStats(s: G.State, item: D.Gear, includeAffix = true) {
   const r = D.RECIPES.find((r) => r.id === item.recipe)!;
   const scale =
-    1.75 ** (item.tier - 1) *
+    gearTierScale(item.tier) *
     RARITY_SCALE[item.rarity - 1] *
     (1 + item.upgrade * 0.08) *
     (1 + s.guild.doctrine.smithing * 0.05);
   const stats = {
     attack: r.attack * scale,
     hp: r.hp * scale,
-    defense: r.defense * scale,
+    defense: r.defense * scale * EQUIPMENT_DEFENSE_SCALE,
     pierce: r.pierce,
     ranged: r.ranged,
     fire: r.fire,

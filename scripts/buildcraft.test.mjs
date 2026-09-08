@@ -284,7 +284,7 @@ test('negative resistance and dodge cannot underflow and six-slot stacking respe
   for (const x of s.guild.inventory) x.affix = 4;
   assert.equal(G.individualStats(s, h).fire, 0.75);
 });
-test('v9 migration preserves old positive-negative combinations, paid tempering and old rarity power', () => {
+test('v9 migration preserves old positive-negative combinations and paid tempering', () => {
   for (const flaw of ['frail', 'hesitant', 'reckless', 'green', 'overcome']) {
     const s = town(),
       h = s.heroes[0];
@@ -343,8 +343,16 @@ test('generated talents have actual rarity distribution independent of locked ea
   for (const [i, p] of [0.4, 0.3, 0.2, 0.08, 0.02].entries())
     assert.ok(Math.abs(counts[i] / 2500 - p) < 0.035, `${i + 1}: ${counts[i]}`);
 });
-test('all six equipment rarities have increasing native stats while the original four retain their scale', () => {
+test('all six equipment rarities increase native stats and retain their relative quality value', () => {
   const s = town();
+  const white = G.itemStats(s, {
+    id: 'quality-baseline',
+    recipe: 'blade',
+    tier: 1,
+    rarity: 1,
+    affix: 2,
+    upgrade: 0,
+  }, false);
   let last = 0;
   assert.equal(G.QUALITY_NAMES.length, 6);
   for (let rarity = 1; rarity <= 6; rarity++) {
@@ -359,8 +367,134 @@ test('all six equipment rarities have increasing native stats while the original
       stats = G.itemStats(s, g, false);
     assert.ok(stats.attack > last);
     last = stats.attack;
-    if (rarity <= 4) close(stats.attack, 12 * (1 + (rarity - 1) * 0.15));
+    close(stats.attack / white.attack, [1, 1.15, 1.3, 1.45, 1.65, 1.85][rarity - 1]);
     assert.ok(!G.gearName(g).includes('undefined'));
+  }
+});
+
+test('every recipe grows at every tier, quality and enhancement step without adding absent native stats', () => {
+  const s = town();
+  for (const recipe of G.RECIPES) {
+    for (let tier = 1; tier <= 6; tier++) {
+      for (let rarity = 1; rarity <= 6; rarity++) {
+        for (let upgrade = 0; upgrade <= 8; upgrade++) {
+          const gear = { id: 'growth-fixture', recipe: recipe.id, tier, rarity, upgrade, affix: 2 };
+          const current = G.itemStats(s, gear, false);
+          for (const key of ['hp', 'attack', 'defense']) {
+            const label = `${recipe.id} T${tier} Q${rarity} +${upgrade} ${key}`;
+            assert.ok(Number.isFinite(current[key]) && current[key] >= 0, label);
+            if (!recipe[key]) {
+              assert.equal(current[key], 0, label);
+              continue;
+            }
+            for (const [axis, first] of [['tier', 1], ['rarity', 1], ['upgrade', 0]]) {
+              if (gear[axis] <= first) continue;
+              const previous = G.itemStats(s, { ...gear, [axis]: gear[axis] - 1 }, false);
+              assert.ok(current[key] > previous[key], `${label}: ${axis} must improve`);
+            }
+          }
+        }
+      }
+    }
+  }
+});
+
+test('equipment growth and smithing never multiply native special effects or fixed affix bonuses', () => {
+  const s = town();
+  const fixedBonuses = { defense: 3, pierce: 0.12, fire: 0.15, shadow: 0.15, radiant: 0.15, crit: 0.08, dodge: 0.06, critDamage: 0.2 };
+  for (const recipe of G.RECIPES) {
+    for (const smithing of [0, 10]) {
+      s.guild.doctrine.smithing = smithing;
+      for (let tier = 1; tier <= 6; tier++) {
+        for (let rarity = 1; rarity <= 6; rarity++) {
+          for (const upgrade of [0, 3, 8]) {
+            const gear = { id: 'special-fixture', recipe: recipe.id, tier, rarity, upgrade, affix: 2 };
+            const base = G.itemStats(s, gear, false);
+            for (const key of ['pierce', 'ranged', 'fire', 'shadow', 'radiant', 'crit', 'dodge', 'critDamage'])
+              close(base[key], recipe[key] || 0, `${recipe.id} native ${key}`);
+            for (const [affix, effect] of G.AFFIXES.entries()) {
+              if (!(effect.stat in fixedBonuses)) continue;
+              const actual = G.itemStats(s, { ...gear, affix });
+              for (const key of Object.keys(base))
+                close(actual[key] - base[key], key === effect.stat ? fixedBonuses[effect.stat] : 0,
+                  `${recipe.id} T${tier} Q${rarity} +${upgrade} ${effect.stat} -> ${key}`);
+            }
+          }
+        }
+      }
+    }
+  }
+});
+
+test('native equipment defense receives the mitigation increase while the defensive affix stays exactly plus three', () => {
+  const s = town();
+  s.guild.doctrine.smithing = 5;
+  const affix = G.AFFIXES.findIndex(a => a.stat === 'defense');
+  for (const recipe of G.RECIPES.filter(r => r.defense && (r.attack || r.hp))) {
+    for (let tier = 1; tier <= 6; tier++) {
+      for (const rarity of [1, 3, 6]) {
+        for (const upgrade of [0, 3, 8]) {
+          const gear = { id: 'defense-fixture', recipe: recipe.id, tier, rarity, upgrade, affix };
+          const native = G.itemStats(s, gear, false);
+          const reference = recipe.attack ? native.attack / recipe.attack : native.hp / recipe.hp;
+          close(native.defense / recipe.defense, reference * 2, `${recipe.id} native defense`);
+          const equipped = G.itemStats(s, gear);
+          close(equipped.defense - native.defense, 3, `${recipe.id} fixed defensive affix`);
+          for (const key of Object.keys(native).filter(key => key !== 'defense'))
+            close(equipped[key], native[key], `${recipe.id} defensive affix leaves ${key} unchanged`);
+        }
+      }
+    }
+  }
+});
+
+test('attack and health affixes keep gaining value with paid equipment development', () => {
+  const s = town();
+  for (const recipe of G.RECIPES) {
+    for (const stat of ['hp', 'attack']) {
+      const affix = G.AFFIXES.findIndex((a) => a.stat === stat);
+      const gear = { id: 'flat-affix-fixture', recipe: recipe.id, tier: 1, rarity: 1, upgrade: 0, affix };
+      const contribution = (g) => G.itemStats(s, g)[stat] - G.itemStats(s, g, false)[stat];
+      assert.ok(contribution(gear) > 0, `${recipe.id} ${stat}`);
+      for (const [axis, from, to] of [['tier', 1, 6], ['rarity', 1, 6], ['upgrade', 0, 8]]) {
+        let previous = contribution({ ...gear, [axis]: from });
+        for (let value = from + 1; value <= to; value++) {
+          const current = contribution({ ...gear, [axis]: value });
+          assert.ok(current > previous, `${recipe.id} ${stat} ${axis} ${value}`);
+          previous = current;
+        }
+      }
+      const before = contribution(gear);
+      s.guild.doctrine.smithing = 10;
+      assert.ok(contribution(gear) > before, `${recipe.id} ${stat} smithing`);
+      s.guild.doctrine.smithing = 0;
+    }
+  }
+});
+
+test('legacy and current saves retain gear identity, investments, sets and ownership after equipment rebalance', () => {
+  for (const version of [9, 10]) {
+    const s = town();
+    s.version = version;
+    for (let tier = 1; tier <= 6; tier++) {
+      for (let rarity = 1; rarity <= 6; rarity++) {
+        const index = (tier - 1) * 6 + rarity - 1;
+        const gear = item(s, recipes[index % recipes.length], G.EQUIPMENT_SETS[index % 6].id, {
+          tier, rarity, upgrade: index % 9, affix: index % G.AFFIXES.length,
+        });
+        if (index < 6)
+          s.heroes[0].equipment[G.RECIPES.find((r) => r.id === gear.recipe).slot] = gear.id;
+      }
+    }
+    const before = copy(s);
+    const stats = G.individualStats(s, s.heroes[0]);
+    const loaded = reload(s);
+    assert.deepEqual(s, before, 'loading does not modify the input save');
+    assert.deepEqual(loaded.guild.inventory, before.guild.inventory);
+    assert.equal(loaded.guild.serial, before.guild.serial);
+    assert.deepEqual(loaded.heroes.map((h) => h.equipment), before.heroes.map((h) => h.equipment));
+    assert.deepEqual(G.individualStats(loaded, loaded.heroes[0]), stats);
+    assert.deepEqual(reload(loaded), loaded);
   }
 });
 test('ordinary forging reaches gold but never red and charges exactly the quoted bill', () => {

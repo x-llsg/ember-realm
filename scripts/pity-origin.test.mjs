@@ -488,7 +488,7 @@ test('six origins award exact expedition XP to active and reserve heroes, includ
 
 test('boss victory awards the same origin XP factor to active and reserve heroes', () => {
   for (const offset of [0, 3]) {
-    const s = town();
+    let s = town();
     s.cleared=[];
     s.guild.depths[0] = 5;
     s.guild.intel[0] = 100;
@@ -503,6 +503,29 @@ test('boss victory awards the same origin XP factor to active and reserve heroes
       { length: 4 },
       (_, i) => s.heroes[(i + offset) % 6].id,
     );
+    // XP attribution needs an actual victory from a developed party. Build its
+    // equipment through the already available handcrafting and enhancement APIs.
+    for (const id of s.party) {
+      const hero = s.heroes.find(h => h.id === id);
+      for (const recipe of [hero.role === 'finn' ? 'bow' : 'blade', 'plate', 'vitality', 'cap', 'grips', 'boots']) {
+        fund(s);
+        assert.equal(G.forgeReason(s, recipe, 1), '', recipe);
+        const crafted = G.craftGear(s, recipe, 1);
+        assert.notEqual(crafted, s, `craft ${recipe}`);
+        const itemId = crafted.guild.inventory.at(-1).id;
+        s = crafted;
+        for (let level = 1; level <= 2; level++) {
+          fund(s);
+          const enhanced = G.enhanceGear(s, itemId);
+          assert.notEqual(enhanced, s, `enhance ${recipe} +${level}`);
+          s = enhanced;
+        }
+        const equipped = G.equipGear(s, id, itemId);
+        assert.notEqual(equipped, s, `equip ${recipe}`);
+        s = equipped;
+      }
+    }
+    s = G.setPreparation(fund(s), { stance: 'cautious' });
     let battle = G.startBattle(s, 0);
     assert.notEqual(battle, s, G.bossReason(s, 0));
     for (let rounds = 0; battle.battle && rounds < 50; rounds++)

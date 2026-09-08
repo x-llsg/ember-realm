@@ -34,10 +34,53 @@ function hasDestination(s,goal){
   if(goal.region!==undefined)assert.ok(G.regionOpen(s,goal.region),`closed region: ${goal.region}`);
 }
 
+test('reaching a guardian guides party assembly before advertising a bare challenge',()=>{
+  const s=base();s.explored[0]=1;s.guild.progress[0]=G.FRONTIER_REQUIREMENTS[0];
+  assert.equal(G.guardianReady(s,0),true);
+  const goal=G.objective(s);hasDestination(s,goal);
+  assert.equal(goal.view,'recruit');assert.match(goal.detail,/配装|装备/);
+});
+
+test('a full recommended-level naked party is guided to real gear and available costs',()=>{
+  let s=base();s.explored[0]=1;s.guild.progress[0]=G.FRONTIER_REQUIREMENTS[0];
+  while(s.party.length<4){s.guild.applicants=[G.makeApplicant(s,'rhea')];fund(s);s=G.recruit(s,s.guild.applicants[0].id);}
+  for(const h of s.heroes)h.level=G.enemyDefinition(s,0,'guardian').targetLevel;
+  const goal=G.objective(s);hasDestination(s,goal);
+  assert.equal(goal.view,'heroes');assert.equal(goal.tab,'forge');assert.ok(goal.recipe);
+  assert.equal(G.forgeReason(s,goal.recipe,1),'');
+  s=G.craftGear(s,goal.recipe,1);const equipGoal=G.objective(s);
+  assert.equal(equipGoal.tab,'inventory');assert.equal(equipGoal.hero,goal.hero);
+});
+
+test('returning from a higher-tier side branch keeps guardian crafting guidance on its quoted lower tier',()=>{
+  let s=base();
+  // Dragoncraft can be earned on the mountain branch before starting the court.
+  s.world.tech=['settlement','metallurgy','runecraft','citadel','dragoncraft'];
+  s.guild.depths=[2,1,5,0,2,0];s.explored=[1,1,1,1,1,0];s.cleared=[2];
+  s.guild.progress[3]=G.FRONTIER_REQUIREMENTS[0];s.research.push('axes');
+  s.buildings.forge=1;s.buildings.warehouse=G.buildingLimit(s,'warehouse');
+  for(const role of ['finn','luna','kael']){
+    s.guild.applicants=[G.makeApplicant(s,role)];fund(s);s=G.recruit(s,s.guild.applicants[0].id);
+  }
+  fund(s);s.world.materials.boards=6;s.world.materials.steel=4;
+  assert.equal(G.gearTier(s),4);assert.equal(G.objectiveRegion(s),3);
+  assert.equal(G.guardianReady(s,3),true);
+  const goal=G.objective(s);hasDestination(s,goal);
+  assert.equal(goal.view,'heroes');assert.equal(goal.tab,'forge');assert.equal(goal.tier,3);
+  assert.equal(G.forgeReason(s,goal.recipe,goal.tier),'');
+  assert.notEqual(G.forgeReason(s,goal.recipe,G.gearTier(s)),'','the highest unlocked tier still lacks its own materials');
+  const cost=G.recipeCost(s,goal.recipe,goal.tier),materials=G.recipeMaterialCost(s,goal.recipe,goal.tier);
+  const before=structuredClone(s),crafted=G.craftGear(s,goal.recipe,goal.tier);
+  assert.notEqual(crafted,s);assert.deepEqual(s,before);
+  assert.equal(crafted.guild.inventory.at(-1).tier,goal.tier);
+  for(const key of keys)assert.equal(crafted.resources[key],s.resources[key]-(cost[key]||0));
+  for(const key of G.MATERIAL_IDS)assert.equal(crafted.world.materials[key],s.world.materials[key]-(materials[key]||0));
+});
+
 test('first survey does not recommend an impossible departure across random starting individuals',()=>{
   let low=0;
-  for(let seed=1;seed<=40;seed++)for(const role of ['rhea','finn','luna','kael']){
-    let s=craft(base(seed,role));s=G.equipGear(s,s.party[0],s.guild.inventory.at(-1).id);fund(s);
+  for(let seed=1;seed<=40;seed++)for(const role of ['rhea','finn','luna','kael'])for(const equipped of [false,true]){
+    let s=base(seed,role);if(equipped){s=craft(s);s=G.equipGear(s,s.party[0],s.guild.inventory.at(-1).id);}fund(s);
     const reason=G.dispatchReason(s,0,'survey',0),goal=G.objective(s);hasDestination(s,goal);
     if(!reason)continue;
     low++;assert.notEqual(goal.view,'explore',`${seed}/${role}: ${reason}`);
@@ -93,6 +136,8 @@ test('a full roster with an available different-class bench member recommends as
   let s=frontierFixture();
   for(const recipe of ['blade','plate','vitality']){s=craft(s,recipe,2);s=G.equipGear(s,s.party[0],s.guild.inventory.at(-1).id);}
   while(s.heroes.length<12){s.guild.applicants=[G.makeApplicant(s,s.heroes.length===1?'finn':'rhea')];fund(s);s=G.recruit(s,s.guild.applicants[0].id);}
+  s.guild.progress[1]=G.FRONTIER_REQUIREMENTS[0];
+  assert.equal(G.guardianReady(s,1),true,'party assembly is required for the actual guardian');
   s.party=[s.heroes[0].id];const available=s.heroes[1];assert.equal(available.role,'finn');
   const goal=G.objective(s);hasDestination(s,goal);assert.equal(goal.view,'heroes');assert.ok(!goal.tab||goal.tab==='roster');
   assert.notEqual(G.toggleParty(s,available.id),s,'existing different role can join now');

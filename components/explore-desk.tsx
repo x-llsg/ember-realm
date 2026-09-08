@@ -1,6 +1,7 @@
 'use client';
 
 import { InfoHint } from './info-hint';
+import { CombatRecommendation } from './combat-recommendation';
 import { useState } from 'react';
 import {
   ArrowRight,
@@ -252,28 +253,9 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
     );
   }
 
-  function renderBossPanel(prefix = 'explore') {
-    return bossRevealed ? (
-      <section className="explore-boss">
-        <div className="explore-section-head">
-          <h3>
-            <Swords aria-hidden="true" />
-            {enemy.boss}
-          </h3>
-          <span>{G.ELEMENT_NAMES[G.ENEMIES[region].element]}</span>
-        </div>
-        <p className="explore-enemy-stats">
-          生命 {boss.hp.toLocaleString('zh-CN')} · 攻击 {boss.attack} · 护甲{' '}
-          {G.enemyArmor(s, region).toFixed(1)}
-        </p>
-        <p className="explore-match">
-          敌情仅提供伤害增益，当前 +{(s.guild.intel[region] / 10).toFixed(1)}
-          %；可自行选择挑战时机。 对应抗性{' '}
-          {Math.round(modifiers.resistance * 100)}% · 穿甲{' '}
-          {Math.round(modifiers.pierce * 100)}% · 远程{' '}
-          {Math.round(modifiers.ranged * 100)}%
-        </p>
-
+  function renderPreparation(prefix: string) {
+    return (
+      <>
         <fieldset className="explore-preparations" disabled={preparationLocked}>
           <legend className="sr-only">出战准备</legend>
           <div className="explore-prep-row">
@@ -324,10 +306,38 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
         </fieldset>
         <p
           className="explore-prep-cost"
-          title="只在正式决战时支付，推演不消耗材料"
+          title="每次挑战守敌或首领时支付，推演不消耗材料"
         >
           出战费用：{G.costText(G.battlePreparationCost(s))}
         </p>
+      </>
+    );
+  }
+
+  function renderBossPanel(prefix = 'explore') {
+    return bossRevealed ? (
+      <section className="explore-boss">
+        <div className="explore-section-head">
+          <h3>
+            <Swords aria-hidden="true" />
+            {enemy.boss}
+          </h3>
+          <span>{G.ELEMENT_NAMES[G.ENEMIES[region].element]}</span>
+        </div>
+        <p className="explore-enemy-stats">
+          生命 {boss.hp.toLocaleString('zh-CN')} · 攻击 {boss.attack} · 护甲{' '}
+          {G.enemyArmor(s, region).toFixed(1)}
+        </p>
+        <CombatRecommendation s={s} region={region} node={6} />
+        <p className="explore-match">
+          敌情仅提供伤害增益，当前 +{(s.guild.intel[region] / 10).toFixed(1)}
+          %；可自行选择挑战时机。 对应抗性{' '}
+          {Math.round(modifiers.resistance * 100)}% · 穿甲{' '}
+          {Math.round(modifiers.pierce * 100)}% · 远程{' '}
+          {Math.round(modifiers.ranged * 100)}%
+        </p>
+
+        {renderPreparation(prefix)}
         <button
           type="button"
           className="life-text-button"
@@ -376,11 +386,16 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
         <div className="explore-section-head">
           <strong>
             <Shield aria-hidden="true" />
-            首领之路
+            当前节点备战
           </strong>
           <span>据点 {frontier.depth}/5</span>
         </div>
-        <p>深入道路后，队伍会带回首领与战斗准备的线索。</p>
+        <p>
+          姿态与药剂同时用于守敌和首领。当前守敌：
+          {G.ELEMENT_NAMES[guardian.element]}伤害。
+        </p>
+        {renderPreparation(prefix)}
+        {preparationLocked && <small>队伍归来后可调整准备。</small>}
         <button
           type="button"
           className="life-text-button"
@@ -593,7 +608,7 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
               <div>
                 <InfoHint
                   title={guardian.name}
-                  body={`生命 ${guardian.hp} · 攻击 ${guardian.attack} · 护甲 ${guardian.defense}。建议约Lv.${guardian.targetLevel}、T${guardian.targetTier}行装；这不是挑战门槛。每层击败守敌后才取得据点奖励，失败保留路线。`}
+                  body={`生命 ${guardian.hp} · 攻击 ${guardian.attack} · 护甲 ${guardian.defense}。${G.ELEMENT_NAMES[guardian.element]}伤害。推荐等级以配齐装备、强化和技能养成为前提；下方养成参考可悬停查看完整配置。战胜守敌后取得据点奖励，失败保留路线。`}
                 >
                   <strong>{guardian.name}</strong>
                 </InfoHint>
@@ -613,6 +628,13 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
                 <small>{G.guardianReason(s, region)}</small>
               )}
             </div>
+          )}
+          {returned && frontier.depth < 5 && (
+            <CombatRecommendation
+              s={s}
+              region={region}
+              node={frontier.depth + 1}
+            />
           )}
           {returned && (
             <label className="guardian-auto">
@@ -671,7 +693,7 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
                 onClick={() => setDetail('preparation')}
               >
                 <Swords aria-hidden="true" />
-                <span>{bossRevealed ? '首领备战' : '首领之路'}</span>
+                <span>{bossRevealed ? '首领备战' : '守敌备战'}</span>
               </button>
             )}
           </div>
@@ -759,7 +781,7 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
         <DialogContent className="life-dialog explore-detail-dialog">
           <DialogTitle>{enemy.name} · 战斗准备</DialogTitle>
           <DialogDescription>
-            调整准备后可以推演，再决定是否发起决战。
+            按敌人的伤害类型准备药剂、装备与技能，再决定是否挑战。
           </DialogDescription>
           {returned && renderBossPanel('explore-dialog')}
         </DialogContent>
