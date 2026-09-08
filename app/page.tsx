@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import { GAME_VERSION } from '@/lib/version';
 import {
   Flame,
   Castle,
@@ -690,7 +691,7 @@ export default function Home() {
       </Dialog>
       <Dialog open={settings} onOpenChange={setSettings}>
         <DialogContent className="life-dialog">
-          <DialogTitle>领主的手记</DialogTitle>
+          <DialogTitle>领主的手记 · V{GAME_VERSION}</DialogTitle>
           <DialogDescription>
             自动保存于当前浏览器。导出手记可备份或带到免安装版继续游玩。
           </DialogDescription>

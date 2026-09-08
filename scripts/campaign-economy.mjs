@@ -455,6 +455,8 @@ function prepareRoute(r,route){
 }
 function fightGuardian(r){
   stopOrder();rest();
+  // Guardians need the same elemental preparation as bosses; pay its quoted cost below.
+  act(x=>G.setPreparation(x,{element:G.enemyDefinition(x,r,'guardian').element}),'combat:guardian protection');
   let tries=0;
   while(G.guardianReady(s,r)){
     ensure(G.battlePreparationCost(s),'guardian preparation');

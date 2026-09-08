@@ -343,14 +343,15 @@ test('reserve edits leave every subsequent recommended combat command and round 
   const { s, reserve, idle } = fixture('battle');
   let baseline = s,
     adjusted = adjustments(s, reserve, idle),
-    rounds = 0;
-  while (baseline.battle && rounds < 60) {
+    actions = 0;
+  // A round contains up to four hero actions; compare through the combat turn limit.
+  while (baseline.battle && actions < 260) {
     assert.deepEqual(adjusted.battle, baseline.battle);
     const command = G.recommendedCommand(baseline);
     assert.equal(
       G.recommendedCommand(adjusted),
       command,
-      `recommendation at round ${rounds + 1}`,
+      `recommendation at action ${actions + 1}`,
     );
     assert.equal(
       G.commandReason(adjusted, command),
@@ -358,11 +359,11 @@ test('reserve edits leave every subsequent recommended combat command and round 
     );
     baseline = G.combat(baseline, command);
     adjusted = G.combat(adjusted, command);
-    rounds++;
+    actions++;
     assert.deepEqual(
       adjusted.battle,
       baseline.battle,
-      `battle after round ${rounds}`,
+      `battle after action ${actions}`,
     );
     assert.deepEqual(adjusted.party, baseline.party);
     assert.deepEqual(
@@ -370,7 +371,7 @@ test('reserve edits leave every subsequent recommended combat command and round 
       baseline.party.map((id) => hero(baseline, id)),
     );
   }
-  assert.ok(rounds > 1, 'comparison must exercise multiple rounds');
+  assert.ok(actions > 4, 'comparison must exercise multiple rounds');
   assert.equal(
     baseline.battle,
     null,

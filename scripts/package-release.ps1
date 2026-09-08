@@ -24,10 +24,10 @@ Copy-Item -LiteralPath (Join-Path $projectDir 'play.html') -Destination (Join-Pa
 Copy-Item -LiteralPath (Join-Path $projectDir 'LICENSE') -Destination (Join-Path $stageDir 'LICENSE.txt') -Force
 $cmd = '@echo off' + [Environment]::NewLine + 'start "" "%~dp0ember-realm\play.html"' + [Environment]::NewLine + 'exit /b'
 [System.IO.File]::WriteAllText((Join-Path $stageDir '启动余烬之境.cmd'),$cmd,[Text.Encoding]::ASCII)
-$guide = '余烬之境 V' + $version + [Environment]::NewLine + '完整解压后双击启动程序，或打开 ember-realm/play.html。无需联网。' + [Environment]::NewLine + '更新前关闭旧页面，建议先在设置中导出手记备份。'
+$guide = '余烬之境 V' + $version + [Environment]::NewLine + '完整解压后双击启动程序，或打开 ember-realm/play.html。无需联网。' + [Environment]::NewLine + '更新：在旧版设置中导出手记，关闭旧页面，启动新版后导入手记。更换浏览器或目录也请迁移手记。'
 [System.IO.File]::WriteAllText((Join-Path $stageDir '游戏说明.txt'),$guide,[Text.UTF8Encoding]::new($true))
 $entries = @('启动余烬之境.exe','启动余烬之境.cmd','游戏说明.txt','LICENSE.txt','ember-realm/play.html')
-$archivePath = Join-Path $releaseDir ('ember-realm-V' + $version + '-windows-portable.zip')
+$archivePath = Join-Path $releaseDir 'ember-realm-windows-portable.zip'
 $archiveStream = [System.IO.File]::Open($archivePath,[System.IO.FileMode]::Create)
 $archive = [System.IO.Compression.ZipArchive]::new($archiveStream,[System.IO.Compression.ZipArchiveMode]::Create)
 try {

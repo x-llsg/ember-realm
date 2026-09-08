@@ -108,9 +108,18 @@
   gap: 3px !important;
   padding: 6px 8px !important;
 }
-.skill-tree-dialog .skill-tree-node > :is(span,p) { grid-column:1 / -1; }
-.skill-tree-dialog .skill-tree-node small { align-self:center; font-size:11px; }
-.skill-tree-dialog .skill-tree-node button { width:auto; padding:3px 5px; font-size:11px; }
+.skill-tree-dialog .skill-tree-node > :is(span, p) {
+  grid-column: 1 / -1;
+}
+.skill-tree-dialog .skill-tree-node small {
+  align-self: center;
+  font-size: 11px;
+}
+.skill-tree-dialog .skill-tree-node button {
+  width: auto;
+  padding: 3px 5px;
+  font-size: 11px;
+}
 .skill-tree-dialog .skill-tree-node > .realm-hint-trigger {
   font-size: 13px;
 }
@@ -197,6 +206,31 @@
   font-size: 12px;
   letter-spacing: 1px;
   color: inherit;
+}
+.v9-ui .forge-slot-filter {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 3px;
+  flex-shrink: 0;
+}
+.v9-ui .forge-slot-filter button {
+  min-height: 28px;
+  padding: 3px 5px;
+  border: 1px solid #493d2c;
+  border-radius: 3px;
+  background: #211e18;
+  color: #b7ad98;
+  font-size: 12px;
+  cursor: pointer;
+}
+.v9-ui .forge-slot-filter button:is(:hover, [aria-pressed='true']) {
+  border-color: #a67c43;
+  color: #f0c58b;
+  background: #392b1b;
+}
+.v9-ui .forge-slot-filter button:focus-visible {
+  outline: 2px solid #efb36b;
+  outline-offset: 1px;
 }
 .v9-ui .building-upgrades {
   display: flex;

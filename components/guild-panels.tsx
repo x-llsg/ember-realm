@@ -220,6 +220,10 @@ export function GuildTeam({ s, act, go, focus }: Props) {
     itemLocked = !!item && G.gearAway(s, item.id),
     recipes = G.RECIPES.filter((r) => G.recipeDiscovered(s, r.id)),
     chosen = recipes.find((r) => r.id === recipe) || recipes[0],
+    forgeSlots = G.GEAR_SLOTS.filter((slot) =>
+      recipes.some((r) => r.slot === slot),
+    ),
+    slotRecipes = recipes.filter((r) => r.slot === chosen?.slot),
     gearList = s.guild.inventory
       .filter(
         (g) =>
@@ -580,11 +584,29 @@ export function GuildTeam({ s, act, go, focus }: Props) {
                 </div>
                 {chosen ? (
                   <>
+                    <div
+                      className="forge-slot-filter"
+                      role="group"
+                      aria-label="按装备部位筛选锻造配方"
+                    >
+                      {forgeSlots.map((slot) => (
+                        <button
+                          key={slot}
+                          type="button"
+                          aria-pressed={chosen.slot === slot}
+                          onClick={() =>
+                            setRecipe(recipes.find((r) => r.slot === slot)!.id)
+                          }
+                        >
+                          {G.SLOT_NAMES[slot]}
+                        </button>
+                      ))}
+                    </div>
                     <Pick
-                      label="装备配方"
+                      label={G.SLOT_NAMES[chosen.slot] + '配方'}
                       value={chosen.id}
                       onChange={setRecipe}
-                      options={recipes.map((r) => ({
+                      options={slotRecipes.map((r) => ({
                         value: r.id,
                         label: r.name,
                       }))}
