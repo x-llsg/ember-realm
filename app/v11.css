@@ -1,0 +1,757 @@
+/* Personal-turn battle layout. The engine owns turns, cooldowns and automatic stepping. */
+.life-main:has(.battle-desk) > .life-objective,
+.life-main:has(.battle-desk) > .life-activity {
+  display: none;
+}
+.v9-ui .battle-desk {
+  --battle-ink: #eee7dc;
+  --battle-muted: #c3b8a9;
+  --battle-line: #4d4134;
+  display: grid;
+  grid-template-rows: 34px minmax(0, 1fr) 40px;
+  gap: 8px;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  max-height: 650px;
+  padding: 8px;
+  overflow: hidden;
+  color: var(--battle-ink);
+  background: #191715;
+  border: 1px solid var(--battle-line);
+  border-radius: 6px;
+  font-size: 14px;
+  line-height: 1.35;
+}
+.v9-ui .battle-desk *,
+.battle-history-dialog * {
+  box-sizing: border-box;
+}
+.v9-ui .battle-heading,
+.v9-ui .battle-heading > div,
+.v9-ui .battle-enemy-line,
+.v9-ui .battle-intent,
+.v9-ui .battle-command-heading,
+.v9-ui .battle-controls,
+.v9-ui .battle-history-heading {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 8px;
+}
+.v9-ui .battle-heading,
+.v9-ui .battle-enemy-line,
+.v9-ui .battle-history-heading {
+  justify-content: space-between;
+}
+.v9-ui .battle-heading {
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--battle-line);
+}
+.v9-ui .battle-heading strong {
+  font-size: 16px;
+}
+.v9-ui .battle-heading > span {
+  flex-shrink: 0;
+}
+.v9-ui .battle-location {
+  color: var(--battle-muted);
+}
+.v9-ui .battle-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 12px;
+  min-height: 0;
+}
+.v9-ui .battle-stage {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 8px;
+  min-width: 0;
+  min-height: 0;
+}
+.v9-ui .battle-stage > * {
+  flex-shrink: 0;
+}
+.v9-ui .battle-enemy {
+  display: grid;
+  gap: 7px;
+  padding: 8px 10px;
+  border: 1px solid #6b4336;
+  background: #281e19;
+  border-radius: 4px;
+}
+.v9-ui .battle-enemy-line > strong {
+  font-size: 17px;
+}
+.v9-ui .battle-hp-track {
+  display: block;
+  height: 5px;
+  overflow: hidden;
+  background: #39342c;
+  border-radius: 3px;
+}
+.v9-ui .battle-hp-track > span {
+  display: block;
+  height: 100%;
+  background: #a69a66;
+  border-radius: inherit;
+  transition: width 160ms ease;
+}
+.v9-ui progress.battle-hp-track.enemy {
+  appearance: none;
+  width: 100%;
+  border: 0;
+  color: #c67555;
+}
+.v9-ui progress.battle-hp-track.enemy::-webkit-progress-bar {
+  background: #39342c;
+  border-radius: 3px;
+}
+.v9-ui progress.battle-hp-track.enemy::-webkit-progress-value {
+  background: #c67555;
+  border-radius: 3px;
+}
+.v9-ui progress.battle-hp-track.enemy::-moz-progress-bar {
+  background: #c67555;
+  border-radius: 3px;
+}
+.v9-ui .battle-intent {
+  min-height: 32px;
+  padding: 4px 8px;
+  border-left: 2px solid #b48a5e;
+  background: #262018;
+}
+.v9-ui .battle-intent > span:last-child {
+  margin-left: auto;
+  color: var(--battle-muted);
+}
+.v9-ui .battle-intent.dangerous {
+  border-left-color: #efad79;
+  background: #34251c;
+}
+.v9-ui .battle-units {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 6px;
+}
+.v9-ui .battle-unit {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 5px;
+  min-width: 0;
+  min-height: 112px;
+  margin: 0;
+  padding: 7px;
+  color: var(--battle-ink);
+  text-align: left;
+  font: inherit;
+  border: 1px solid #4a4136;
+  border-radius: 4px;
+  background: #211e1a;
+  box-shadow: none;
+}
+.v9-ui .battle-unit:hover {
+  border-color: #a17e56;
+  background: #28221c;
+}
+.v9-ui .battle-unit.selected {
+  border-color: #d5ad72;
+  box-shadow: inset 0 0 0 1px #d5ad7266;
+  background: #32271c;
+}
+.v9-ui .battle-unit.acted {
+  background: #1c1b18;
+}
+.v9-ui .battle-unit.down {
+  background: #22201f;
+  color: #b7afa6;
+}
+.v9-ui .battle-unit.targeted .battle-unit-name strong::before {
+  content: '◆ ';
+  color: #e49b77;
+  font-size: 10px;
+}
+.v9-ui .battle-unit-name {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1px 5px;
+  min-width: 0;
+}
+.v9-ui .battle-unit-name strong {
+  font-size: 14px;
+  line-height: 1.3;
+}
+.v9-ui .battle-unit-name > small {
+  font-size: 12px;
+  color: var(--battle-muted);
+}
+.v9-ui .battle-unit-health {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.v9-ui .battle-unit-health > small {
+  font-size: 12px;
+  color: var(--battle-muted);
+}
+.v9-ui .battle-unit > .battle-hp-track {
+  width: 100%;
+}
+.v9-ui .battle-unit-cooldowns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 6px;
+  min-width: 0;
+}
+.v9-ui .battle-unit-cooldowns > .realm-hint-trigger {
+  display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
+  border-bottom: 1px dotted #71614e;
+}
+.v9-ui .battle-unit-cooldowns > .realm-hint-trigger > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+  font-size: 12px;
+}
+.v9-ui .battle-cd-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.v9-ui .battle-unit-cooldowns b {
+  flex-shrink: 0;
+  color: #dfc28e;
+  font-size: 12px;
+}
+.v9-ui .battle-unit-cooldowns .cooling b {
+  color: #c1b6a6;
+}
+.v9-ui .battle-unit-status {
+  font-size: 12px;
+  line-height: 1.25;
+  color: var(--battle-muted);
+}
+.v9-ui .battle-command-heading {
+  flex-wrap: wrap;
+  min-height: 34px;
+  padding-top: 3px;
+  border-top: 1px solid var(--battle-line);
+}
+.v9-ui .battle-command-heading > strong {
+  color: #e5bf84;
+}
+.v9-ui .battle-command-heading > span {
+  white-space: nowrap;
+  color: var(--battle-muted);
+}
+.v9-ui .battle-command-heading b {
+  color: var(--battle-ink);
+  font-weight: 500;
+}
+.v9-ui .battle-heal-target {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+  min-width: 0;
+}
+.v9-ui .battle-heal-target > span {
+  white-space: nowrap;
+  color: var(--battle-muted);
+}
+.v9-ui .battle-heal-target > select {
+  width: 150px;
+  min-width: 0;
+  height: 30px;
+  border: 1px solid #65523b;
+  border-radius: 3px;
+  padding: 2px 4px;
+  background: #211d18;
+  color: var(--battle-ink);
+  font: inherit;
+}
+.v9-ui .battle-actions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  align-items: stretch;
+}
+.v9-ui .battle-action-cell {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 4px;
+  padding: 5px 6px;
+  border: 1px solid #51422f;
+  border-radius: 4px;
+  background: #242019;
+}
+.v9-ui .battle-action-cell.skill {
+  grid-column: span 2;
+}
+.v9-ui .battle-action-cell.skill:last-child:nth-child(5) {
+  grid-column: 1 / -1;
+}
+.v9-ui .battle-action-cell > .realm-hint-trigger {
+  align-self: flex-start;
+  max-width: 100%;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.v9-ui .battle-action-cell > button {
+  width: 100%;
+  min-height: 27px;
+  margin: 0;
+  padding: 3px 4px;
+  border: 1px solid #927047;
+  border-radius: 3px;
+  background: #40301f;
+  color: #f4e6cf;
+  font: inherit;
+  line-height: 1.2;
+  white-space: normal;
+}
+.v9-ui .battle-action-cell > button:hover:not(:disabled) {
+  background: #624627;
+}
+.v9-ui .battle-action-cell > button:disabled {
+  opacity: 1;
+  background: #29241e;
+  border-color: #51483c;
+  color: #c2b7a5;
+  cursor: not-allowed;
+}
+.v9-ui .battle-action-note {
+  margin: 0;
+  color: var(--battle-muted);
+  font-size: 12px;
+}
+.v9-ui .battle-history {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-left: 1px solid var(--battle-line);
+  padding-left: 12px;
+}
+.v9-ui .battle-history-heading {
+  flex: 0 0 30px;
+}
+.v9-ui .battle-history-heading > span {
+  color: var(--battle-muted);
+  font-size: 12px;
+}
+.battle-history-list {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.battle-history-list > li {
+  padding: 7px 0;
+  border-bottom: 1px solid #443b30;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #d7cfc1;
+  overflow-wrap: anywhere;
+}
+.battle-history-list > li:first-child {
+  color: #f0d7b0;
+}
+.v9-ui .battle-controls {
+  padding-top: 5px;
+  border-top: 1px solid var(--battle-line);
+}
+.v9-ui .battle-controls > button {
+  min-height: 32px;
+  padding: 4px 12px;
+  margin: 0;
+  border: 1px solid #705639;
+  border-radius: 4px;
+  background: #2a231b;
+  color: var(--battle-ink);
+  font: inherit;
+  white-space: nowrap;
+}
+.v9-ui .battle-controls > button:hover {
+  background: #3c2e20;
+  border-color: #ba935f;
+}
+.v9-ui .battle-controls > .battle-auto.enabled {
+  color: #f1d2a2;
+  border-color: #d5a96a;
+  background: #49341e;
+}
+.v9-ui .battle-controls > .battle-retreat {
+  margin-left: auto;
+  color: #d4b6a5;
+}
+.v9-ui .battle-controls > .battle-history-trigger {
+  display: none;
+}
+.battle-history-dialog {
+  width: min(620px, calc(100vw - 24px)) !important;
+  max-width: none !important;
+  max-height: min(680px, calc(100dvh - 24px));
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 10px;
+  padding: 16px;
+  background: #1e1b17;
+  color: #eee7dc;
+}
+.battle-history-dialog .battle-history-list {
+  max-height: calc(100dvh - 190px);
+}
+.v9-ui .battle-desk button:focus-visible,
+.v9-ui .battle-desk select:focus-visible {
+  outline: 2px solid #e5bb7b;
+  outline-offset: 2px;
+}
+@media (max-width: 1000px) {
+  .v9-ui .battle-content {
+    grid-template-columns: minmax(0, 1fr) 220px;
+    gap: 8px;
+  }
+  .v9-ui .battle-command-heading {
+    gap: 4px 8px;
+  }
+  .v9-ui .battle-heal-target {
+    margin-left: 0;
+  }
+  .v9-ui .battle-unit {
+    padding: 5px;
+  }
+}
+@media (max-width: 700px) {
+  .v9-ui .battle-desk {
+    padding: 5px;
+    grid-template-rows: 27px minmax(0, 1fr) 36px;
+    gap: 4px;
+    border-radius: 3px;
+  }
+  .v9-ui .battle-heading {
+    padding-bottom: 2px;
+  }
+  .v9-ui .battle-heading > div {
+    gap: 6px;
+  }
+  .v9-ui .battle-heading strong {
+    font-size: 14px;
+  }
+  .v9-ui .battle-location {
+    max-width: 88px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .v9-ui .battle-content {
+    display: block;
+  }
+  .v9-ui .battle-stage {
+    gap: 4px;
+  }
+  .v9-ui .battle-enemy {
+    padding: 4px 6px;
+    gap: 4px;
+  }
+  .v9-ui .battle-enemy-line > strong {
+    font-size: 14px;
+  }
+  .v9-ui .battle-intent {
+    min-height: 27px;
+    padding: 3px 5px;
+    gap: 3px;
+  }
+  .v9-ui .battle-intent > span:last-child {
+    font-size: 12px;
+  }
+  .v9-ui .battle-units {
+    gap: 3px;
+  }
+  .v9-ui .battle-unit {
+    min-height: 103px;
+    padding: 4px 3px;
+    gap: 3px;
+  }
+  .v9-ui .battle-unit-name {
+    flex-direction: column;
+    gap: 0;
+  }
+  .v9-ui .battle-unit-name > small {
+    line-height: 1.2;
+  }
+  .v9-ui .battle-unit-health {
+    font-size: 14px;
+  }
+  .v9-ui .battle-unit-health > small {
+    font-size: 11px;
+  }
+  .v9-ui .battle-unit-cooldowns {
+    gap: 1px 4px;
+  }
+  .v9-ui .battle-unit-cooldowns > .realm-hint-trigger {
+    width: 100%;
+  }
+  .v9-ui .battle-unit-cooldowns > .realm-hint-trigger > span {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+  }
+  .v9-ui .battle-unit-cooldowns .battle-cd-name {
+    font-size: 11px;
+  }
+  /* The same status/stat explanation remains on each visible name. */
+  .v9-ui .battle-unit-status {
+    display: none;
+  }
+  .v9-ui .battle-command-heading {
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr);
+    gap: 3px 7px;
+    min-height: 0;
+    padding-top: 3px;
+  }
+  .v9-ui .battle-command-heading > strong {
+    display: none;
+  }
+  .v9-ui .battle-heal-target {
+    margin-left: 0;
+    gap: 3px;
+  }
+  .v9-ui .battle-heal-target > span {
+    font-size: 12px;
+  }
+  .v9-ui .battle-heal-target > select {
+    flex: 1;
+    width: auto;
+    height: 27px;
+  }
+  .v9-ui .battle-actions {
+    gap: 3px;
+  }
+  .v9-ui .battle-action-cell {
+    padding: 3px;
+    gap: 2px;
+  }
+  .v9-ui .battle-action-cell > .realm-hint-trigger {
+    font-size: 14px;
+    line-height: 1.2;
+  }
+  .v9-ui .battle-action-cell > button {
+    min-height: 25px;
+    padding: 3px 1px;
+    font-size: 12px;
+  }
+  .v9-ui .battle-action-note {
+    display: none;
+  }
+  .v9-ui .battle-history {
+    display: none;
+  }
+  .v9-ui .battle-controls {
+    gap: 4px;
+    padding-top: 3px;
+  }
+  .v9-ui .battle-controls > button {
+    min-height: 30px;
+    padding: 4px 8px;
+  }
+  .v9-ui .battle-controls > .battle-history-trigger {
+    display: block;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .v9-ui .battle-hp-track > span {
+    transition: none;
+  }
+}
+.skill-tree-open {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 8px;
+  border: 1px solid #645236;
+  background: #302719;
+  color: #e8c38a;
+  border-radius: 4px;
+}
+.skill-tree-open span {
+  font-size: 12px;
+  color: #bdb097;
+}
+.skill-tree-dialog {
+  max-width: 760px !important;
+}
+.skill-tree-root {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid #80613a;
+  background: #30271c;
+}
+.skill-tree-root strong {
+  margin-left: auto;
+  color: #e8be78;
+}
+.skill-tree-root span,
+.skill-tree-footer span {
+  font-size: 13px;
+  color: #b6ad9a;
+}
+.skill-tree-branches {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.skill-tree-branches h3 {
+  font-size: 15px;
+  color: #c9af81;
+  margin: 10px 0;
+}
+.skill-tree-node {
+  position: relative;
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 12px;
+  background: #211f18;
+  border: 1px solid #4c4634;
+  border-radius: 4px;
+}
+.skill-tree-node + .skill-tree-node:before {
+  content: '';
+  position: absolute;
+  top: -13px;
+  left: 50%;
+  height: 12px;
+  border-left: 1px solid #947340;
+}
+.skill-tree-node.learned {
+  border-color: #948153;
+}
+.skill-tree-node small {
+  font-size: 12px;
+  color: #b0a68e;
+}
+.skill-tree-node button,
+.skill-tree-footer button {
+  padding: 6px 10px;
+  border: 1px solid #755b36;
+  background: #30271c;
+  color: #e8c38a;
+}
+.skill-tree-node button:disabled {
+  color: #aaa08c;
+  border-color: #474234;
+}
+.skill-tree-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+.guardian-preview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border: 1px solid #4b4231;
+  border-radius: 4px;
+}
+.guardian-preview.ready {
+  border-color: #c2924c;
+  background: #30281c;
+}
+.guardian-preview > div {
+  flex: 1;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.guardian-preview small {
+  font-size: 12px;
+  color: #b8ad92;
+}
+.guardian-preview button {
+  font-size: 13px;
+  padding: 6px 12px;
+}
+.guardian-auto {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #d2bc97;
+}
+.guardian-auto input {
+  accent-color: #c49751;
+}
+.guardian-auto .realm-hint-trigger {
+  margin-left: auto;
+}
+.explore-center:has(.guardian-preview) {
+  gap: 8px;
+}
+.explore-center:has(.guardian-preview) .mission-summary {
+  padding: 6px 0;
+}
+.explore-center:has(.guardian-preview) .explore-reward {
+  margin: 4px 0;
+}
+@media (max-width: 700px) {
+  .guardian-preview {
+    padding: 5px;
+    gap: 5px;
+  }
+  .guardian-preview > div {
+    display: grid;
+    gap: 2px;
+  }
+  .guardian-preview small {
+    font-size: 12px;
+  }
+  .guardian-auto {
+    font-size: 12px;
+  }
+  .skill-tree-branches {
+    gap: 10px;
+  }
+  .skill-tree-node {
+    padding: 8px;
+  }
+  .skill-tree-root {
+    flex-wrap: wrap;
+  }
+  .skill-tree-dialog {
+    padding: 16px;
+  }
+  .skill-tree-footer {
+    align-items: start;
+  }
+  .skill-tree-footer span {
+    flex: 1;
+  }
+}
+
+.battle-report-history {
+  max-height: 60dvh;
+  overflow-y: auto;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.battle-report-history p {
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+}

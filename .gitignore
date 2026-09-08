@@ -1,0 +1,61 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/.vinext/
+/out/
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# local environment
+.env*
+
+# deployment and generated files
+.vercel
+next-env.d.ts
+/dist/
+/.wrangler/
+/outputs/
+/work/
+/.portable-build/
+/play.html
+/*.tsbuildinfo
+
+/.test-results/
+
+# Private project notes and local publication settings must stay outside GitHub.
+/.openai/
+/private/
+/design-private/
+/内部设计文档/
+/BALANCE.md
+/BUILDCRAFT.md
+/CIVIC.md
+/COMBAT.md
+/COMBAT_CALIBRATION.md
+/DESIGN_RESEARCH.md
+/ECONOMY.md
+/VERIFICATION.md
+/release/
+*.zip
+
+/test-results.log

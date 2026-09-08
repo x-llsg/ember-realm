@@ -1,0 +1,376 @@
+/* Append after v9.css. 1280×720 target: six rows ×64px + heading ~28px = ~420px.
+   Completed rows collapse to34px. A small screen scrolls this list, never the page. */
+.v9-ui .engineering-board {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  padding: 6px 8px;
+  background: #1d1b18;
+  border-top: 1px solid #705236;
+  color: #eee8dc;
+  overflow: hidden;
+}
+.v9-ui .engineering-heading {
+  display: flex;
+  align-items: baseline;
+  flex: none;
+  min-height: 24px;
+  gap: 8px 14px;
+}
+.v9-ui .engineering-heading > strong {
+  color: #f2e4cb;
+  font-size: 16px;
+  letter-spacing: 0.025em;
+}
+.v9-ui .engineering-heading > span {
+  color: #c0b5a5;
+  font-size: 13px;
+}
+.v9-ui .engineering-heading > .realm-hint-trigger {
+  margin-left: auto;
+  color: #dcb789;
+  font-size: 13px;
+}
+.v9-ui .engineering-list {
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #74614a transparent;
+}
+.v9-ui .engineering-row {
+  display: grid;
+  grid-template-columns: 148px minmax(340px, 1.6fr) repeat(2, minmax(0, 1fr));
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 64px;
+  padding: 3px 0;
+  border-bottom: 1px solid #443827;
+  font-size: 14px;
+  line-height: 1.25;
+}
+.v9-ui .engineering-row:last-child {
+  border-bottom: 0;
+}
+.v9-ui .engineering-row.focused {
+  background: #292218;
+  box-shadow: inset 2px 0 #b88b58;
+}
+.v9-ui .engineering-identity {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+  padding-left: 5px;
+}
+.v9-ui .engineering-project-name {
+  color: #f0dfc2;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.v9-ui .engineering-meta {
+  color: #bfb19b;
+  font-size: 12px;
+  line-height: 1.25;
+}
+.v9-ui .engineering-gate {
+  color: #e3b28a;
+  font-size: 13px;
+  line-height: 1.25;
+}
+.v9-ui .engineering-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #e1b777;
+  font-size: 13px;
+  line-height: 1.3;
+  text-align: left;
+}
+.v9-ui .engineering-bill {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  min-width: 0;
+}
+.v9-ui .engineering-price {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: nowrap;
+  gap: 3px;
+  color: #cfbfa6;
+  white-space: nowrap;
+  font-size: 14px;
+  line-height: 1.2;
+}
+.v9-ui .engineering-price > .realm-hint-trigger {
+  font-size: 14px;
+  font-weight: 400;
+}
+.v9-ui .engineering-price b {
+  font-size: 14px;
+  font-weight: 500;
+  color: #eee0c8;
+}
+.v9-ui .engineering-price em {
+  font-size: 14px;
+  font-style: normal;
+  color: #efb0a0;
+}
+.v9-ui .engineering-price .engineering-cap {
+  color: #f1c58b;
+  font-size: 12px;
+}
+.v9-ui .engineering-choice {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  min-width: 0;
+  min-height: 56px;
+  padding: 4px 7px;
+  gap: 3px;
+  border: 1px solid #775637;
+  border-radius: 3px;
+  background: #33271b;
+  color: #f0d2a7;
+  text-align: left;
+  font-size: 14px;
+  line-height: 1.25;
+}
+.v9-ui .engineering-choice > strong {
+  color: #f4d3a5;
+  font-size: 14px;
+  line-height: 1.25;
+  font-weight: 600;
+}
+.v9-ui .engineering-choice > span {
+  color: #d9c7ab;
+  font-size: 14px;
+  line-height: 1.25;
+}
+.v9-ui .engineering-choice:hover:not(:disabled) {
+  background: #49331f;
+  border-color: #c0935b;
+}
+.v9-ui .engineering-choice:disabled {
+  opacity: 1;
+  background: #27231d;
+  border-color: #494033;
+  color: #bdaf98;
+}
+.v9-ui .engineering-choice:disabled > strong {
+  color: #d0bea3;
+}
+.v9-ui .engineering-choice:disabled > span {
+  color: #bfb29e;
+}
+.v9-ui .engineering-row.completed {
+  display: block;
+  min-height: 34px;
+  padding: 0;
+}
+.v9-ui .engineering-completed-summary {
+  display: grid;
+  grid-template-columns: 148px minmax(0, 1fr) auto;
+  align-items: center;
+  min-height: 34px;
+  gap: 8px;
+  padding: 5px;
+  cursor: pointer;
+  list-style: none;
+}
+.v9-ui .engineering-completed-summary::-webkit-details-marker {
+  display: none;
+}
+.v9-ui .engineering-saved {
+  color: #c4c69f;
+  font-size: 14px;
+}
+.v9-ui .engineering-expand {
+  color: #c3ad8a;
+  font-size: 13px;
+}
+.v9-ui .engineering-expand::after {
+  content: ' ＋';
+}
+.v9-ui .engineering-row[open] .engineering-expand::after {
+  content: ' −';
+}
+.v9-ui .engineering-completed-detail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 5px 12px;
+  padding: 4px 8px 9px 161px;
+}
+.v9-ui .engineering-completed-detail strong {
+  color: #e5d1af;
+  font-size: 14px;
+  font-weight: 500;
+}
+.v9-ui .engineering-completed-detail p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #c0b5a5;
+}
+.v9-ui .engineering-completed-detail small {
+  color: #b5aa98;
+  font-size: 12px;
+}
+.v9-ui .engineering-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 18px 5px;
+  font-size: 14px;
+}
+.engineering-confirm .engineering-confirm-effect {
+  color: #f2c98f;
+  font-size: 16px;
+  line-height: 1.5;
+  padding: 9px 0;
+  border-block: 1px solid #60482e;
+}
+.engineering-confirm .life-buy {
+  margin: 6px 0 0;
+  padding: 0;
+  gap: 8px;
+}
+.engineering-confirm .life-buy :is(.life-cost, .material-price, .life-hint) {
+  font-size: 14px !important;
+  line-height: 1.45 !important;
+}
+.engineering-confirm .life-buy .primary-button {
+  min-height: 40px;
+}
+@media (min-width: 1001px) and (max-height: 740px) {
+  .v9-ui .engineering-board {
+    padding-block: 4px;
+    gap: 4px;
+  }
+  .v9-ui .engineering-heading {
+    min-height: 22px;
+  }
+  .v9-ui .engineering-row {
+    min-height: 62px;
+    gap: 6px;
+    padding-block: 2px;
+  }
+  .v9-ui .engineering-choice {
+    padding: 3px 6px;
+    min-height: 54px;
+  }
+}
+@media (min-width: 701px) and (max-width: 1100px) {
+  .v9-ui .engineering-row {
+    grid-template-columns: 138px minmax(250px, 1.4fr) repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .v9-ui .engineering-price {
+    font-size: 14px;
+    gap: 2px;
+  }
+}
+@media (max-width: 700px) {
+  .v9-ui .engineering-board {
+    padding: 4px 5px;
+  }
+  .v9-ui .engineering-heading {
+    flex-wrap: wrap;
+    gap: 3px 9px;
+  }
+  .v9-ui .engineering-heading > .realm-hint-trigger {
+    margin-left: 0;
+  }
+  .v9-ui .engineering-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    padding: 9px 0;
+  }
+  .v9-ui .engineering-identity {
+    grid-column: 1/-1;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: baseline;
+    padding-left: 0;
+    gap: 4px 8px;
+  }
+  .v9-ui .engineering-bill {
+    grid-column: 1/-1;
+    gap: 3px 9px;
+  }
+  .v9-ui .engineering-choice {
+    min-height: 62px;
+    padding: 6px;
+  }
+  .v9-ui .engineering-completed-summary {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px;
+    padding: 6px 0;
+  }
+  .v9-ui .engineering-completed-summary > .engineering-project-name {
+    grid-column: 1/-1;
+  }
+  .v9-ui .engineering-completed-detail {
+    padding: 3px 0 9px;
+  }
+  .engineering-confirm {
+    max-height: calc(100dvh - 24px);
+    overflow: auto;
+  }
+}
+.v9-ui .team-gear-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+}
+.v9-ui .team-gear-actions .life-text-button {
+  padding: 2px 0;
+  font-size: 14px;
+}
+.v9-ui .team-gear-actions .quick-unequip:disabled {
+  color: #9d9182;
+  cursor: not-allowed;
+}
+.v9-ui .hero-loadout {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.v9-ui .hero-loadout > .realm-hint-trigger {
+  flex: none;
+  font-size: 14px;
+}
+.v9-ui .hero-loadout .life-select {
+  min-width: 0;
+  flex: 1;
+  height: 30px;
+  min-height: 30px;
+  padding-inline: 6px;
+}
+.v9-ui .hero-loadout .life-select:disabled {
+  opacity: 0.65;
+}
+.v9-ui .team-detail > .hero-term-line {
+  max-width: 200px;
+}
+@media (max-width: 1000px) {
+  .v9-ui .team-detail > .hero-term-line {
+    max-width: none;
+  }
+}

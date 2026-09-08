@@ -1,0 +1,606 @@
+.guild-board {
+  gap: 9px;
+}
+.material-price { display:block; color:#d9c79a; font-size:12px; line-height:1.5; }
+.campaign-detail { display:flex; flex-direction:column; gap:9px; min-height:0; flex:1; }
+.campaign-card { border:1px solid #536249; border-radius:5px; background:#263021; padding:14px; display:flex; flex-direction:column; gap:12px; min-height:0; flex:1; }
+.campaign-card h2 { color:#eddbac; font-size:21px; }
+.campaign-card p { font-size:14px; line-height:1.6; }
+.campaign-card .life-buy { margin-top:auto; }
+.campaign-effects { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.campaign-effects span { font-size:12px; color:#b7c4aa; padding:10px; background:#1e281d; }
+.campaign-effects strong { display:block; font-size:20px; color:#ead8a6; }
+.campaign-stock { display:grid; grid-template-columns:repeat(9,1fr); gap:4px; }
+.campaign-stock span { padding:7px 5px; background:#253120; border:1px solid #4d6141; }
+.campaign-stock small { display:block; color:#b7caa5; font-size:11px; }
+.campaign-stock strong { color:#efdfb9; font-size:13px; }
+.campaign-stock i { color:#95a989; font-size:10px; font-style:normal; }
+.campaign-card progress { accent-color:#c9bd87; width:100%; height:6px; }
+.campaign-map { display:flex; flex-direction:column; gap:8px; flex:1; min-height:0; }
+.campaign-nodes { display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(2,minmax(0,1fr)); gap:10px; flex:1; min-height:0; }
+.campaign-node { display:flex; flex-direction:column; gap:7px; align-items:flex-start; text-align:left; background:#253020; border:1px solid #526147; border-radius:5px; padding:15px; }
+.campaign-node.selected { border-color:#d1bb83; background:#34402a; }
+.campaign-node strong { color:#eddbac; font-size:20px; }
+.campaign-node span,.campaign-node small { color:#bac8ae; font-size:12px; line-height:1.5; }
+@media(max-height:780px) { .campaign-card {gap:7px;padding:10px}.campaign-card p{font-size:12px}.campaign-node{padding:8px;gap:4px}.campaign-node strong{font-size:17px}.campaign-effects span{padding:5px}.campaign-stock span{padding:4px}.campaign-card h2{font-size:18px} }
+@media(max-width:700px) { .campaign-stock { grid-template-columns:repeat(3,1fr);gap:3px}.campaign-stock span{display:flex;align-items:center;justify-content:space-between;padding:3px 5px}.campaign-card{padding:9px;gap:6px}.campaign-card p{font-size:11px}.campaign-nodes{grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(3,minmax(0,1fr));gap:5px}.campaign-node{padding:6px;gap:3px}.campaign-node span,.campaign-node small{font-size:10px}.campaign-node strong{font-size:14px}.campaign-effects strong{font-size:16px}.campaign-effects span{font-size:10px} }
+.guild-pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+  gap: 9px;
+  overflow: hidden;
+}
+.guild-pane[hidden] {
+  display: none !important;
+}
+.guild-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  gap: 10px;
+  border: 1px solid #536249;
+  background: #263021;
+  border-radius: 4px;
+  padding: 13px;
+  overflow: hidden;
+}
+.guild-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+.guild-card h3 {
+  font-size: 19px;
+  font-weight: 500;
+  color: #ecdbac;
+}
+.guild-card p {
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+}
+.guild-meta {
+  font-size: 12px !important;
+  line-height: 1.55 !important;
+  color: #b5c3a6;
+}
+.guild-flaw {
+  font-size: 13px !important;
+  color: #cab39c;
+}
+.guild-person {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 12px;
+  align-items: baseline;
+}
+.guild-person strong {
+  font-size: 17px;
+  color: #ead9ac;
+  font-weight: 500;
+}
+.guild-person span {
+  font-size: 13px;
+  color: #b9caa5;
+}
+.guild-summary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 5px 12px;
+  flex: none;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #e0d6b3;
+  padding: 7px 10px;
+  border: 1px solid #4a583c;
+  background: #283320;
+}
+.guild-summary span {
+  font-size: 12px;
+  color: #b9caa7;
+}
+.guild-candidates {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  flex: 1;
+  min-height: 0;
+}
+.guild-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: minmax(0, 1fr);
+  gap: 9px;
+  flex: 1;
+  min-height: 0;
+}
+.guild-recruit-controls {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  flex: none;
+}
+.guild-recruit-controls .life-select {
+  flex: 1;
+  max-width: 240px;
+}
+.guild-recruit-controls > span {
+  font-size: 12px;
+  color: #b4c6a1;
+}
+.guild-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  align-items: center;
+  flex: none;
+}
+.guild-actions > button {
+  flex: 1;
+  font-size: 13px;
+  padding: 7px 9px;
+  min-height: 34px;
+  white-space: nowrap;
+}
+.guild-card .life-buy {
+  flex: none;
+  gap: 7px;
+}
+.guild-card .life-buy .primary-button {
+  font-size: 14px;
+  min-height: 35px;
+  padding: 8px;
+}
+.guild-card .life-buy .life-hint {
+  font-size: 12px;
+  line-height: 1.4;
+}
+.guild-training-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  flex: none;
+}
+.guild-training-actions .life-cost {
+  font-size: 12px;
+  min-height: 34px;
+}
+.guild-inventory-head {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  flex: none;
+}
+.guild-inventory-head > .life-select {
+  flex: 1;
+}
+.guild-inventory-head > span {
+  font-size: 12px;
+  color: #bac7ac;
+  white-space: nowrap;
+}
+.guild-grid .guild-card {
+  padding: 10px;
+  gap: 7px;
+}
+.guild-grid .guild-card strong {
+  font-size: 15px;
+  font-weight: 500;
+  color: #e1d6b4;
+}
+.rarity-2 {
+  border-color: #6d885d;
+}
+.rarity-3 {
+  border-color: #6f92a8;
+}
+.rarity-4 {
+  border-color: #aa86b7;
+}
+.guild-forge {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+}
+.guild-recipes {
+  display: grid;
+  grid-template-rows: repeat(10, minmax(0, 1fr));
+  gap: 4px;
+  min-height: 0;
+}
+.guild-recipes button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 7px;
+  font-size: 13px;
+  border: 1px solid #526342;
+  background: #23301d;
+  padding: 5px 8px;
+  text-align: left;
+  border-radius: 3px;
+}
+.guild-recipes small {
+  font-size: 11px;
+  color: #aabd99;
+  white-space: nowrap;
+}
+.guild-recipes button[aria-pressed='true'] {
+  border-color: #ceb986;
+  background: #41492d;
+  color: #f1deac;
+}
+.guild-frontier-path {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 5px;
+  flex: none;
+}
+.guild-frontier-path > div {
+  padding: 8px 4px;
+  border: 1px solid #4a573e;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: #94a585;
+}
+.guild-frontier-path b {
+  font-size: 16px;
+  font-weight: 400;
+}
+.guild-frontier-path span {
+  font-size: 12px;
+}
+.guild-frontier-path .current {
+  background: #3e452b;
+  border-color: #c7b376;
+  color: #ead9ab;
+}
+.guild-frontier-path .done {
+  background: #2a4028;
+  color: #b4cba0;
+}
+.guild-preparations {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  flex: none;
+}
+.guild-preparations .life-switch {
+  grid-column: 1/3;
+  justify-content: flex-start;
+  gap: 15px;
+  font-size: 14px;
+}
+.guild-forecast {
+  padding: 10px;
+  border: 1px solid #8e9160;
+  background: #303c26;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.guild-forecast small {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #b6c4a8;
+}
+.guild-pane > .guild-card {
+  flex: 1;
+}
+.life-pane > .guild-card {
+  height: 100%;
+}
+@media (max-width: 1100px) {
+  .guild-candidates {
+    gap: 7px;
+  }
+  .guild-candidates .guild-card {
+    padding: 10px;
+  }
+  .guild-recruit-controls {
+    flex-wrap: wrap;
+  }
+  .guild-person strong {
+    font-size: 16px;
+  }
+}
+@media (max-width: 700px) {
+  .guild-board {
+    gap: 6px;
+  }
+  .guild-candidates,
+  .guild-grid {
+    grid-template-columns: 1fr;
+  }
+  .guild-card {
+    padding: 9px;
+    gap: 7px;
+  }
+  .guild-card-body {
+    gap: 6px;
+  }
+  .guild-card h3 {
+    font-size: 16px;
+  }
+  .guild-card p {
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .guild-summary {
+    font-size: 12px;
+    padding: 5px 7px;
+  }
+  .guild-summary > span {
+    font-size: 12px;
+  }
+  .guild-meta {
+    font-size: 12px !important;
+  }
+  .guild-person strong {
+    font-size: 16px;
+  }
+  .guild-person span {
+    font-size: 12px;
+  }
+  .guild-recruit-controls {
+    gap: 6px;
+  }
+  .guild-recruit-controls .life-select {
+    max-width: none;
+    min-width: 120px;
+  }
+  .guild-recruit-controls > span {
+    display: none;
+  }
+  .guild-recruit-controls .econ-action {
+    font-size: 12px;
+    padding: 6px;
+  }
+  .guild-board > .guild-meta {
+    display: none;
+  }
+  .guild-training-actions {
+    grid-template-columns: 1fr;
+    gap: 7px;
+    max-height: 140px;
+    overflow: auto;
+  }
+  .guild-training-actions .life-buy {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+  }
+  .guild-training-actions .life-buy > .life-hint {
+    grid-column: 1/3;
+  }
+  .guild-training-actions .life-cost {
+    min-height: 0;
+  }
+  .guild-forge {
+    grid-template-columns: 115px minmax(0, 1fr);
+    gap: 6px;
+  }
+  .guild-recipes button {
+    font-size: 12px;
+    padding: 3px;
+    line-height: 1.35;
+  }
+  .guild-recipes small {
+    display: none;
+  }
+  .guild-forge .guild-card {
+    padding: 7px;
+  }
+  .guild-card .life-buy .primary-button {
+    font-size: 12px;
+  }
+  .guild-inventory-head {
+    gap: 5px;
+  }
+  .guild-inventory-head > span {
+    font-size: 11px;
+    white-space: normal;
+    max-width: 95px;
+  }
+  .guild-frontier-path > div {
+    padding: 4px 2px;
+  }
+  .guild-frontier-path span {
+    font-size: 11px;
+    line-height: 1.4;
+  }
+  .guild-actions {
+    gap: 5px;
+  }
+  .guild-actions > button {
+    font-size: 12px;
+    padding: 6px;
+    min-height: 31px;
+  }
+  .guild-preparations {
+    grid-template-columns: 1fr;
+  }
+  .guild-preparations .life-switch {
+    grid-column: 1;
+    font-size: 13px;
+  }
+  .guild-forecast {
+    padding: 7px;
+  }
+  .guild-pane {
+    gap: 6px;
+  }
+}
+@media (min-width: 701px) {
+  .guild-inventory-grid {
+    grid-template-columns: 1fr;
+  }
+  .guild-inventory-grid .guild-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 270px;
+    align-items: center;
+    padding: 7px 10px;
+    gap: 12px;
+  }
+  .guild-inventory-grid .guild-card-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3px 12px;
+    overflow: visible;
+    align-content: center;
+  }
+  .guild-inventory-grid .guild-card-body > strong {
+    grid-column: 1/3;
+  }
+  .guild-inventory-grid .guild-card-body > p:nth-child(2) {
+    display: none;
+  }
+  .guild-inventory-grid .guild-card-body > p {
+    font-size: 12px !important;
+    line-height: 1.45 !important;
+  }
+  .guild-inventory-grid .guild-actions {
+    flex-wrap: nowrap;
+  }
+  .guild-inventory-grid .guild-actions > button {
+    padding: 6px;
+    font-size: 12px;
+  }
+}
+@media (max-width: 700px) {
+  .guild-inventory-head {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+  }
+  .guild-inventory-head > span {
+    grid-column: 1/3;
+    max-width: none;
+  }
+  .guild-inventory-head .life-select {
+    min-width: 0;
+  }
+}
+@media (max-width: 700px) {
+  .guild-inventory-head {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 65px;
+  }
+  .guild-inventory-head > span {
+    grid-column: auto;
+    font-size: 10px;
+    line-height: 1.4;
+  }
+  .guild-inventory-grid .guild-card-body > p:nth-child(2) {
+    display: none;
+  }
+  .guild-inventory-grid .guild-card-body {
+    gap: 3px;
+  }
+  .guild-inventory-grid .guild-card-body > p {
+    line-height: 1.35 !important;
+    font-size: 11px !important;
+  }
+  .guild-inventory-grid .guild-card-body > strong {
+    font-size: 14px;
+  }
+  .guild-summary {
+    line-height: 1.4;
+    gap: 2px 8px;
+    padding: 4px 7px;
+  }
+}
+@media (max-width: 700px) {
+  .guild-inventory-grid .guild-card {
+    gap: 4px;
+    padding: 7px;
+  }
+}
+.guild-brief-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-content: start;
+}
+.guild-brief-column {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+.guild-battle-brief .guild-forecast {
+  flex: none;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px 12px;
+  padding: 7px 10px;
+}
+.guild-battle-brief .guild-forecast small {
+  grid-column: 1/3;
+  font-size: 11px;
+  line-height: 1.4;
+}
+.guild-battle-brief .guild-brief-column > p {
+  font-size: 13px;
+  line-height: 1.5;
+}
+.guild-battle-brief .life-text-button {
+  text-align: left;
+  padding: 0;
+  font-size: 12px;
+}
+@media (max-width: 700px) {
+  .guild-brief-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .guild-battle-brief .guild-forecast {
+    display: flex;
+    gap: 2px;
+  }
+  .guild-battle-brief .guild-forecast p {
+    font-size: 12px;
+  }
+  .guild-battle-brief .guild-forecast small {
+    font-size: 10px;
+  }
+}
+
+/* Forge decisions stay visible; optional rules open in a dialog. */
+.guild-forge-card { justify-content:center; gap:8px; }
+.guild-forge-heading { display:flex; gap:12px; align-items:center; justify-content:space-between; flex:none; }
+.guild-forge-heading .life-select { width:250px; max-width:62%; }
+.guild-forge-preview { display:flex; gap:14px; align-items:center; flex-wrap:wrap; }
+.guild-forge-card .guild-forge-bill p,.guild-forge-bill .material-price { font-size:12px; line-height:1.5; }
+.guild-forge-actions { display:flex; gap:8px; }
+.guild-forge-actions > button { flex:1; min-height:34px; padding:6px 8px; font-size:13px; }
+.guild-forge-footer { display:flex; gap:10px; justify-content:space-between; align-items:center; }
+.guild-forge-footer small { color:#b5c3a6; font-size:11px; }
+.guild-forge-footer .life-text-button { padding:0; font-size:12px; }
+@media(max-width:700px) {
+  .guild-forge-heading { flex-direction:column; align-items:stretch; gap:5px; }
+  .guild-forge-heading .life-select { width:100%; max-width:none; }
+  .guild-forge-preview { gap:4px; }
+  .guild-forge-actions { flex-direction:column; gap:4px; }
+  .guild-forge-footer { flex-direction:column; align-items:stretch; gap:4px; }
+  .guild-forge-card { gap:6px; }
+}
+@media(max-width:700px) and (max-height:740px) {
+  .guild-board:has(.guild-forge) .guild-summary { display:none; }
+  .guild-forge-card { justify-content:flex-start; gap:4px; }
+  .guild-forge-heading h3 { display:none; }
+  .guild-forge-heading .life-select { min-height:30px; }
+  .guild-forge-preview p,.guild-forge-card .guild-forge-bill p,.guild-forge-bill .material-price { font-size:11px; line-height:1.4; }
+  .guild-forge-footer small { display:none; }
+  .guild-forge-actions > button { min-height:30px; padding:4px; font-size:12px; }
+}

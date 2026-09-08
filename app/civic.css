@@ -1,0 +1,256 @@
+.v9-ui .potential-1 {
+  color: #e6e5e1 !important;
+}
+.v9-ui .rarity-1 {
+  color: #e6e5e1 !important;
+}
+.v9-ui .rarity-2 {
+  color: #86d19a !important;
+}
+.v9-ui .rarity-3 {
+  color: #79baff !important;
+}
+.v9-ui .rarity-4 {
+  color: #c79bff !important;
+}
+.v9-ui .rarity-5 {
+  color: #f2c662 !important;
+}
+.v9-ui .rarity-6 {
+  color: #ff7b78 !important;
+  text-shadow: 0 0 12px #e4545420;
+}
+.v9-ui .equipment-six-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+.v9-ui .equipment-six-grid .team-gear-slot {
+  margin: 0;
+  padding: 8px;
+  min-width: 0;
+  background: #27221b;
+  border: 1px solid #4b3d2c;
+  border-radius: 4px;
+}
+.v9-ui .equipment-six-grid .guild-meta {
+  font-size: 12px !important;
+  line-height: 1.45 !important;
+  min-height: 18px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.v9-ui .equipment-six-grid .gear-name {
+  display: block;
+  max-width: 100%;
+  font-size: 13px;
+  line-height: 1.5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.v9-ui .equipment-six-grid .team-gear-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+}
+.v9-ui .equipment-six-grid .life-text-button {
+  font-size: 12px;
+}
+.equipment-set-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 12px;
+  font-size: 12px;
+  color: #a99d88;
+}
+.equipment-set-summary .set-active {
+  color: #a8d5a0;
+}
+.skill-tree-dialog {
+  max-width: 1100px !important;
+  width: calc(100vw - 40px);
+  max-height: calc(100dvh - 36px);
+  overflow: auto;
+  gap: 9px !important;
+}
+.skill-tree-branches {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+.skill-tree-node {
+  padding: 8px 10px;
+  gap: 4px;
+  margin-bottom: 9px;
+}
+.skill-tree-node + .skill-tree-node:before {
+  height: 9px;
+  top: -10px;
+}
+.skill-node-effect {
+  font-size: 12px;
+  line-height: 1.4;
+  color: #c2b7a1;
+}
+.skill-tree-dialog .skill-node-effect {
+  font-size: 12px !important;
+  line-height: 1.4 !important;
+  min-height: 0;
+  max-height: 34px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.skill-tree-dialog .skill-tree-node {
+  grid-template-columns: 1fr auto;
+  gap: 3px !important;
+  padding: 6px 8px !important;
+}
+.skill-tree-dialog .skill-tree-node > :is(span,p) { grid-column:1 / -1; }
+.skill-tree-dialog .skill-tree-node small { align-self:center; font-size:11px; }
+.skill-tree-dialog .skill-tree-node button { width:auto; padding:3px 5px; font-size:11px; }
+.skill-tree-dialog .skill-tree-node > .realm-hint-trigger {
+  font-size: 13px;
+}
+.skill-tree-node button {
+  font-size: 12px;
+  padding: 4px 6px;
+}
+.boss-phase-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: #dfb680;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+.boss-phase-line span {
+  color: #b8aa92;
+}
+.boss-strategy {
+  padding: 8px 10px;
+  border-left: 2px solid #b18b52;
+  background: #2c251b;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #d6c7ae;
+}
+.boss-barrier {
+  color: #9bc9df;
+  font-size: 12px;
+  margin-top: 5px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.boss-barrier progress {
+  accent-color: #75b9d5;
+  height: 6px;
+  flex: 1;
+}
+.boss-dots {
+  font-size: 11px;
+  color: #a8c697;
+}
+.boss-loot-note {
+  color: #c5b394;
+  font-size: 12px;
+}
+@media (max-width: 850px) {
+  .v9-ui .equipment-six-grid {
+    gap: 4px;
+  }
+  .v9-ui .equipment-six-grid .team-gear-slot {
+    padding: 5px;
+  }
+}
+@media (max-width: 600px) {
+  .skill-tree-branches {
+    grid-template-columns: 1fr;
+  }
+  .skill-tree-dialog {
+    width: calc(100vw - 20px);
+  }
+}
+.v9-ui .potential-2 {
+  color: #86d19a !important;
+}
+.v9-ui .potential-3 {
+  color: #79baff !important;
+}
+.v9-ui .potential-4 {
+  color: #c79bff !important;
+}
+.v9-ui .potential-5 {
+  color: #f2c662 !important;
+}
+.v9-ui .potential-5 strong {
+  text-shadow: 0 0 12px #dba82a30;
+}
+.v9-ui [class*='potential-'] .realm-hint-trigger {
+  color: inherit;
+}
+.v9-ui .roster-name small {
+  display: block;
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: inherit;
+}
+.v9-ui .building-upgrades {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  align-items: center;
+}
+.v9-ui .building-upgrades .econ-action {
+  white-space: nowrap;
+  padding-inline: 9px;
+  min-width: 60px;
+}
+.v9-ui .dense-building-row {
+  grid-template-columns: minmax(190px, 1fr) minmax(180px, 1.3fr) 160px;
+}
+.v9-ui .dense-building-list {
+  grid-auto-rows: minmax(0, 1fr);
+}
+.v9-ui .dense-building-row {
+  min-height: 34px;
+  padding-block: 2px;
+}
+.v9-ui .building-upgrades .econ-action {
+  min-height: 28px;
+  height: 28px;
+}
+.v9-ui .civic-buff-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex-shrink: 0;
+  font-size: 13px;
+  color: #b8d3a3;
+}
+.v9-ui .civic-buff-strip .realm-hint-trigger {
+  padding: 3px 9px;
+  background: #22291e;
+  border: 1px solid #41523a;
+  border-radius: 3px;
+  color: inherit;
+}
+@media (max-width: 700px) {
+  .v9-ui .dense-building-row {
+    grid-template-columns: minmax(0, 1fr) 150px;
+  }
+  .v9-ui .dense-building-cost {
+    grid-column: 1/-1;
+    grid-row: 2;
+  }
+  .v9-ui .building-upgrades {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .v9-ui .civic-buff-strip {
+    gap: 3px;
+  }
+}

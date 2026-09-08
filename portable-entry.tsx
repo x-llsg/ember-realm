@@ -1,0 +1,15 @@
+import { createRoot } from 'react-dom/client';
+import Home from './app/page';
+import './app/globals.css';
+import './app/lifecycle.css';
+import './app/economy.css';
+import './app/guild.css';
+import './app/v7.css';
+import './app/v8.css';
+import './app/v9.css';
+import './app/v10.css';
+import './app/v11.css';
+import './app/incremental.css';
+import './app/civic.css';
+
+createRoot(document.getElementById('root')!).render(<Home />);

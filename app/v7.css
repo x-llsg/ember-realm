@@ -1,0 +1,226 @@
+/* Night palette and bounded action panels. Imported after the base component styles. */
+
+:root,.dark {
+  --background:#0c1018; --foreground:#edf0f4;
+  --primary:#efb071; --primary-foreground:#27180e;
+  --muted:#1b2432; --muted-foreground:#b0bbc9;
+  --popover:#141b26; --border:#303e50;
+  --gold:#efb071; --soft:#b0bbc9; --green:#a6c7b5;
+  --v7-bg:#0c1018; --v7-panel:#141b26; --v7-raised:#1b2432;
+  --v7-border:#303e50; --v7-text:#edf0f4; --v7-muted:#b0bbc9;
+  --v7-fire:#efb071; --v7-blue:#91bce7; --v7-danger:#f0a197;
+}
+body { background:var(--background); color:var(--foreground); }
+button:disabled { opacity:1; }
+button:not(:disabled):hover { filter:none; }
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible { outline:2px solid var(--v7-blue); outline-offset:3px; }
+::selection { background:#775137; color:#fff4e5; }
+.life-shell { background:radial-gradient(ellipse at 5% 0,#38251c20,transparent 42%),var(--v7-bg); color:var(--v7-text); font-size:15px; grid-template-rows:54px minmax(0,1fr) 32px; }
+.life-shell :is(h1,h2,h3) { color:var(--v7-text); letter-spacing:0; font-weight:600; }
+.life-shell :is(h2,h3) { font-family:'Microsoft YaHei','PingFang SC',system-ui,sans-serif; }
+.life-shell h2 { font-size:23px; }
+.life-shell h3 { font-size:18px; }
+.life-shell p { line-height:1.65; }
+.life-shell small { font-size:13px; }
+.life-topbar,.life-nav,.life-footer { background:#101620; border-color:var(--v7-border); }
+.life-topbar { padding:0 20px; }
+.life-brand { color:var(--v7-text); font-size:21px; letter-spacing:2px; }
+.life-brand > svg { color:var(--v7-fire); }
+.life-brand small,.life-world,.life-tools > span,.life-tools button,.life-help-button,.life-kicker,.life-title > span,.life-footer,.life-footer button { color:var(--v7-muted); }
+.life-layout { grid-template-columns:132px minmax(0,1fr); }
+.life-journal { display:none; background:#101620; border-color:var(--v7-border); }
+.life-main { padding:12px 20px 0; gap:10px; }
+.life-nav { padding:20px 10px 14px; }
+.life-nav-list > [data-slot='tabs-trigger'] { min-height:44px; color:var(--v7-muted); font-size:15px; }
+.life-nav-list > [data-slot='tabs-trigger'][data-active] { background:#2b211d; border-color:#765138; color:var(--v7-fire); }
+.life-nav-list > [data-slot='tabs-trigger']:hover { background:var(--v7-raised); }
+.life-tabs { border-color:var(--v7-border); height:40px!important; gap:5px!important; }
+.life-tabs > [data-slot='tabs-trigger'] { font-size:14px; color:var(--v7-muted); padding:7px 11px; background:transparent; }
+.life-tabs > [data-slot='tabs-trigger'][data-active] { color:var(--v7-text); border-color:#4e627c; background:#233145; }
+.life-oaths,.life-oaths > span:not(.life-kicker) { border-color:var(--v7-border); color:var(--v7-muted); }
+.life-ring { border-color:#687e96; }
+.life-dot { background:var(--v7-fire); }
+.life-heading,.life-main:has(.life-opening) > .life-heading { display:none; }
+.life-objective { background:#221e1d; border:1px solid #614c37; border-left:3px solid var(--v7-fire); border-radius:7px; min-height:46px; padding:8px 12px; color:var(--v7-text); }
+.life-objective strong { color:var(--v7-text); font-size:15px; }
+.life-objective > span > span { color:var(--v7-muted); font-size:13px; line-height:1.45; }
+.life-objective > svg { color:var(--v7-fire); }
+.life-notice { color:var(--v7-muted); font-size:13px; min-height:24px; }
+.life-activity,.life-activity > button { background:#182433; border-color:#405671; color:var(--v7-text); }
+
+/* Replace hard-coded olive paint across retained panels. */
+.life-card,.econ-board,.guild-card,.campaign-card,.life-empty { background:var(--v7-panel); border-color:var(--v7-border); border-radius:9px; color:var(--v7-text); }
+.econ-board { padding:12px 15px; }
+.life-card { scrollbar-color:#52657e transparent; }
+.life-card-body,.guild-card-body,.econ-building-list,.econ-research-list,.econ-ledger-list,.life-journal-list { scrollbar-color:#52657e transparent; }
+.life-pill,.guild-summary,.campaign-effects > span,.life-effect,.life-mission-state { background:var(--v7-raised); border-color:var(--v7-border); color:var(--v7-text); }
+.econ-board-head > strong,.econ-item-name strong,.guild-card h3,.guild-person strong,.campaign-card h2,.campaign-node strong,.life-title h2 { color:var(--v7-text); }
+.econ-board-head > span,.econ-board-head > button,.econ-item-name small,.econ-item-effect,.econ-lock,.econ-price,.econ-footnote,.guild-meta,.guild-person span,.guild-summary span,.guild-flaw,.life-hint,.life-cost,.life-prose,.material-price,.campaign-card p,.campaign-effects span,.life-card .life-prose { color:var(--v7-muted); }
+.econ-item-name strong { font-size:15px; }
+.econ-item-effect,.econ-price,.material-price,.guild-meta,.guild-flaw,.life-hint { font-size:14px!important; line-height:1.55!important; }
+.econ-building-row,.econ-research-row,.econ-ledger-row,.life-workers > div,.life-market > div,.life-clues article,.chronicle-entry { border-color:var(--v7-border); }
+.econ-building-row,.econ-research-row,.econ-ledger-row { background:transparent; }
+.life-workers > div,.life-clues article,.life-requirements > button,.life-market > div { background:#172130; color:var(--v7-text); }
+.campaign-stock span,.campaign-node { background:#172130; border-color:var(--v7-border); }
+.campaign-stock small,.campaign-stock i,.campaign-node span,.campaign-node small { color:var(--v7-muted); }
+.campaign-stock strong,.campaign-effects strong { color:var(--v7-text); }
+.campaign-node.selected { background:#223248; border-color:var(--v7-blue); }
+.life-clues article.found { border-color:#5a776d; background:#17272b; }
+.life-meter,.guild-frontier-path > div { background:#253144; border-color:#41526b; }
+.life-meter [data-slot='progress-indicator'],.campaign-card progress { accent-color:var(--v7-fire); background-color:var(--v7-fire); }
+.life-stepper > button,.econ-pager > button,.guild-pages > button { background:#202d3e; border-color:#52657e; color:var(--v7-text); }
+.life-stepper > button:disabled,.econ-pager > button:disabled { color:#7b8ca1; background:#17202e; }
+.life-time > button[aria-pressed='true'] { background:#293a50; color:#d7e9fa; border-color:#59799a; }
+.life-meter [data-slot='progress-track'] { background:#263246; }
+.econ-building-row { flex:0 0 auto; min-height:74px; padding:12px 0; }
+.econ-building-list { justify-content:flex-start; }
+.life-tabs:has(> [data-slot='tabs-trigger']:only-child) { justify-content:flex-start; }
+.life-dialog,.life-options,.life-confirm { background:#141b26!important; color:var(--v7-text)!important; border-color:#52657e!important; }
+.life-dialog [data-slot='dialog-description'],.life-dialog [data-slot='alert-dialog-description'],.life-dialog p,.life-dialog small { color:var(--v7-muted); }
+.life-dialog [data-slot='dialog-title'],.life-dialog [data-slot='alert-dialog-title'] { color:var(--v7-text); }
+.life-select,.secondary-button { background:#1b293b; color:var(--v7-text); border-color:#52657e; min-height:40px; font-size:14px; }
+.secondary-button:hover:not(:disabled),.life-select:hover { background:#25374e; border-color:#7991ae; }
+.primary-button,.econ-action { background:var(--v7-fire); border-color:#ffd1a1; color:#27180e; min-height:40px; font-size:14px; font-weight:600; }
+.primary-button:hover:not(:disabled),.econ-action:hover:not(:disabled) { background:#ffc895; }
+.primary-button:disabled,.econ-action:disabled,.secondary-button:disabled { opacity:1; background:#293442; border-color:#43536a; color:#a7b2c1; }
+.econ-building-row > .econ-action { background:#1c2b3e; color:var(--v7-text); border-color:#536b89; }
+.life-text-button,.life-help-button:hover,.chronicle-entry summary { color:var(--v7-blue); }
+.short,.negative { color:var(--v7-danger)!important; }
+.expedition-return { background:#182731; border-color:#426079; color:var(--v7-text); }
+.expedition-return strong { color:var(--v7-text); }
+.expedition-return small { color:var(--v7-blue); }
+.life-entry,.life-entry p { color:var(--v7-muted); }
+.life-entry.story p,.life-entry.good p { color:#c3d6de; }
+.life-battle,.life-intent,.life-combat-log { background:#141d2a; border-color:var(--v7-border); }
+.life-intent.danger { background:#30212b; border-color:#93645c; }
+.life-combat-actions > button,.life-hero-skills > button { background:#223248; border-color:#4c637f; color:var(--v7-text); }
+.life-combat-actions > button small,.life-hero-skills > button small { color:var(--v7-muted); }
+
+/* Actual ResourceStrip: inline grid column count is preserved on desktop. */
+.resource-dock { display:grid; flex:none; gap:7px; min-width:0; }
+.resource-cell { display:grid; grid-template-rows:minmax(0,1fr) 30px; min-width:0; height:100px; border:1px solid var(--v7-border); background:#141d2a; border-radius:7px; overflow:hidden; }
+.resource-detail { display:flex; flex-direction:column; gap:2px; align-items:flex-start; justify-content:center; min-width:0; border:0; background:none; padding:7px 10px; text-align:left; color:var(--v7-muted); font-size:13px; }
+.resource-detail > strong { color:var(--v7-text); font-size:19px; line-height:1.3; white-space:nowrap; }
+.resource-detail > strong > small { font-size:12px; font-weight:400; color:var(--v7-muted); }
+.resource-detail .resource-rate { color:#a6c7b5; font-size:12px; line-height:1.2; }
+.resource-detail .resource-rate > small { font-size:11px; }
+.resource-detail:hover { background:#1c293b; }
+.resource-gather { border:0; border-top:1px solid #614c37; background:#29211d; color:var(--v7-fire); font-size:13px; line-height:1.2; padding:4px 3px; min-width:0; }
+.resource-gather:hover:not(:disabled) { background:#3b2b20; }
+.resource-gather:disabled { color:#8f9bad; background:#18202d; border-color:var(--v7-border); }
+
+/* Actual MissionPlanner. Footer owns its row; it is never inside the scroll body. */
+.life-card.expedition-planner { padding:15px; gap:12px; min-height:0; overflow:hidden; }
+.expedition-planner:has(> .mission-body) { display:grid; grid-template-rows:auto minmax(0,1fr) auto; }
+.mission-choices { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; min-inline-size:0; margin:0; padding:0; border:0; }
+.life-select[data-slot='select-trigger'] { background:#1b293b!important; color:var(--v7-text)!important; border-color:#52657e!important; }
+.life-choices > button { background:#1c2a3b; border-color:#49627e; color:var(--v7-text); }
+.life-choices > button:disabled { background:#1a2431; border-color:#35465b; }
+.life-choices > button > strong { color:var(--v7-text); }
+.life-choices > button > span { color:var(--v7-muted); }
+.life-activity > button:last-child { color:var(--v7-blue); }
+.life-region > span,.life-region > span > strong { color:var(--v7-muted); }
+.mission-description > p { margin-top:0; }
+.mission-choices > button:only-child { grid-column:1/-1; }
+.mission-choices > button { display:grid; grid-template-columns:24px minmax(0,1fr); gap:4px 9px; align-items:center; min-height:74px; text-align:left; padding:10px 13px; border:1px solid #405671; border-radius:8px; background:#111b2a; color:var(--v7-text); }
+.mission-choices > button > svg { grid-row:1/3; width:21px; height:21px; color:var(--v7-muted); }
+.mission-choices > button > strong { font-size:16px; }
+.mission-choices > button > span { grid-column:2; font-size:13px; color:var(--v7-muted); }
+.mission-choices > button.selected { border:2px solid var(--v7-blue); padding:9px 12px; background:#203247; }
+.mission-choices > button.selected > svg,.mission-choices > button.selected > strong { color:#b2d5f5; }
+.mission-body { min-height:0; min-width:0; overflow:auto; overscroll-behavior:contain; scrollbar-width:thin; scrollbar-color:#52657e transparent; display:flex; flex-direction:column; gap:13px; padding-right:3px; }
+.mission-description > strong { font-size:18px; font-weight:600; color:var(--v7-text); }
+.mission-description > p { margin-top:5px; font-size:15px; color:var(--v7-muted); line-height:1.55; }
+.mission-bill { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+.mission-bill > span { min-width:0; border:1px solid #2d3e53; background:#101925; border-radius:7px; padding:10px 12px; font-size:13px; color:var(--v7-muted); }
+.mission-bill b { display:block; margin-top:4px; color:var(--v7-text); font-size:21px; line-height:1.25; }
+.mission-yield { color:#d8c2a7; font-size:14px; line-height:1.55; }
+.mission-running { display:flex; flex-direction:column; gap:8px; padding:11px 12px; border:1px solid #425c78; border-radius:7px; background:#182b3b; font-size:14px; color:var(--v7-text); }
+.mission-blocker { padding:10px 12px; border-left:2px solid #6987aa; background:#152131; color:var(--v7-muted); font-size:14px; line-height:1.5; }
+.mission-bottom { display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:10px; padding-top:12px; margin-top:auto; border-top:1px solid var(--v7-border); flex:none; background:var(--v7-panel); }
+.mission-repeat { display:flex; align-items:center; gap:9px; margin-right:auto; min-height:40px; font-size:14px; color:var(--v7-muted); cursor:pointer; }
+.mission-repeat > input { width:19px; height:19px; margin:0; accent-color:var(--v7-fire); }
+.mission-stop { margin-right:auto; background:transparent; color:var(--v7-blue); border:1px solid #52657e; border-radius:5px; min-height:36px; padding:7px; font-size:13px; }
+.mission-bottom > .primary-button,.mission-bottom > .secondary-button { min-height:44px; padding:9px 15px; }
+.mission-confirm .life-inline-actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.mission-confirm .life-inline-actions > button { min-height:46px; }
+
+/* Actual opening markup. A prepared pile does not ignite before the fire action.
+   Use .lit or .igniting only when the engine action actually succeeds. */
+.life-opening.v7-opening { position:relative; display:grid; grid-template-columns:minmax(0,1.2fr) minmax(0,1fr); overflow:hidden; min-height:0; border:1px solid #354257; border-radius:12px; background:linear-gradient(120deg,#101620,#141c2a); }
+.v7-opening .life-opening-copy { position:relative; z-index:2; grid-column:1; grid-row:1; min-width:0; min-height:0; max-width:none; gap:18px; padding:clamp(22px,3vw,44px); }
+.v7-opening h2 { font:clamp(25px,2.2vw,34px)/1.55 Georgia,'SimSun',serif; color:#f2e6d6; }
+.v7-opening p { font:16px/1.85 Georgia,'SimSun',serif; color:#bdc8d8; max-width:510px; }
+.v7-opening .life-kicker,.v7-opening small { color:#9faec2; }
+.opening-stock { display:grid; grid-template-columns:1fr auto; gap:8px 12px; color:var(--v7-muted); font-size:14px; }
+.opening-stock > strong { color:#e8c69e; font-size:18px; }
+.opening-stock > .life-meter { grid-column:1/-1; }
+.opening-actions { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.opening-actions > button { min-width:0!important; width:100%; min-height:48px; padding:10px 12px; font-size:14px; justify-content:center; white-space:nowrap; }
+.camp-scene { position:relative; grid-column:2; grid-row:1; align-self:stretch; min-width:0; min-height:0; isolation:isolate; background:radial-gradient(ellipse at 62% 22%,#31435836,transparent 62%); }
+.camp-scene::before { content:''; position:absolute; width:4px; height:4px; border-radius:50%; left:18%; top:24%; background:#a3b5d073; box-shadow:80px -33px #a3b5d04a,150px 24px #a3b5d05c,224px -10px #a3b5d045,44px 72px #a3b5d041; }
+.camp-scene::after { content:''; position:absolute; inset:58% 5% 10%; z-index:-1; background:radial-gradient(ellipse,#d0822930,transparent 64%); opacity:0; }
+.camp-moon { position:absolute; width:53px; height:53px; right:20%; top:15%; border-radius:50%; background:#c7d3dc; box-shadow:0 0 50px #bdd2e52e; opacity:.78; }
+.camp-ground { position:absolute; left:0; right:0; bottom:20%; height:20px; background:radial-gradient(ellipse,#05090f 10%,transparent 69%); }
+.camp-log { position:absolute; width:93px; height:15px; left:calc(50% - 46px); bottom:24%; border-radius:8px; background:linear-gradient(#7c5a43,#48362d); border:1px solid #97715a; transform:rotate(18deg); z-index:2; }
+.camp-log.second { transform:rotate(-18deg); background:linear-gradient(#9a7350,#654632); }
+.camp-flame { position:absolute; width:55px; height:102px; left:calc(50% - 27px); bottom:calc(24% + 10px); background:linear-gradient(#ffe3a4 5%,#e99143 55%,#d2572e 95%); border-radius:75% 18% 66% 37%; transform:rotate(-10deg); box-shadow:0 0 45px #e6933c44; opacity:0; }
+.camp-flame::after { content:''; position:absolute; width:24px; height:54px; bottom:3px; left:15px; border-radius:75% 20% 50% 30%; background:#ffdfa0; }
+.camp-spark { position:absolute; width:4px; height:4px; left:52%; bottom:62%; background:#efb071; border-radius:50%; opacity:0; }
+.camp-spark.second { width:3px; height:3px; left:45%; bottom:54%; }
+.camp-scene.ready .camp-log { border-color:#c99769; box-shadow:0 0 22px #bd784114; }
+.camp-scene.lit .camp-flame,.camp-scene.igniting .camp-flame,.camp-scene.lit .camp-spark,.camp-scene.igniting .camp-spark,.camp-scene.lit::after,.camp-scene.igniting::after { opacity:1; }
+.camp-scene.lit .camp-flame,.camp-scene.igniting .camp-flame { animation:camp-flicker 1.8s ease-in-out infinite alternate; }
+@keyframes camp-flicker { from{transform:rotate(-10deg) scale(.97,1)} to{transform:rotate(-6deg) scale(1.03,.96)} }
+
+@media(min-width:1600px) { .life-layout { grid-template-columns:150px minmax(0,1fr) 255px; }.life-journal{display:flex}.life-main{padding-left:24px;padding-right:24px} }
+@media(max-width:1100px) { .life-layout{grid-template-columns:115px minmax(0,1fr)}.life-main{padding:10px 13px 0;gap:8px}.life-nav{padding:16px 7px}.life-nav-list > [data-slot='tabs-trigger']{padding:8px;font-size:14px}.resource-detail{padding:6px 8px}.resource-detail > strong{font-size:18px}.resource-detail > strong > small{font-size:11px}.mission-choices > button{padding:9px}.mission-choices > button.selected{padding:8px}.mission-choices > button > span{font-size:12px} }
+@media(max-width:850px) { .life-layout{grid-template-columns:minmax(0,1fr);grid-template-rows:42px minmax(0,1fr)}.life-nav{padding:4px 8px;border-right:0;border-bottom:1px solid var(--v7-border)}.life-nav-list{flex-direction:row!important;gap:4px!important}.life-nav-list > [data-slot='tabs-trigger']{min-height:34px;padding:5px;font-size:14px;justify-content:center}.life-nav > .life-kicker,.life-oaths,.life-help-button{display:none}.life-objective > span > span{display:none}.life-objective strong{white-space:normal}.life-journal{display:none} }
+@media(max-width:700px) {
+  .life-shell{grid-template-rows:46px minmax(0,1fr) 28px}
+  .life-topbar{padding:0 11px}.life-brand{font-size:18px}.life-brand > svg{width:22px;height:26px}.life-brand small{display:none}.life-tools{gap:7px}.life-world{font-size:12px}
+  .life-main{padding:8px 9px 0;gap:7px}.life-objective{min-height:39px;padding:6px 9px}.life-objective strong{font-size:14px}.life-notice{height:22px;min-height:22px;font-size:12px}
+  .life-tabs{height:38px!important;gap:3px!important}.life-tabs > [data-slot='tabs-trigger']{font-size:13px;padding:6px 7px}.life-stack,.life-subtabs{gap:7px!important}
+  .resource-dock{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:5px}
+  .resource-dock:has(> .resource-cell:only-child){grid-template-columns:minmax(0,1fr)!important}
+  .resource-dock:has(> .resource-cell:nth-child(2):last-child){grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .resource-cell{height:72px;grid-template-rows:minmax(0,1fr) 30px;border-radius:6px}
+  .resource-detail{padding:4px 7px;gap:0;font-size:12px}.resource-detail > strong{font-size:16px;line-height:1.35}.resource-detail > strong > small{font-size:11px}.resource-detail .resource-rate{display:none}
+  .resource-gather{font-size:12px;padding:5px 1px;line-height:1.25}
+  .life-region{gap:7px}.life-region > span{display:none}.life-region > .life-select{width:100%;flex:1}.life-region .expedition-return{max-width:48%;font-size:12px;min-width:0}.expedition-return > span{display:none}.expedition-return small{font-size:11px}
+  .life-card.expedition-planner{padding:10px;gap:8px}.mission-choices{gap:6px}.mission-choices > button{min-height:44px;padding:7px 5px;grid-template-columns:18px auto;justify-content:center;gap:5px;text-align:center}.mission-choices > button.selected{padding:6px 4px}.mission-choices > button > svg{width:17px;height:17px;grid-row:1}.mission-choices > button > strong{font-size:14px}.mission-choices > button > span{display:none}
+  .mission-body{gap:10px}.mission-description > strong{font-size:16px}.mission-description > p{font-size:14px;margin-top:4px}.mission-bill{gap:6px}.mission-bill > span{padding:8px;font-size:12px}.mission-bill b{font-size:18px}.mission-yield,.mission-running,.mission-blocker{font-size:13px}.mission-running,.mission-blocker{padding:8px 9px}
+  .mission-bottom{gap:8px;padding-top:8px;display:grid;grid-template-columns:minmax(0,1fr)}.mission-repeat{min-height:32px;font-size:13px}.mission-bottom > button{width:100%;min-height:44px}.mission-bottom > .secondary-button{min-height:36px;padding:6px;font-size:13px}
+  .mission-confirm{padding:20px!important}.mission-confirm .life-inline-actions{gap:8px}.mission-confirm .life-inline-actions > button{padding:9px 6px;font-size:14px}
+  .econ-board{padding:10px}.econ-item-name strong{font-size:15px}.econ-item-effect,.econ-price,.material-price,.guild-meta,.guild-flaw,.life-hint{font-size:13px!important}.guild-person strong{font-size:17px}.guild-card p{font-size:14px}.guild-candidates{gap:8px}.guild-card{padding:12px}
+  .campaign-card p{font-size:14px}.campaign-card h2{font-size:19px}.campaign-effects span{font-size:12px}.campaign-stock small{font-size:12px}.campaign-stock strong{font-size:14px}
+  .life-opening.v7-opening{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(85px,.55fr) minmax(0,1fr)}
+  .camp-scene{grid-column:1;grid-row:1}.camp-moon{width:31px;height:31px;right:23%;top:14%}.camp-ground{bottom:8%}.camp-log{width:61px;height:11px;left:calc(50% - 30px);bottom:15%}.camp-flame{width:33px;height:60px;left:calc(50% - 16px);bottom:calc(15% + 7px)}.camp-flame::after{width:17px;height:34px;left:9px}.camp-scene::after{inset:25% 10% 0}
+  .v7-opening .life-opening-copy{grid-column:1;grid-row:2;padding:12px 18px 18px;gap:12px;justify-content:center}.v7-opening h2{font-size:23px;line-height:1.5}.v7-opening p{font-size:15px;line-height:1.7}.v7-opening .life-kicker{font-size:12px!important}.v7-opening small{font-size:12px}.opening-actions{gap:8px}.opening-actions > button{min-height:46px;font-size:13px;padding:9px 6px}.opening-actions svg{width:16px;height:16px}.opening-stock{gap:6px;font-size:13px}
+}
+@media(max-height:730px) and (min-width:701px) { .life-main{gap:7px;padding-top:9px}.resource-cell{height:85px;grid-template-rows:minmax(0,1fr) 28px}.resource-detail > strong{font-size:18px}.resource-detail .resource-rate{font-size:11px}.life-objective{min-height:40px}.life-card.expedition-planner{padding:11px;gap:9px}.mission-choices > button{min-height:65px}.mission-body{gap:9px}.mission-bill > span{padding:8px 10px}.mission-bottom{padding-top:8px} }
+@media(max-height:710px) and (max-width:700px) { .resource-cell{height:65px;grid-template-rows:minmax(0,1fr) 29px}.resource-detail > strong > small{display:none}.life-main{gap:6px}.life-notice{height:20px;min-height:20px}.mission-body{gap:8px}.v7-opening .life-opening-copy{gap:9px;padding:9px 15px 14px}.v7-opening p{font-size:14px;line-height:1.6}.v7-opening h2{font-size:21px}.v7-opening .life-kicker{display:none}.v7-opening small{display:none}.life-opening.v7-opening{grid-template-rows:minmax(65px,.4fr) minmax(0,1fr)} }
+@media(prefers-reduced-motion:reduce) { .camp-flame,.camp-spark{animation:none!important} }
+@media(max-width:700px) {
+  .resource-detail > strong { display:flex; align-items:baseline; gap:3px; width:100%; }
+  .resource-detail > strong > small { display:inline; font-size:10px; }
+  .resource-dock.compact .resource-cell { height:43px; grid-template-rows:1fr; }
+  .resource-dock.compact .resource-gather { display:none; }
+  .resource-dock.compact .resource-detail { padding:3px 6px; }
+  .resource-dock.compact .resource-detail > strong { font-size:14px; }
+  .life-region .expedition-return { max-width:none; padding:6px 8px; height:40px; }
+  .life-region .expedition-return > small { display:none; }
+  .mission-bottom { grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:6px; }
+  .mission-repeat { font-size:12px; gap:6px; }
+  .mission-bottom > .primary-button { font-size:13px; padding:8px; }
+  .mission-bottom > .secondary-button { grid-column:1/-1; }
+  .mission-body { gap:7px; }
+  .mission-description > strong { display:none; }
+  .mission-description > p { margin:0; font-size:13px; }
+  .mission-bill > span { padding:6px 8px; }
+  .mission-bill b { margin-top:2px; font-size:17px; }
+  .mission-blocker { padding:6px 8px; }
+  .mission-bill { gap:4px; }
+  .mission-bill > span { display:flex; justify-content:space-between; align-items:baseline; gap:4px; padding:6px; font-size:11px; }
+  .mission-bill b { font-size:15px; white-space:nowrap; }
+}

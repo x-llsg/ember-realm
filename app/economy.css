@@ -1,0 +1,814 @@
+/* A town ledger: visible actions, comparable costs, bounded pages. */
+.life-heading {
+  display: none;
+}
+.life-main:has(.life-opening) > .life-heading {
+  display: flex;
+}
+.life-main {
+  gap: 8px;
+}
+.life-objective {
+  min-height: 42px;
+  padding: 7px 12px;
+  background: #253020;
+}
+.life-objective > span {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+}
+.life-objective strong {
+  font-size: 14px;
+  white-space: nowrap;
+}
+.life-objective > span > span {
+  font-size: 12px;
+  line-height: 1.4;
+}
+.life-resources {
+  min-height: 69px;
+}
+.life-resources > button {
+  gap: 7px;
+  padding: 7px 9px;
+}
+.life-resources strong {
+  font-family: 'Microsoft YaHei', sans-serif;
+  font-size: 18px;
+  line-height: 1.3;
+}
+.life-resources .econ-cap {
+  display: block;
+  font-family: inherit;
+  font-size: 12px;
+  white-space: nowrap;
+  line-height: 1.2;
+  color: #a6b599;
+}
+.life-resources > button > span > small:first-child {
+  font-size: 13px;
+  color: #b8c8a8;
+}
+.life-resources .life-rate {
+  font-size: 12px;
+}
+.econ-gather {
+  display: flex;
+  gap: 6px;
+  flex: none;
+  align-items: stretch;
+  min-height: 48px;
+}
+.econ-gather-label {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  color: #adb99f;
+  writing-mode: horizontal-tb;
+  max-width:28px;
+  line-height:1.5;
+  letter-spacing: 1px;
+}
+.econ-gather > button {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+  background: #2c3a24;
+  border: 1px solid #5c6c49;
+  border-radius: 3px;
+  padding: 4px;
+  font-size: 13px;
+}
+.econ-gather > button:not(:disabled) {
+  color: #e4ddbb;
+}
+.econ-gather > button strong {
+  font-weight: 500;
+  color: #d6c17f;
+}
+.econ-gather > button small {
+  font-size: 11px;
+  line-height: 1.2;
+  color: #afbea0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.econ-gather > button:disabled {
+  opacity: 0.65;
+}
+.econ-gather > .econ-gather-switch {
+  display: none;
+}
+.econ-board {
+  display: flex !important;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  height: 100%;
+  padding: 12px;
+  border: 1px solid #46563a;
+  border-radius: 4px;
+  background: #202b1d;
+  overflow: hidden;
+}
+.econ-board-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: none;
+  min-height: 25px;
+  font-size: 14px;
+}
+.econ-board-head > strong {
+  color: #e1d7b4;
+  font-weight: 500;
+}
+.econ-board-head > span {
+  font-size: 12px;
+  color: #aab99c;
+}
+.econ-board-head > button {
+  margin-left: auto;
+  border: 0;
+  background: none;
+  color: #c8d4b2;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 0;
+  font-size: 12px;
+}
+.econ-board-head svg {
+  height: 15px;
+  width: 15px;
+}
+.econ-building-list,
+.econ-research-list,
+.econ-ledger-list {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+.econ-building-row {
+  display: grid;
+  grid-template-columns: minmax(130px, 1fr) minmax(150px, 1.4fr) minmax(
+      130px,
+      1fr
+    ) 62px;
+  gap: 12px;
+  align-items: center;
+  flex: 1;
+  min-height: 40px;
+  padding: 3px 0;
+  border-bottom: 1px solid #3b4c31;
+}
+.econ-building-row:last-child {
+  border-bottom: 0;
+}
+.econ-item-name {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  text-align: left;
+  border: 0;
+  background: none;
+}
+.econ-item-name strong {
+  font-size: 14px;
+  font-weight: 500;
+  color: #e1d9b8;
+}
+.econ-item-name small {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #a9b799;
+  font-size: 12px;
+  line-height: 1.25;
+}
+.econ-item-name svg {
+  width: 12px;
+  height: 12px;
+}
+.econ-item-effect {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #bcc9ad;
+}
+.econ-item-effect > small {
+  display: block;
+  font-size: 11px;
+}
+.econ-lock {
+  color: #b6ae96;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.econ-lock > svg {
+  height: 13px;
+  width: 13px;
+}
+.econ-price {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 9px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: #c2d1b0;
+}
+.econ-price > span {
+  white-space: nowrap;
+}
+.short {
+  color: #dca78d !important;
+}
+.econ-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 8px;
+  min-height: 32px;
+  white-space: nowrap;
+  border: 1px solid #b4aa77;
+  background: #c5b780;
+  color: #20291a;
+  border-radius: 3px;
+  font-size: 13px;
+  line-height: 1.3;
+}
+.econ-action:disabled {
+  opacity: 0.56;
+}
+.econ-action svg {
+  width: 14px;
+  height: 14px;
+}
+.econ-footnote {
+  flex: none;
+  font-size: 12px !important;
+  line-height: 1.5 !important;
+  color: #a6b499;
+}
+.econ-pager {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 32px;
+  gap: 12px;
+  margin-top: auto;
+  border-top: 1px solid #455638;
+  padding-top: 5px;
+  font-size: 13px;
+  color: #bbcaab;
+}
+.econ-pager button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  border: 0;
+  background: none;
+  padding: 3px;
+  font-size: 13px;
+}
+.econ-pager svg {
+  width: 15px;
+  height: 15px;
+}
+.econ-research-list[hidden] {
+  display: none !important;
+}
+.econ-research-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 135px 65px;
+  gap: 14px;
+  align-items: center;
+  padding: 3px 0;
+  border-bottom: 1px solid #405335;
+  flex: 1;
+  min-height: 52px;
+}
+.econ-research-row:last-child {
+  border: 0;
+}
+.econ-research-row strong {
+  font-size: 15px;
+  font-weight: 500;
+  color: #e2d6ae;
+}
+.econ-research-row p {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #bac9ac;
+  margin-top: 3px;
+}
+.econ-research-row.complete {
+  grid-template-columns: minmax(0, 1fr) 65px;
+}
+.econ-research-row.complete > div {
+  opacity: 0.7;
+}
+.econ-recruit-list {
+  min-height: 0;
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-auto-rows: minmax(0, 1fr);
+  gap: 10px;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+.econ-recruit-card {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-height: 136px;
+  border: 1px solid #4c603b;
+  border-radius: 3px;
+  padding: 10px;
+  background: #25331e;
+}
+.econ-hero-name {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  text-align: left;
+  border: 0;
+  background: transparent;
+}
+.econ-hero-name .hero-letter {
+  height: 36px;
+  width: 34px;
+  font-size: 21px;
+}
+.econ-hero-name > span > strong {
+  font-size: 15px;
+  font-weight: 500;
+  color: #e6d9b4;
+}
+.econ-hero-name small {
+  display: block;
+  font-size: 12px;
+  color: #afc49a;
+}
+.econ-hero-name > svg {
+  margin-left: auto;
+  width: 14px;
+  height: 14px;
+  color: #a8b694;
+}
+.econ-recruit-card .econ-hero-stats,
+.econ-recruit-card .econ-hero-trait {
+  font-size: 12px;
+  line-height: 1.4;
+  color: #b9caab;
+}
+.econ-recruit-buy {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 7px;
+  margin-top: auto;
+}
+.econ-recruit-buy .econ-action {
+  min-width: 68px;
+}
+.econ-unlock {
+  padding: 8px 10px;
+  text-align: left;
+  border: 1px solid #706846;
+  background: #363726;
+  color: #d0c899;
+  font-size: 13px;
+  line-height: 1.5;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: none;
+}
+.econ-unlock svg {
+  width: 16px;
+  height: 16px;
+}
+.econ-unlock svg:last-child {
+  margin-left: auto;
+}
+.econ-hero-tabs {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.econ-hero-tabs button {
+  border: 1px solid #52683d;
+  background: #202d19;
+  border-radius: 3px;
+  padding: 6px 8px;
+  font-size: 13px;
+  color: #bacfa3;
+}
+.econ-hero-tabs button[aria-pressed='true'] {
+  background: #465130;
+  border-color: #b0ab70;
+  color: #eee0b4;
+}
+.econ-ledger-row {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr 1.3fr;
+  text-align: left;
+  gap: 12px;
+  align-items: center;
+  border: 0;
+  border-bottom: 1px solid #405134;
+  background: none;
+  padding: 12px 2px;
+  flex: 1;
+  min-height: 54px;
+  font-size: 14px;
+}
+.econ-ledger-row strong {
+  font-weight: 500;
+  color: #dcd7b8;
+}
+.econ-ledger-row small {
+  display: block;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #a4b795;
+  margin-top: 4px;
+}
+.econ-legacy {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: none;
+}
+.econ-legacy p {
+  font-size: 12px;
+  line-height: 1.5;
+}
+.econ-outcomes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.econ-outcomes > div {
+  border: 1px solid #52683e;
+  padding: 12px;
+  background: #293a20;
+}
+.econ-outcomes strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #dcca98;
+}
+.econ-outcomes span {
+  display: block;
+  font-size: 12px;
+  color: #b7cba4;
+  margin-top: 5px;
+}
+.econ-report-card > p {
+  font-size: 14px;
+  line-height: 1.6;
+}
+.life-card:has(> .life-card-body):has(> .life-inline-actions) {
+  overflow: hidden;
+}
+.life-card:has(> .life-inline-actions) > .life-card-body {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+.life-card > .life-inline-actions {
+  flex: none;
+}
+.life-guide {
+  max-height: 85dvh;
+  overflow: auto;
+}
+@media (max-width: 1350px) {
+  .life-layout {
+    grid-template-columns: 135px minmax(0, 1fr);
+  }
+  .life-journal {
+    display: none;
+  }
+  .life-main {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+}
+@media (max-width: 850px) {
+  .life-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .life-nav-list [data-slot='tabs-trigger'] {
+    padding: 5px 7px;
+    font-size: 14px;
+    gap: 4px;
+  }
+  .life-nav-list svg {
+    display: none;
+  }
+  .life-objective > span > span {
+    display: none;
+  }
+}
+@media (max-width: 700px) {
+  .life-mission-card .life-card-body > .life-title {
+    display: none;
+  }
+  .life-mission-card > .life-inline-actions {
+    position: static;
+    margin: 0;
+    padding: 7px 0 0;
+  }
+  .life-shell {
+    grid-template-rows: 48px minmax(0, 1fr) 38px;
+  }
+  .life-layout {
+    grid-template-rows: 37px minmax(0, 1fr);
+  }
+  .life-nav {
+    padding: 3px 9px;
+  }
+  .life-nav-list {
+    gap: 4px !important;
+  }
+  .life-nav-list [data-slot='tabs-trigger'] {
+    min-height: 30px;
+    padding: 4px;
+    font-size: 13px;
+  }
+  .life-main {
+    padding: 7px 9px 0;
+    gap: 6px;
+  }
+  .life-resources {
+    min-height: 71px;
+  }
+  .life-resources > button {
+    padding: 5px 2px;
+    gap: 1px;
+  }
+  .life-resources strong {
+    font-size: 16px;
+  }
+  .life-resources > button > span > small:first-child {
+    font-size: 12px;
+  }
+  .life-resources .econ-cap {
+    font-size: 12px;
+  }
+  .life-resources .life-rate {
+    font-size: 11px;
+  }
+  .life-objective {
+    min-height: 32px;
+    padding: 5px 8px;
+  }
+  .life-objective small {
+    display: none;
+  }
+  .life-objective strong {
+    font-size: 13px;
+  }
+  .econ-gather {
+    min-height: 44px;
+    gap: 5px;
+  }
+  .econ-gather-label {
+    display: none;
+  }
+  .econ-gather > button {
+    font-size: 13px;
+    gap: 2px;
+  }
+  .econ-gather > button small {
+    font-size: 11px;
+  }
+  .econ-gather > .advanced {
+    display: none;
+  }
+  .econ-gather.workshop > .advanced {
+    display: flex;
+  }
+  .econ-gather.workshop > .basic {
+    display: none;
+  }
+  .econ-gather > .econ-gather-switch {
+    display: flex;
+    flex: 0 0 44px;
+    gap: 0;
+    background: #24321e;
+    font-size: 12px;
+  }
+  .econ-gather-switch svg {
+    width: 13px;
+    height: 13px;
+  }
+  .econ-board {
+    padding: 10px;
+    gap: 7px;
+  }
+  .econ-board-head {
+    font-size: 14px;
+    gap: 7px;
+    min-height: 24px;
+  }
+  .econ-board-head > span,
+  .econ-board-head > button {
+    font-size: 12px;
+  }
+  .econ-board-head > button svg {
+    display: none;
+  }
+  .econ-building-row {
+    grid-template-columns: minmax(0, 1fr) 62px;
+    gap: 4px 10px;
+    min-height: 93px;
+    padding: 8px 0;
+    align-content: center;
+  }
+  .econ-item-name {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    grid-column: 1;
+  }
+  .econ-item-name strong {
+    font-size: 14px;
+  }
+  .econ-item-name small {
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .econ-item-name svg {
+    display: none;
+  }
+  .econ-item-effect {
+    grid-column: 1/3;
+    font-size: 12px;
+    line-height: 1.4;
+    grid-row: 2;
+  }
+  .econ-building-row > .econ-price {
+    grid-column: 1;
+    grid-row: 3;
+    font-size: 12px;
+  }
+  .econ-building-row > .econ-action {
+    grid-column: 2;
+    grid-row: 1/4;
+  }
+  .econ-item-effect {
+    padding-right: 65px;
+  }
+  .econ-action {
+    font-size: 13px;
+    min-height: 34px;
+  }
+  .econ-research-row {
+    grid-template-columns: minmax(0, 1fr) 58px;
+    gap: 6px 8px;
+    padding: 9px 0;
+    min-height: 106px;
+  }
+  .econ-research-row > div {
+    grid-column: 1/3;
+  }
+  .econ-research-row strong {
+    font-size: 14px;
+  }
+  .econ-research-row p {
+    font-size: 12px;
+    line-height: 1.5;
+    margin-top: 3px;
+  }
+  .econ-research-row > .econ-price {
+    grid-column: 1;
+  }
+  .econ-research-row > .econ-action {
+    grid-column: 2;
+  }
+  .econ-research-row.complete {
+    grid-template-columns: minmax(0, 1fr) 58px;
+  }
+  .econ-research-row.complete > div {
+    grid-column: 1;
+  }
+  .econ-research-row.complete > .econ-action {
+    grid-row: 1;
+  }
+  .econ-recruit-list {
+    grid-template-columns: 1fr;
+    gap: 7px;
+  }
+  .econ-recruit-card {
+    min-height: 121px;
+    padding: 8px;
+    gap: 4px;
+  }
+  .econ-hero-name .hero-letter {
+    width: 30px;
+    height: 32px;
+    font-size: 19px;
+  }
+  .econ-hero-name > span > strong {
+    font-size: 14px;
+  }
+  .econ-hero-name small {
+    font-size: 12px;
+  }
+  .econ-recruit-card .econ-hero-trait {
+    display: none;
+  }
+  .econ-recruit-card .econ-hero-stats {
+    font-size: 12px;
+  }
+  .econ-recruit-buy .econ-action {
+    min-height: 30px;
+    min-width: 58px;
+  }
+  .econ-unlock {
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+  .econ-ledger-row {
+    grid-template-columns: 1fr 1.4fr;
+    gap: 7px;
+    min-height: 83px;
+    font-size: 13px;
+  }
+  .econ-ledger-row > span:last-child {
+    grid-column: 1/3;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+  }
+  .econ-ledger-row small {
+    font-size: 12px;
+    margin-top: 1px;
+  }
+  .econ-legacy {
+    gap: 6px;
+  }
+  .econ-legacy .econ-action {
+    font-size: 12px;
+    padding: 6px;
+  }
+  .econ-outcomes > div {
+    padding: 8px;
+  }
+  .econ-outcomes strong {
+    font-size: 13px;
+  }
+  .econ-report-card > p {
+    font-size: 13px;
+  }
+  .life-notice {
+    height: 22px;
+  }
+  .life-footer {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+}
+@media (max-width: 700px) and (max-height: 720px) {
+  .econ-building-row {
+    min-height: 80px;
+    padding: 4px 0;
+    gap: 2px 8px;
+  }
+  .econ-recruit-card {
+    min-height: 101px;
+    gap: 3px;
+    padding: 6px;
+  }
+  .econ-board {
+    gap: 5px;
+    padding: 8px;
+  }
+  .econ-research-row {
+    min-height: 100px;
+  }
+}

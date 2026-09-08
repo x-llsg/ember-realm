@@ -1,0 +1,1195 @@
+/* Ember chronicle. Import after v8.css; retain v8-ui and add v9-ui to life-shell.
+   Theme only: no re-pagination, no hidden conditions, no layout-wide font shrinking.
+   Explicit portal scopes below are intentional; popups have no v9-ui ancestor. */
+.life-shell.v9-ui {
+  --desk-bg: #171614;
+  --desk-panel: #1d1b18;
+  --desk-raised: #28241f;
+  --desk-line: #443b31;
+  --desk-text: #eee8dc;
+  --desk-muted: #c0b5a5;
+  --desk-fire: #d2a06b;
+  --desk-blue: #e1b777;
+  --v7-bg: #171614;
+  --v7-panel: #1d1b18;
+  --v7-raised: #28241f;
+  --v7-border: #443b31;
+  --v7-text: #eee8dc;
+  --v7-muted: #c0b5a5;
+  --v7-fire: #d2a06b;
+  --v7-blue: #e1b777;
+  --v7-danger: #e9a99b;
+  --chronicle-copper: #c28e62;
+  --chronicle-dim: #a79b8a;
+  background:
+    radial-gradient(ellipse at 16% 0, #55351918, transparent 42%), #171614;
+  color: var(--desk-text);
+  font-family: 'Microsoft YaHei', 'PingFang SC', system-ui, sans-serif;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+body:has(.life-shell.v9-ui) {
+  background: #171614;
+}
+.v9-ui :is(h1, h2, h3) {
+  font-family: Georgia, 'Noto Serif SC', 'SimSun', serif;
+  color: #f0e5d2;
+  letter-spacing: 0.025em;
+}
+.v9-ui :is(.life-topbar, .life-nav, .life-footer) {
+  background: #191714;
+  border-color: #3a332b;
+}
+.v9-ui .life-topbar {
+  box-shadow: 0 1px 0 #b7804520;
+}
+.v9-ui .life-brand {
+  color: #f1e3cc;
+  letter-spacing: 0.12em;
+}
+.v9-ui .life-brand > svg {
+  color: var(--desk-fire);
+}
+.v9-ui :is(.life-world, .life-tools button, .life-footer, .life-footer button) {
+  color: #c0b5a5;
+}
+.v9-ui .life-nav-list > [data-slot='tabs-trigger'] {
+  color: #bdb09d;
+  border: 1px solid transparent;
+  border-radius: 3px;
+}
+.v9-ui .life-nav-list > [data-slot='tabs-trigger'][data-active] {
+  background: #30261c;
+  color: #f1cf9b;
+  border-color: transparent;
+  box-shadow: inset 2px 0 #c28e62;
+}
+.v9-ui .life-nav-list > [data-slot='tabs-trigger']:hover {
+  background: #28221b;
+}
+.v9-ui .life-tabs {
+  border-color: #443b31;
+}
+.v9-ui .life-tabs > [data-slot='tabs-trigger'] {
+  color: #c0b5a5;
+  border-radius: 2px;
+}
+.v9-ui .life-tabs > [data-slot='tabs-trigger'][data-active] {
+  color: #f0d3a8;
+  background: #2c251c;
+  border-color: #796044;
+  box-shadow: none;
+}
+.v9-ui .life-objective {
+  background: #262019;
+  border-color: #57422d;
+  border-left-color: #c28e62;
+  border-radius: 3px;
+}
+.v9-ui .life-objective strong {
+  color: #f1e1c8;
+}
+.v9-ui .life-objective > svg {
+  color: #d2a06b;
+}
+.v9-ui :is(.life-activity, .life-activity > button) {
+  background: #242019;
+  border-color: #493c2c;
+  color: #d9c7ab;
+}
+.v9-ui .life-notice {
+  color: #c8b79d;
+}
+.v9-ui :is(button, a, summary, input, select):focus-visible {
+  outline: 2px solid #e1b777;
+  outline-offset: 2px;
+}
+.v9-ui ::selection {
+  background: #745131;
+  color: #fff4e0;
+}
+
+/* A resource is the same 64px instrument on every page, including legacy compact. */
+.v9-ui.v8-ui .resource-dock {
+  gap: 6px;
+  flex: none;
+}
+.v9-ui.v8-ui .resource-dock .resource-cell,
+.v9-ui.v8-ui .resource-dock.compact .resource-cell {
+  height: 64px;
+  min-height: 64px;
+  max-height: 64px;
+  grid-template-rows: 38px 24px;
+  border: 1px solid #514334;
+  border-radius: 4px;
+  background: #211d18;
+  box-shadow: inset 0 1px #f2d19b0c;
+}
+.v9-ui.v8-ui .resource-dock .resource-detail,
+.v9-ui.v8-ui .resource-dock.compact .resource-detail {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-content: center;
+  align-items: baseline;
+  gap: 1px 5px;
+  padding: 2px 7px;
+  color: #d6c7b0;
+  font-size: 14px;
+  line-height: 1.15;
+}
+.v9-ui.v8-ui .resource-detail > strong {
+  display: block;
+  color: #fff0d7;
+  font-size: 18px;
+  line-height: 1.1;
+  text-align: right;
+}
+.v9-ui.v8-ui .resource-detail > strong > small {
+  display: inline;
+  color: #bbad98;
+  font-size: 12px;
+  font-weight: 400;
+}
+.v9-ui.v8-ui .resource-detail .resource-rate {
+  display: block;
+  grid-column: 1/-1;
+  color: #c1c29b;
+  font-size: 12px;
+  line-height: 1.1;
+}
+.v9-ui.v8-ui .resource-dock .resource-gather,
+.v9-ui.v8-ui .resource-dock.compact .resource-gather {
+  display: block;
+  width: 100%;
+  min-height: 24px;
+  padding: 2px 3px;
+  font-size: 14px;
+  line-height: 19px;
+  background: #33271c;
+  color: #efc68f;
+  border: 0;
+  border-top: 1px solid #665036;
+  border-radius: 0;
+}
+.v9-ui.v8-ui .resource-detail:hover {
+  background: #2d261d;
+}
+.v9-ui.v8-ui .resource-gather:hover:not(:disabled) {
+  background: #4a3420;
+  color: #ffe0b0;
+}
+.v9-ui.v8-ui .resource-dock .resource-gather:disabled {
+  opacity: 1;
+  color: #b8ad9b;
+  background: #26231e;
+  border-top-color: #494034;
+}
+
+/* Thin dividers replace blue card outlines. Main desk hierarchy comes from type. */
+.v9-ui :is(.life-card, .econ-board, .guild-card, .campaign-card, .life-empty) {
+  background: #1d1b18;
+  border-color: #443b31;
+  border-radius: 4px;
+  color: #eee8dc;
+}
+.v9-ui :is(.dense-building-board, .research-desk, .team-desk, .explore-desk) {
+  background: #1d1b18;
+  border: 0;
+  border-top: 1px solid #705236;
+  border-radius: 0;
+  box-shadow: none;
+}
+.v9-ui
+  :is(.dense-building-board, .research-desk, .team-desk, .explore-desk)
+  :is(h2, h3) {
+  color: #f0e5d2;
+  font-family: Georgia, 'Noto Serif SC', 'SimSun', serif;
+}
+.v9-ui :is(.desk-heading, .econ-board-head, .explore-section-head) {
+  color: #e6d8c3;
+}
+.v9-ui :is(.desk-heading, .econ-board-head) > strong {
+  color: #f2e4cb;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+}
+.v9-ui
+  :is(
+    .desk-muted,
+    .life-hint,
+    .guild-meta,
+    .guild-flaw,
+    .material-price,
+    .life-cost,
+    .research-note,
+    .research-current
+  ) {
+  color: #c0b5a5 !important;
+}
+.v9-ui
+  :is(.team-detail, .research-detail, .explore-center)
+  :is(.guild-meta, .guild-flaw, .life-hint, .material-price) {
+  font-size: 14px !important;
+  line-height: 1.4 !important;
+}
+.v9-ui
+  :is(
+    .life-card-body,
+    .guild-card-body,
+    .dense-building-list,
+    .research-list,
+    .research-detail,
+    .team-roster-list,
+    .team-columns,
+    .mission-body,
+    .explore-aside
+  ) {
+  scrollbar-color: #74614a transparent;
+}
+.v9-ui
+  :is(
+    .life-pill,
+    .guild-summary,
+    .life-effect,
+    .life-mission-state,
+    .campaign-effects > span
+  ) {
+  background: #2a251e;
+  border-color: #504332;
+  color: #e6d7bd;
+}
+.v9-ui :is(.primary-button, .econ-action) {
+  background: #cda06e !important;
+  color: #21180f !important;
+  border-color: #e4ba85 !important;
+  box-shadow: inset 0 1px #ffe8c137;
+  font-size: 14px;
+}
+.v9-ui :is(.primary-button, .econ-action):hover:not(:disabled) {
+  background: #dfb17b !important;
+  border-color: #f1cc99 !important;
+}
+.v9-ui :is(.secondary-button, .life-select) {
+  background: #29241d !important;
+  color: #eee0c9 !important;
+  border-color: #68543c !important;
+  box-shadow: none;
+  font-size: 14px !important;
+}
+.v9-ui :is(.secondary-button, .life-select):hover:not(:disabled) {
+  background: #342b20 !important;
+  border-color: #a58158 !important;
+}
+.v9-ui :is(.primary-button, .secondary-button, .econ-action):disabled {
+  opacity: 1;
+  background: #302c25 !important;
+  color: #bcb09d !important;
+  border-color: #4c4337 !important;
+  box-shadow: none;
+}
+.v9-ui
+  :is(
+    .life-text-button,
+    .life-help-button,
+    .research-detail summary,
+    .mission-stop
+  ) {
+  color: #e0b883;
+}
+.v9-ui :is(.short, .negative, .life-short) {
+  color: #f0b0a0 !important;
+}
+.v9-ui .desk-focused {
+  outline-color: #b58959;
+}
+
+/* Town and research read as ruled lists, with a single selected entry. */
+.v9-ui .dense-building-row {
+  border-color: #383128;
+}
+.v9-ui .dense-building-row:hover,
+.v9-ui .dense-building-row:focus-within {
+  background: #28221b;
+}
+.v9-ui .dense-building-name strong {
+  color: #eee5d5;
+}
+.v9-ui .dense-building-row > .econ-action {
+  background: #33281c !important;
+  border-color: #7c5b38 !important;
+  color: #ebc99b !important;
+  box-shadow: none;
+}
+.v9-ui .dense-building-row > .econ-action:hover:not(:disabled) {
+  background: #49321e !important;
+}
+.v9-ui .research-detail {
+  background: #211d17;
+  border-left-color: #4f3f2c;
+}
+.v9-ui .research-detail h2 {
+  font-size: 24px;
+  color: #f1dfbe;
+}
+.v9-ui .research-detail > .life-buy {
+  background: #211d17;
+}
+.v9-ui .research-group-title {
+  color: #d2bb97 !important;
+  border-bottom: 1px solid #443827;
+}
+.v9-ui .research-row {
+  border-radius: 2px;
+  color: #dfd4c3;
+}
+.v9-ui .research-row-copy strong {
+  font-size: 14px;
+}
+.v9-ui .research-row:hover {
+  background: #2a231b;
+}
+.v9-ui .research-row:is(.selected, [aria-pressed='true']) {
+  background: #34291c;
+  border-color: #98734a;
+  color: #f7dfb8;
+}
+.v9-ui .research-row.complete {
+  color: #bac1a2;
+}
+.v9-ui .research-row:not(.blocked):not(.complete) .research-row-state {
+  color: #d0ca98;
+}
+.v9-ui .research-detail > output.research-status:is(.ready, .complete) {
+  color: #d0ca98;
+}
+
+/* Character names lead; practical stats remain legible; content stays near its heading. */
+.v9-ui .team-roster {
+  border-color: #443827;
+}
+.v9-ui .team-roster-list {
+  flex: 0 1 auto;
+}
+.v9-ui .team-roster > .secondary-button {
+  margin-top: 7px;
+}
+.v9-ui .team-roster-row {
+  color: #e4d7c1;
+  border-radius: 2px;
+}
+.v9-ui .team-roster-row[aria-pressed='true'] {
+  background: #34281b;
+  border-color: #99744b;
+}
+.v9-ui .roster-name {
+  color: #f0e4ce;
+  font-size: 15px;
+}
+.v9-ui .roster-state {
+  background: #312d25;
+  color: #b8ab98;
+}
+.v9-ui .roster-state.active {
+  background: #5a3d22;
+  color: #f7d29c;
+}
+.v9-ui .team-party-line {
+  background: #292219;
+  color: #c9b99f;
+  border-radius: 2px;
+  border-bottom: 1px solid #5c4329;
+}
+.v9-ui .team-party-line strong {
+  color: #f0d6b0;
+}
+.v9-ui .team-party-line :is(span, small) {
+  font-size: 14px;
+}
+.v9-ui .team-overview {
+  border-color: #4b3c2b;
+  align-items: center;
+}
+.v9-ui .team-overview h3 {
+  color: #f6e6c9;
+  font-size: 24px;
+  line-height: 1.3;
+}
+.v9-ui .team-overview h3 small {
+  color: #c7b697;
+  font:
+    14px/1.4 'Microsoft YaHei',
+    sans-serif;
+}
+.v9-ui .team-overview p {
+  color: #e0d6c5;
+  font-size: 14px;
+}
+.v9-ui .team-overview p b {
+  color: #ffedce;
+  font-weight: 600;
+}
+.v9-ui .team-columns {
+  align-items: start;
+}
+.v9-ui .team-columns > :is(.training-actions, .gear-slots, .forge-mini) {
+  align-self: start;
+  max-height: 100%;
+  justify-content: flex-start;
+  background: transparent;
+  border: 0;
+  border-left: 1px solid #4b3c2b;
+  border-radius: 0;
+  box-shadow: none;
+}
+.v9-ui .team-columns > .training-actions {
+  border-left: 0;
+}
+.v9-ui .team-columns .desk-heading {
+  color: #e9d5b4;
+  border-bottom: 1px solid #463726;
+  padding-bottom: 4px;
+}
+.v9-ui .team-columns :is(.life-buy, .guild-forge-actions) {
+  margin-top: 0 !important;
+}
+.v9-ui .team-columns .life-buy > :is(.life-cost, .material-price, .life-hint) {
+  font-size: 14px !important;
+  line-height: 1.35 !important;
+}
+.v9-ui .team-columns .desk-muted {
+  color: #c9bba5;
+  font-size: 14px;
+}
+.v9-ui .team-columns .team-retire {
+  margin-top: 6px;
+  color: #cba58b;
+}
+.v9-ui .gear-slots > .team-gear-slot {
+  background: #252018;
+  border: 0;
+  border-bottom: 1px solid #5b432c;
+  border-radius: 2px;
+  box-shadow: none;
+}
+.v9-ui .team-gear-slot > .desk-heading {
+  border: 0;
+  padding-bottom: 0;
+}
+.v9-ui .gear-name {
+  color: #ead6b5;
+  font-weight: 600;
+  font-size: 14px;
+}
+.v9-ui .gear-name.rarity-2 {
+  color: #c8cea9;
+}
+.v9-ui .gear-name.rarity-3 {
+  color: #edc381;
+}
+.v9-ui .gear-name.rarity-4 {
+  color: #dab5ce;
+}
+.v9-ui .team-gear-slot > .guild-meta {
+  color: #e0d5c2 !important;
+}
+.v9-ui .team-gear-slot .life-text-button {
+  color: #dfb37f;
+  font-size: 14px;
+}
+.v9-ui .team-kit {
+  border-color: #665034;
+}
+.v9-ui .team-experience {
+  color: #c7b99e;
+  font-size: 14px;
+}
+.v9-ui .team-experience progress {
+  accent-color: #c79762;
+}
+.v9-ui .hero-term-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 5px 13px;
+  margin: 0;
+  color: #e6d7bf;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.v9-ui .hero-term-line > span {
+  display: inline;
+}
+.v9-ui .hero-term-line strong {
+  color: #f4e3c5;
+  font-weight: 600;
+}
+
+/* Expedition: copper road markers; the chosen purpose owns the warm highlight. */
+.v9-ui :is(.explore-regions, .explore-aside) {
+  border-color: #443827;
+}
+.v9-ui .explore-region-button {
+  border-radius: 2px;
+}
+.v9-ui .explore-region-button:is(.selected, [aria-pressed='true']) {
+  background: #34291c;
+  border-color: #8e6d45;
+}
+.v9-ui .explore-path > li {
+  background: #211e19;
+  border-color: #524330;
+  color: #c9b99f;
+}
+.v9-ui .explore-path > li.done {
+  background: #2a2b20;
+  border-color: #6c7150;
+  color: #d1d6b4;
+}
+.v9-ui .explore-path > li.current {
+  background: #3b2b1b;
+  border-color: #c29865;
+  color: #f2d29d;
+}
+.v9-ui .explore-reward {
+  color: #d7b98b;
+}
+.v9-ui .explore-center > .expedition-planner {
+  background: #201c17;
+  border: 1px solid #57432d;
+  border-radius: 3px;
+}
+.v9-ui .explore-center .mission-choices > button {
+  background: #26211a;
+  border-color: #54432e;
+  border-radius: 3px;
+}
+.v9-ui .explore-center .mission-choices > button.selected {
+  background: #41301d;
+  border-color: #c89a62;
+}
+.v9-ui .mission-choices > button.selected > :is(svg, strong) {
+  color: #f1cf98;
+}
+.v9-ui .explore-center .mission-bill > span {
+  background: #29231b;
+  border-color: #4f3d28;
+  border-radius: 2px;
+  color: #c3b298;
+}
+.v9-ui .explore-center .mission-bill b {
+  color: #f2dfbf;
+}
+.v9-ui .explore-center .mission-description > p {
+  color: #eee1ca;
+}
+.v9-ui .mission-yield {
+  color: #dec398;
+}
+.v9-ui .mission-bottom {
+  background: #201c17;
+  border-color: #54412d;
+}
+.v9-ui :is(.mission-blocker, .mission-running) {
+  background: #292219;
+  border-color: #98734d;
+  color: #dfc5a1;
+}
+.v9-ui .explore-aside > :is(.explore-outpost, .explore-intel, .explore-boss) {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid #55402b;
+  border-radius: 0;
+}
+.v9-ui
+  .explore-aside
+  :is(
+    .explore-enemy-stats,
+    .explore-match,
+    .explore-prep-cost,
+    .explore-blocker
+  ) {
+  color: #cebea5;
+  font-size: 14px;
+}
+.v9-ui .explore-aside-trigger {
+  background: #30251a;
+  border-color: #735235;
+  color: #efd1a7;
+}
+.v9-ui .explore-remedy [data-slot='switch'][data-checked] {
+  background: #b38653;
+}
+.v9-ui :is(.life-meter, .guild-frontier-path > div) {
+  background: #3a3024;
+  border-color: #594732;
+}
+.v9-ui .life-meter [data-slot='progress-indicator'] {
+  background: #c39760;
+}
+.v9-ui
+  :is(
+    .life-workers > div,
+    .life-market > div,
+    .campaign-stock span,
+    .campaign-node,
+    .life-clues article
+  ) {
+  background: #252119;
+  border-color: #51422e;
+  color: #dfd0b7;
+}
+.v9-ui .campaign-node.selected {
+  background: #382a1b;
+  border-color: #a68050;
+}
+.v9-ui
+  :is(.life-stepper > button, .econ-pager > button, .guild-pages > button) {
+  background: #2b251d;
+  border-color: #705638;
+  color: #e9d1af;
+}
+
+/* Inline terms: the popup is a normal text block even when Tooltip adds inline-flex. */
+.realm-hint-trigger {
+  display: inline;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: inherit;
+  text-align: inherit;
+  text-decoration-line: underline;
+  text-decoration-style: dashed;
+  text-decoration-color: #ab8458;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1px;
+  cursor: help;
+  vertical-align: baseline;
+}
+.realm-hint-trigger:hover,
+.realm-hint-trigger:focus-visible {
+  color: #f2ca91;
+  text-decoration-color: #e1b777;
+  outline-color: #e1b777;
+}
+.realm-hint-popup[data-slot='tooltip-content'],
+.realm-hint-popup {
+  display: block !important;
+  width: max-content;
+  max-width: min(360px, calc(100vw - 24px));
+  padding: 13px 15px !important;
+  border: 1px solid #957044;
+  border-radius: 4px;
+  background: #292219 !important;
+  color: #f2e6d0 !important;
+  box-shadow:
+    0 8px 26px #0008,
+    0 1px 0 #f4d3931c inset;
+  font-family: 'Microsoft YaHei', 'PingFang SC', system-ui, sans-serif;
+  font-size: 15px !important;
+  font-weight: 400;
+  line-height: 1.65;
+  letter-spacing: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+.realm-hint-popup :is(p, div, span, small) {
+  color: inherit;
+  font-size: 15px !important;
+  line-height: 1.65 !important;
+}
+.realm-hint-popup p {
+  display: block;
+  margin: 0;
+}
+.realm-hint-popup p + p {
+  margin-top: 8px;
+}
+.realm-hint-popup strong {
+  color: #f9dbac;
+  font-weight: 600;
+}
+.realm-hint-popup > svg {
+  background: #292219 !important;
+  fill: #292219 !important;
+}
+.realm-hint-popup :is(ul, ol) {
+  margin: 6px 0 0;
+  padding-left: 1.3em;
+}
+
+/* Existing portals use these explicit classes; they cannot inherit shell variables. */
+.life-dialog,
+.team-gear-picker,
+.life-options,
+.life-confirm,
+.compact-tip {
+  background: #211d17 !important;
+  color: #eee3d1 !important;
+  border-color: #826441 !important;
+}
+.life-dialog :is(p, small, [data-slot='dialog-description']),
+.compact-tip p {
+  color: #d0c0a6;
+}
+.life-dialog :is([data-slot='dialog-title'], h2, h3) {
+  color: #f4dfbd;
+}
+.life-dialog :is(.primary-button, .econ-action) {
+  background: #cda06e !important;
+  color: #21180f !important;
+  border-color: #e4ba85 !important;
+}
+.life-dialog :is(.secondary-button, .life-select) {
+  background: #30261b !important;
+  color: #e8d5b8 !important;
+  border-color: #7e603d !important;
+}
+.team-gear-picker .gear-picker-row {
+  background: #2a231a;
+  border-color: #5e462d;
+}
+.team-gear-picker .gear-picker-row .desk-muted {
+  color: #c6b394;
+}
+.life-options [data-slot='select-item'][data-highlighted] {
+  background: #4a3520;
+  color: #ffe0ad;
+}
+.v9-ui .dense-building-row > .econ-action:disabled,
+.life-dialog :is(.primary-button, .secondary-button, .econ-action):disabled {
+  background: #302c25 !important;
+  color: #bcb09d !important;
+  border-color: #4c4337 !important;
+  box-shadow: none;
+  opacity: 1;
+}
+
+@media (min-width: 1001px) {
+  .v9-ui .life-view:has(> .team-desk) {
+    flex: 0 1 650px;
+    max-height: 650px;
+  }
+  .v9-ui .team-detail {
+    justify-content: flex-start;
+  }
+}
+@media (max-width: 700px) {
+  .v9-ui.v8-ui .resource-dock {
+    gap: 4px;
+  }
+  .v9-ui.v8-ui .resource-dock .resource-detail,
+  .v9-ui.v8-ui .resource-dock.compact .resource-detail {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 0;
+    padding: 2px 5px;
+    font-size: 14px;
+  }
+  .v9-ui.v8-ui .resource-detail > strong {
+    font-size: 16px;
+    line-height: 1.1;
+    text-align: left;
+  }
+  .v9-ui.v8-ui .resource-detail > strong > small {
+    font-size: 12px;
+  }
+  .v9-ui.v8-ui .resource-detail .resource-rate {
+    display: none;
+  }
+  .v9-ui.v8-ui .resource-dock .resource-gather {
+    font-size: 14px;
+  }
+  .v9-ui .team-overview h3 {
+    font-size: 20px;
+  }
+  .v9-ui .team-party-line :is(span, small) {
+    font-size: 14px;
+  }
+  .v9-ui .team-columns > :is(.training-actions, .gear-slots, .forge-mini) {
+    align-self: stretch;
+    max-height: none;
+    border-left: 0;
+    border-bottom: 1px solid #4b3c2b;
+  }
+  .v9-ui .hero-term-line {
+    gap: 4px 9px;
+    font-size: 14px;
+  }
+  .realm-hint-popup {
+    max-width: calc(100vw - 24px);
+  }
+}
+/* Import after realm-theme.css. Matches ResourceStrip's explicit detail/actions wrappers. */
+.v9-ui.v8-ui .resource-dock > .resource-cell {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 38px 24px;
+  height: 64px;
+  min-height: 64px;
+  max-height: 64px;
+}
+.v9-ui.v8-ui .resource-cell > .resource-detail {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-content: center;
+  align-items: baseline;
+  justify-content: normal;
+  gap: 1px 5px;
+  min-width: 0;
+  min-height: 0;
+  padding: 2px 7px;
+  cursor: default;
+}
+.v9-ui.v8-ui .resource-cell > .resource-detail:hover {
+  background: transparent;
+}
+.v9-ui.v8-ui .resource-detail > .resource-name {
+  display: inline;
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: start;
+  align-self: baseline;
+  width: auto;
+  padding: 0;
+  color: #d6c7b0;
+  font-size: 14px;
+  line-height: 1.15;
+  white-space: nowrap;
+  cursor: help;
+}
+.v9-ui.v8-ui .resource-detail > strong {
+  display: flex;
+  grid-column: 2;
+  grid-row: 1;
+  align-items: baseline;
+  justify-content: flex-end;
+  width: auto;
+  min-width: 0;
+  gap: 0;
+  margin: 0;
+  white-space: nowrap;
+  line-height: 1.1;
+}
+.v9-ui.v8-ui .resource-detail > strong > .resource-amount {
+  display: inline;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #fff0d7;
+  font:
+    600 18px/1.1 'Microsoft YaHei',
+    sans-serif;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+.v9-ui.v8-ui .resource-amount:hover {
+  color: #ffe2ac;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.v9-ui.v8-ui .resource-amount[aria-disabled='true'] {
+  color: #d9ccb5;
+  cursor: default;
+}
+.v9-ui.v8-ui .resource-detail > strong > small {
+  display: inline;
+  flex: none;
+  font-size: 12px;
+  line-height: 1.1;
+  color: #bbad98;
+  font-weight: 400;
+}
+.v9-ui.v8-ui .resource-detail > .resource-rate {
+  display: block;
+  grid-column: 1/-1;
+  grid-row: 2;
+  font-size: 12px;
+  line-height: 1.1;
+  color: #c1c29b;
+}
+.v9-ui.v8-ui .resource-cell > .resource-actions {
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+  height: 24px;
+  gap: 0;
+  padding: 0;
+  border-top: 1px solid #665036;
+  background: #33271c;
+}
+.v9-ui.v8-ui .resource-actions > .resource-gather {
+  display: block;
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+  min-height: 23px;
+  height: 23px;
+  margin: 0;
+  padding: 1px 3px;
+  border: 0;
+  font-size: 14px;
+  line-height: 21px;
+  white-space: nowrap;
+}
+.v9-ui.v8-ui .resource-actions > .resource-extra {
+  display: block;
+  flex: 0 0 34px;
+  min-width: 0;
+  min-height: 23px;
+  height: 23px;
+  padding: 1px 2px;
+  border: 0;
+  border-left: 1px solid #665036;
+  border-radius: 0;
+  background: #3b2e20;
+  color: #edc58f;
+  font-size: 14px;
+  line-height: 21px;
+  white-space: nowrap;
+}
+.v9-ui.v8-ui .resource-actions > .resource-extra:hover:not(:disabled) {
+  background: #513b23;
+  color: #ffe1ae;
+}
+.v9-ui.v8-ui .resource-actions > .resource-extra:disabled {
+  opacity: 1;
+  background: #29251e;
+  color: #b8ad9b;
+}
+@media (max-width: 700px) {
+  .v9-ui.v8-ui .resource-cell > .resource-detail {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    gap: 0;
+    padding: 2px 5px;
+  }
+  .v9-ui.v8-ui .resource-detail > .resource-name {
+    grid-column: 1;
+    grid-row: 1;
+    font-size: 14px;
+  }
+  .v9-ui.v8-ui .resource-detail > strong {
+    grid-column: 1;
+    grid-row: 2;
+    justify-content: flex-start;
+  }
+  .v9-ui.v8-ui .resource-detail > strong > .resource-amount {
+    font-size: 16px;
+  }
+  .v9-ui.v8-ui .resource-detail > .resource-rate {
+    display: none;
+  }
+  .v9-ui.v8-ui .resource-actions > .resource-extra {
+    flex-basis: 30px;
+    padding-inline: 0;
+  }
+  .v9-ui.v8-ui .resource-actions > .resource-gather {
+    padding-inline: 1px;
+  }
+}
+
+.realm-hint-body {
+  max-height: min(55vh, 420px);
+  overflow: auto;
+  scrollbar-width: thin;
+}
+.realm-hint-popup > :last-child:not(.realm-hint-body) {
+  display: none;
+}
+/* v9 source QA supplement. Append after v9.css; no Site files were edited.
+   Short desktop merges traits into the overview row, reclaiming about 50px.
+   All prices, disabled reasons and actions remain rendered at readable sizes. */
+.v9-ui .team-overview p {
+  display: block;
+}
+.v9-ui .team-overview p > .realm-hint-trigger {
+  margin-left: 7px;
+}
+.v9-ui .hero-term-line {
+  flex: none;
+  min-width: 0;
+}
+.v9-ui .hero-term-line > .realm-hint-trigger {
+  flex: 0 0 auto;
+  max-width: 100%;
+}
+
+@media (min-width: 1001px) and (max-height: 780px) {
+  .v9-ui .team-detail {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto minmax(0, 1fr);
+    gap: 5px 8px;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .v9-ui .team-detail > .team-party-line {
+    grid-column: 1/-1;
+    grid-row: 1;
+    flex-wrap: nowrap;
+    align-items: baseline;
+    min-width: 0;
+    gap: 8px;
+    padding: 3px 6px;
+    line-height: 1.35;
+  }
+  .v9-ui .team-detail > .team-overview {
+    grid-column: 1;
+    grid-row: 2;
+    min-width: 0;
+    gap: 8px;
+    padding-bottom: 0;
+    border-bottom: 0;
+    align-items: center;
+  }
+  .v9-ui .team-overview h3 {
+    font-size: 22px;
+    line-height: 1.25;
+  }
+  .v9-ui .team-overview h3 small {
+    font-size: 14px;
+  }
+  .v9-ui .team-overview p {
+    font-size: 14px;
+    line-height: 1.35;
+  }
+  .v9-ui .team-detail > .hero-term-line {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: center;
+    justify-content: flex-start;
+    max-width: 154px;
+    gap: 3px 8px;
+    line-height: 1.35;
+    padding-left: 8px;
+    border-left: 1px solid #4b3c2b;
+  }
+  .v9-ui .team-detail > .team-columns {
+    grid-column: 1/-1;
+    grid-row: 3;
+    min-height: 0;
+  }
+  .v9-ui .team-columns > :is(.training-actions, .gear-slots, .forge-mini) {
+    gap: 4px;
+    padding: 6px;
+  }
+  .v9-ui .team-columns .desk-heading {
+    min-height: 20px;
+    padding-bottom: 2px;
+  }
+  .v9-ui .team-columns .life-buy {
+    gap: 2px 6px;
+    padding-block: 2px;
+  }
+  .v9-ui .team-columns .life-buy > .primary-button {
+    min-height: 32px;
+  }
+  .v9-ui .team-gear-slot {
+    padding: 4px !important;
+    gap: 2px !important;
+  }
+  .v9-ui .team-gear-slot > .desk-heading {
+    min-height: 18px;
+    padding-bottom: 0;
+  }
+  .v9-ui .team-gear-slot :is(.gear-name, .guild-meta, .life-text-button) {
+    line-height: 1.3 !important;
+  }
+  .v9-ui .forge-mini > .hero-term-line {
+    gap: 3px 8px;
+    line-height: 1.35;
+  }
+  .v9-ui .forge-mini .life-select {
+    height: 30px !important;
+    min-height: 30px;
+  }
+  .v9-ui .team-kit {
+    gap: 3px;
+    padding-top: 4px;
+  }
+  .v9-ui .team-columns .team-retire {
+    margin-top: 4px;
+  }
+}
+
+/* Narrow phones: preserve a coherent inline stats sentence; keep both trait names.
+   The 64px resource cells intentionally stay unchanged. */
+@media (max-width: 700px) {
+  .v9-ui .team-overview p {
+    line-height: 1.35;
+  }
+  .v9-ui .team-detail > .hero-term-line {
+    gap: 3px 8px;
+    line-height: 1.35;
+  }
+  .v9-ui .forge-mini > .hero-term-line {
+    gap: 3px 8px;
+  }
+  .v9-ui .explore-center {
+    gap: 4px;
+  }
+  .v9-ui .explore-frontier {
+    gap: 2px;
+  }
+  .v9-ui .explore-heading {
+    align-items: baseline;
+  }
+  .v9-ui .explore-party {
+    gap: 0;
+    padding-block: 0;
+  }
+  .v9-ui .explore-path > li {
+    min-height: 32px;
+    padding-block: 2px;
+  }
+  .v9-ui .explore-center > .expedition-planner {
+    gap: 4px;
+    padding: 5px;
+  }
+  .v9-ui .explore-center .mission-body {
+    gap: 4px;
+  }
+  .v9-ui .explore-center .mission-bottom {
+    padding-top: 4px;
+    min-height: 36px;
+  }
+}
+@media (max-width: 700px) {
+  .v9-ui.v8-ui .resource-cell > .resource-detail {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: 15px 18px;
+    gap: 0 3px;
+  }
+  .v9-ui.v8-ui .resource-detail > strong {
+    grid-column: 1/-1;
+  }
+  .v9-ui.v8-ui .resource-detail > .resource-rate {
+    display: block;
+    grid-column: 2;
+    grid-row: 1;
+    text-align: right;
+    font-size: 10px;
+    white-space: nowrap;
+  }
+  .v9-ui.v8-ui .resource-rate > small {
+    font-size: 10px;
+  }
+  /* Names still reveal the complete road and reward; route names explain purpose. */
+  .v9-ui .explore-frontier > .explore-path,
+  .v9-ui .explore-frontier:has(.explore-path) > .explore-reward,
+  .v9-ui .explore-center .mission-description {
+    display: none;
+  }
+}
