@@ -1,7 +1,8 @@
 'use client';
 import { useEffect, useState } from 'react';
 import * as G from '@/lib/realm';
-import { GearLabel } from './gear-presentation';
+import { GearLabel, GearWearer } from './gear-presentation';
+import { DEFAULT_GEAR_SORT, GearSortControl } from './gear-sort-control';
 import { GearWorkshop, SalvageYield } from './gear-workshop';
 import { InfoHint, Term } from './info-hint';
 import { Pick, type Act, type Destination } from './realm-panels';
@@ -13,9 +14,9 @@ type Batch = { ids: string[]; includeSets: boolean; includeEnhanced: boolean; al
 export function EquipmentWarehouse({ s, act, go, focus }: {
   s: G.State; act: Act; go: (d: Destination) => void; focus: Destination;
 }) {
-  const [filters, setFilters] = useState<Filters>({ sort: 'recent' });
+  const [filters, setFilters] = useState<Filters>({ ...DEFAULT_GEAR_SORT });
   const [selected, setSelected] = useState<string[]>([]);
-  const [inspected, setInspected] = useState(focus.gear || G.filterGear(s, { sort: 'recent' })[0]?.id || '');
+  const [inspected, setInspected] = useState(focus.gear || G.filterGear(s)[0]?.id || '');
   const [includeSets, setIncludeSets] = useState(false);
   const [includeEnhanced, setIncludeEnhanced] = useState(false);
   const [confirm, setConfirm] = useState<Batch | null>(null);
@@ -58,8 +59,7 @@ export function EquipmentWarehouse({ s, act, go, focus }: {
         options={[{ value: 'all', label: '全部状态' }, { value: 'unequipped', label: '闲置装备' }, { value: 'equipped', label: '已穿戴' }, { value: 'locked', label: '已收藏' }]} />
       <Pick label="仓库套装筛选" value={filters?.set || 'all'} onChange={(set) => changeFilters({ set })}
         options={[{ value: 'all', label: '全部套装与散件' }, { value: 'none', label: '只看散件' }, ...G.EQUIPMENT_SETS.filter((set) => setIds.has(set.id)).map((set) => ({ value: set.id, label: set.name }))]} />
-      <Pick label="仓库装备排序" value={filters?.sort || 'recent'} onChange={(sort) => changeFilters({ sort: sort as 'recent' | 'rarity' | 'tier' | 'name' })}
-        options={[{ value: 'recent', label: '最近获得优先' }, { value: 'rarity', label: '品质从高到低' }, { value: 'tier', label: '阶级从高到低' }, { value: 'name', label: '装备名称' }]} />
+      <GearSortControl label="仓库装备" sort={filters?.sort} order={filters?.order} onChange={changeFilters} />
     </div>
     <div className="warehouse-quality" role="group" aria-label="筛选装备品质">
       <button aria-pressed={!filters?.rarities?.length} onClick={() => changeFilters({ rarities: [] })}>全部品质</button>
@@ -68,7 +68,7 @@ export function EquipmentWarehouse({ s, act, go, focus }: {
         changeFilters({ rarities: rarities.includes(i + 1) ? rarities.filter((r) => r !== i + 1) : [...rarities, i + 1] });
       }}>{name}</button>)}
       <span>找到 {items.length} 件</span>
-      <button onClick={() => { setFilters({ sort: 'recent' }); setSelected([]); }}>清除筛选</button>
+      <button onClick={() => { setFilters({ ...DEFAULT_GEAR_SORT }); setSelected([]); }}>清除筛选</button>
     </div>
     <div className="warehouse-body">
       <section className="warehouse-list-area" aria-label="装备整理清单">
@@ -81,7 +81,6 @@ export function EquipmentWarehouse({ s, act, go, focus }: {
         </div>
         <div className="warehouse-items">
           {items.map((gear) => {
-            const wearer = G.gearOwner(s, gear.id);
             const single = G.dismantleQuote(s, [gear.id], options);
             const blocked = single.skipped[0]?.reason || '';
             return <article key={gear.id} className={'warehouse-row' + (item?.id === gear.id ? ' active' : '')}>
@@ -89,7 +88,7 @@ export function EquipmentWarehouse({ s, act, go, focus }: {
                 checked={selected.includes(gear.id) && !blocked} onChange={(e) => selectOne(gear.id, e.target.checked)} />
               <button className="warehouse-item-open" aria-pressed={item?.id === gear.id} onClick={() => setInspected(gear.id)}>
                 <GearLabel s={s} item={gear} withinControl />
-                <span>{G.SLOT_NAMES[G.RECIPES.find((r) => r.id === gear.recipe)!.slot]} · {wearer ? wearer.name + (G.heroAway(s, wearer.id) ? ' · 出征携带' : ' · 已穿戴') : '闲置'}{gear.locked ? ' · 已收藏' : ''}</span>
+                <span>{G.SLOT_NAMES[G.RECIPES.find((r) => r.id === gear.recipe)!.slot]} · <GearWearer s={s} item={gear} />{gear.locked ? ' · 已收藏' : ''}</span>
               </button>
               <button className="warehouse-lock" aria-label={(gear.locked ? '取消收藏 ' : '收藏 ') + G.gearName(gear)} aria-pressed={!!gear.locked}
                 onClick={() => act((x) => G.toggleGearLock(x, gear.id))}>{gear.locked ? '◆' : '◇'}</button>

@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import * as G from '@/lib/realm';
-import { GearStats } from './gear-presentation';
+import { GearStats, GearWearer } from './gear-presentation';
 import { InfoHint, Term } from './info-hint';
 import { affixHelp } from '@/lib/glossary';
 import { Buy, Pick, type Act } from './realm-panels';
@@ -29,7 +29,7 @@ export function GearWorkshop({ s, item, act, onRemoved }: {
   return <div className="gear-workshop">
     <GearStats s={s} item={item} />
     <div className="gear-workshop-state">
-      <span>{owner ? `${owner.name} · ${away ? '出征携带' : '已装备'}` : '闲置装备'}</span>
+      <GearWearer s={s} item={item} />
       <button className="secondary-button" aria-pressed={!!item.locked}
         onClick={() => act((x) => G.toggleGearLock(x, item.id))}>
         {item.locked ? '已收藏 · 取消收藏' : '收藏保护'}

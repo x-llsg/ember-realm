@@ -23,6 +23,18 @@ export const GEAR_SLOT_OPTIONS = GEAR_SLOTS.map((value) => ({
 export const INVENTORY_CAP = 120;
 export const RARITY_SCALE = [1, 1.15, 1.3, 1.45, 1.65, 1.85] as const;
 export const BOSS_RED_CHANCE = 0.02;
+export const REGION_DROP_TIERS = [1, 2, 2, 4, 4, 6] as const;
+export const REGION_DROP_RANKS = [0, 1, 1, 2, 2, 3] as const;
+export const GUARDIAN_DROP_CHANCES = [0.2, 0.35, 0.5, 0.7, 0.9] as const;
+/** Green, blue, purple and gold weights; red remains exclusive to bosses. */
+export const GUARDIAN_RARITY_WEIGHTS = [
+  [70, 27, 3, 0],
+  [58, 34, 8, 0],
+  [42, 43, 14, 1],
+  [28, 48, 21, 3],
+  [15, 48, 31, 6],
+] as const;
+export const EXPEDITION_DROP_CHANCES = [0.12, 0.17, 0.23, 0.3, 0.38, 0.47] as const;
 export type BuildModifiers = Partial<
   Record<
     | 'hp'

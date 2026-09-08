@@ -1,0 +1,18 @@
+/* Equipment pickers and workshop dialogs render through portals outside .v9-ui. */
+.gear-name.rarity-1, .gear-wearer .gear-wearer-name.potential-1 { color: #e6e5e1 !important; }
+.gear-name.rarity-2, .gear-wearer .gear-wearer-name.potential-2 { color: #86d19a !important; }
+.gear-name.rarity-3, .gear-wearer .gear-wearer-name.potential-3 { color: #79baff !important; }
+.gear-name.rarity-4, .gear-wearer .gear-wearer-name.potential-4 { color: #c79bff !important; }
+.gear-name.rarity-5, .gear-wearer .gear-wearer-name.potential-5 { color: #f2c662 !important; }
+.gear-name.rarity-6 { color: #ff7b78 !important; }
+.gear-wearer { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 5px; vertical-align: baseline; }
+.gear-wearer .gear-wearer-name { font-size: inherit; font-weight: 650; }
+.gear-wearer-status { display: inline-block; border: 1px solid #716043; border-radius: 3px; padding: 0 4px; color: #d4bd94; font-size: 11px; font-style: normal; line-height: 1.5; white-space: nowrap; }
+.gear-sort-control { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 6px; min-width: 0; }
+.gear-sort-control .life-select { width: 100%; min-width: 0; }
+.gear-picker-toolbar { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.75fr); gap: 8px; flex: none; }
+.gear-picker-toolbar .life-select { min-height: 34px; height: 34px; padding: 5px 8px; font-size: 13px; }
+.gear-picker-row .gear-name { font-weight: 600; line-height: 1.5; }
+@media (max-width: 520px) {
+  .gear-picker-toolbar { grid-template-columns: 1fr; gap: 6px; }
+}

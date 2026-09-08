@@ -55,6 +55,7 @@ export function MissionPlanner({
   const reason = G.dispatchReason(s, region, route, 0);
   const e = s.expedition,
     frontier = G.frontierInfo(s, region);
+  const equipmentLoot = G.dropProfile(s, region, 'expedition', frontier.depth);
   return (
     <div className="life-card expedition-planner">
       <fieldset
@@ -111,6 +112,9 @@ export function MissionPlanner({
         <p className="mission-yield">
           {G.expeditionMaterialPreview(s, region, route)}
         </p>
+        {G.hasReturned(s) && <p className="mission-drop">
+          <InfoHint {...G.dropHelp(equipmentLoot)}>成功归来：{G.dropSummary(equipmentLoot)}</InfoHint>
+        </p>}
         {route === 'survey' && G.hasReturned(s) && (
           <p className="life-hint">
             线索 {G.discoveryCount(s, region)}/2 ·{' '}

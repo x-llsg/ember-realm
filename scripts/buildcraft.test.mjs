@@ -535,10 +535,10 @@ test('boss loot has exact blue-purple-gold-red boundaries and always contains on
     [0.00001, 6],
     [0.01999, 6],
     [0.02001, 5],
-    [0.09999, 5],
-    [0.10001, 4],
-    [0.39999, 4],
-    [0.40001, 3],
+    [0.13999, 5],
+    [0.14001, 4],
+    [0.47999, 4],
+    [0.48001, 3],
     [0.99999, 3],
   ]) {
     const s = town();
@@ -549,11 +549,11 @@ test('boss loot has exact blue-purple-gold-red boundaries and always contains on
     assert.equal(s.guild.inventory.length, n + 1);
     assert.equal(x.rarity, rarity);
     assert.equal(x.setId, 'wildwatch');
-    assert.equal(x.tier, 1);
+    assert.equal(x.tier, 2);
     assert.deepEqual(reload(s), s);
   }
 });
-test('all six boss pools use their own region set and tier cap and can reach all six slots', () => {
+test('all six boss pools use their own region set and post-clear tier and can reach all six slots', () => {
   const slots = new Set();
   for (let region = 0; region < 6; region++) {
     const s = town();
@@ -564,21 +564,20 @@ test('all six boss pools use their own region set and tier cap and can reach all
         G.EQUIPMENT_SETS.find((set) => set.id === x.setId).region,
         region,
       );
-      assert.ok(x.tier <= [1, 2, 2, 4, 4, 6][region]);
-      assert.ok(x.tier <= G.gearTier(s));
+      assert.equal(x.tier, [2, 3, 3, 5, 5, 6][region]);
       slots.add(G.RECIPES.find((r) => r.id === x.recipe).slot);
     }
   }
   assert.deepEqual([...slots].sort(), [...G.GEAR_SLOTS].sort());
 });
-test('third guardians guarantee local blue-or-purple; ordinary guardians can miss and never generate red', () => {
+test('third guardians guarantee local blue-or-better; ordinary guardians can miss and never generate red', () => {
   for (const q of [0.001, 0.5, 0.999]) {
     const s = town();
     s.battle = { node: 2 };
     s.rng = seed(q);
     G.monsterEquipment(s, 0, 'guardian');
     assert.equal(s.guild.inventory.length, 1);
-    assert.ok([3, 4].includes(s.guild.inventory[0].rarity));
+    assert.ok([3, 4, 5].includes(s.guild.inventory[0].rarity));
   }
   const missing = town();
   missing.rng = seed(0.9);
@@ -587,7 +586,7 @@ test('third guardians guarantee local blue-or-purple; ordinary guardians can mis
   const s = town();
   for (let n = 0; n < 80; n++) G.monsterEquipment(s, 1, 'guardian');
   assert.ok(s.guild.inventory.length > 0);
-  assert.ok(s.guild.inventory.every((x) => x.rarity >= 2 && x.rarity <= 4));
+  assert.ok(s.guild.inventory.every((x) => x.rarity >= 2 && x.rarity <= 5));
 });
 test('full equipment storage prevents a paid boss challenge before deducting supplies', () => {
   const s = fill(town(), G.INVENTORY_CAP),

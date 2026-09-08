@@ -1,5 +1,7 @@
 import * as G from './realm.ts';
 import type { BuildModifiers } from './equipment-data.ts';
+import { dropProfile, rollDropRarity } from './drop-progression.ts';
+export * from './drop-progression.ts';
 
 export function talentBonuses(h: G.Hero): BuildModifiers {
   if (h.talentVersion === 2)
@@ -94,23 +96,10 @@ export function monsterEquipment(
     s.battle.rng = x >>> 0 || 1;
     return s.battle.rng / 4294967296;
   };
-  const guaranteed = firstClear && s.battle?.node === 2;
-  if (kind === 'guardian' && !guaranteed && random() >= 0.4) return;
+  const profile = dropProfile(s, region, kind, s.battle?.node ?? 0, firstClear);
+  if (!profile.guaranteed && random() >= profile.chance) return;
   const n = random(),
-    rarity =
-      kind === 'boss'
-        ? n < 0.02
-          ? 6
-          : n < 0.1
-            ? 5
-            : n < 0.4
-              ? 4
-              : 3
-        : n < 0.1
-          ? 4
-          : n < 0.5 || guaranteed
-            ? 3
-            : 2,
+    rarity = rollDropRarity(profile, n),
     slot = G.GEAR_SLOTS[Math.floor(random() * 6)],
     recipes = G.RECIPES.filter(
       (recipe) =>
@@ -120,7 +109,7 @@ export function monsterEquipment(
   const item: G.Gear = {
     id: `gear-${++s.guild.serial}`,
     recipe: recipes[Math.floor(random() * recipes.length)].id,
-    tier: Math.min(G.gearTier(s), [1, 2, 2, 4, 4, 6][region]),
+    tier: profile.tier,
     rarity,
     affix: Math.floor(random() * G.AFFIXES.length),
     upgrade: 0,

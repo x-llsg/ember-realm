@@ -328,3 +328,35 @@ test('filtering combines quality, slot, set, ownership, collection and Chinese s
     s.guild.inventory.map(G.gearName).sort((a, b) => a.localeCompare(b, 'zh-CN')));
   assert.deepEqual(s, before);
 });
+
+test('equipment defaults to rarity descending, with explicit forward and reverse order for each sort', () => {
+  const s = fixture();
+  const goldOld = gear(s, { rarity: 5, tier: 2, upgrade: 1 });
+  const blue = gear(s, { rarity: 3, tier: 4 });
+  const white = gear(s, { rarity: 1, tier: 1 });
+  const goldNew = gear(s, { rarity: 5, tier: 2, upgrade: 1 });
+  const before = structuredClone(s);
+  const ids = (filters) => G.filterGear(s, filters).map((item) => item.id);
+
+  assert.deepEqual(ids(), [goldNew.id, goldOld.id, blue.id, white.id]);
+  assert.deepEqual(ids({ sort: 'rarity', order: 'asc' }), [white.id, blue.id, goldOld.id, goldNew.id]);
+  assert.deepEqual(ids({ sort: 'tier', order: 'desc' }), [blue.id, goldNew.id, goldOld.id, white.id]);
+  for (const sort of ['rarity', 'tier', 'recent', 'name']) {
+    const ascending = ids({ sort, order: 'asc' });
+    assert.deepEqual(ids({ sort, order: 'desc' }), ascending.toReversed());
+    assert.deepEqual(ids({ sort, order: 'asc' }), ascending, 'repeated reads are stable');
+  }
+  assert.deepEqual(s, before, 'sorting preserves every state field including inventory and RNG');
+});
+
+test('acquisition sorting uses preserved insertion order across equipment and visitor IDs', () => {
+  const s = fixture();
+  const early = gear(s, { id: 'gear-999', rarity: 6 });
+  const visitor = gear(s, { id: 'visitor-3', rarity: 1 });
+  const late = gear(s, { id: 'gear-2', rarity: 4 });
+  const before = structuredClone(s);
+  assert.deepEqual(G.filterGear(s, { sort: 'recent', order: 'desc' }).map((g) => g.id), [late.id, visitor.id, early.id]);
+  assert.deepEqual(G.filterGear(s, { sort: 'recent', order: 'asc' }).map((g) => g.id), [early.id, visitor.id, late.id]);
+  assert.deepEqual(G.filterGear(s, { rarities: [4, 6], sort: 'recent', order: 'asc' }).map((g) => g.id), [early.id, late.id]);
+  assert.deepEqual(s, before);
+});

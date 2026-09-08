@@ -2,6 +2,18 @@
 import * as G from '@/lib/realm';
 import { InfoHint, Term } from './info-hint';
 import { HELP, affixHelp } from '@/lib/glossary';
+import '@/app/gear-presentation.css';
+
+export function GearWearer({ s, item }: { s: G.State; item: G.Gear }) {
+  const owner = G.gearOwner(s, item.id);
+  if (!owner) return <span>闲置</span>;
+  const applicant = !s.heroes.some((hero) => hero.id === owner.id);
+  return <span className="gear-wearer">
+    <strong className={'gear-wearer-name potential-' + owner.quality}>{owner.name}</strong>
+    <em className="gear-wearer-status">{G.heroAway(s, owner.id) ? '出征携带' : applicant ? '候选 · 已穿戴' : '已穿戴'}</em>
+  </span>;
+}
+
 export function GearLabel({ s, item, withinControl = false }: { s: G.State; item: G.Gear; withinControl?: boolean }) {
   const recipe = G.RECIPES.find((r) => r.id === item.recipe)!;
   const stats = G.itemStats(s, item);

@@ -1,6 +1,7 @@
 'use client';
 import { SkillTreePanel } from './skill-tree-panel';
-import { GearLabel, GearStats } from './gear-presentation';
+import { GearLabel, GearStats, GearWearer } from './gear-presentation';
+import { DEFAULT_GEAR_SORT, GearSortControl } from './gear-sort-control';
 import { GearWorkshop } from './gear-workshop';
 import { useState, useSyncExternalStore } from 'react';
 import { InfoHint, Term } from './info-hint';
@@ -213,6 +214,7 @@ export function GuildTeam({ s, act, go, focus }: Props) {
       Math.max(1, Math.min(G.gearTier(s), Math.trunc(focus?.tier ?? G.gearTier(s)))),
     ),
     [slotFilter, setSlotFilter] = useState('all'),
+    [gearSort, setGearSort] = useState(DEFAULT_GEAR_SORT),
     [picker, setPicker] = useState(false);
   const busy = !!s.battle || !!s.expedition,
     h = s.heroes.find((member) => member.id === selected) || s.heroes[0],
@@ -227,13 +229,7 @@ export function GuildTeam({ s, act, go, focus }: Props) {
       recipes.some((r) => r.slot === slot),
     ),
     slotRecipes = recipes.filter((r) => r.slot === chosen?.slot),
-    gearList = s.guild.inventory
-      .filter(
-        (g) =>
-          slotFilter === 'all' ||
-          G.RECIPES.find((r) => r.id === g.recipe)!.slot === slotFilter,
-      )
-      .toReversed();
+    gearList = G.filterGear(s, { slot: slotFilter as G.GearSlot | 'all', ...gearSort });
   const inspect = (g: G.Gear) => {
     setPicker(false);
     setDetail(g.id);
@@ -488,7 +484,7 @@ export function GuildTeam({ s, act, go, focus }: Props) {
                     className="life-text-button"
                     onClick={() => go({ view: 'heroes', tab: 'inventory', hero: h.id })}
                   >
-                    整理仓库 {s.guild.inventory.length}/{G.INVENTORY_CAP}
+                    装备仓库 {s.guild.inventory.length}/{G.INVENTORY_CAP}
                   </button>
                 </div>
                 <div className="equipment-six-grid">
@@ -702,35 +698,33 @@ export function GuildTeam({ s, act, go, focus }: Props) {
       </section>
       <Dialog open={picker} onOpenChange={setPicker}>
         <DialogContent className="life-dialog team-gear-picker">
-          <DialogTitle>{h?.name || '旅人'} · 装备库</DialogTitle>
+          <DialogTitle>{h?.name || '旅人'} · 选择装备</DialogTitle>
           <DialogDescription>
             选择后直接装备到当前旅人；标明原主人的装备可转交。共{' '}
             {s.guild.inventory.length}/{G.INVENTORY_CAP} 件。
           </DialogDescription>
-          <Pick
-            label="筛选装备部位"
-            value={slotFilter}
-            onChange={setSlotFilter}
-            options={[
-              { value: 'all', label: '全部 · 最近获得优先' },
-              ...G.GEAR_SLOT_OPTIONS,
-            ]}
-          />
+          <div className="gear-picker-toolbar">
+            <Pick
+              label="筛选装备部位"
+              value={slotFilter}
+              onChange={setSlotFilter}
+              options={[
+                { value: 'all', label: '全部部位' },
+                ...G.GEAR_SLOT_OPTIONS,
+              ]}
+            />
+            <GearSortControl label="可选装备" {...gearSort} onChange={setGearSort} />
+          </div>
           <div className="gear-picker-list">
             {gearList.map((g) => {
-              const owner = s.heroes.find((member) =>
-                Object.values(member.equipment).includes(g.id),
-              );
+              const owner = G.gearOwner(s, g.id);
               return (
                 <article className="gear-picker-row" key={g.id}>
                   <div>
                     <GearLabel s={s} item={g} />
                     <GearStats s={s} item={g} />
                     <small className="desk-muted">
-                      {owner
-                        ? owner.name +
-                          (G.heroAway(s, owner.id) ? '出征携带' : '正在使用')
-                        : '闲置'}{' '}
+                      <GearWearer s={s} item={g} />{' '}
                       ·{' '}
                       <InfoHint {...affixHelp(g.affix, s, g)}>
                         {G.AFFIXES[g.affix].text}
@@ -783,7 +777,7 @@ export function GuildTeam({ s, act, go, focus }: Props) {
         }}
       >
         <DialogContent className="life-dialog">
-          <DialogTitle>{item ? G.gearName(item) : '安排旅人退役'}</DialogTitle>
+          <DialogTitle>{item ? <GearLabel s={s} item={item} /> : '安排旅人退役'}</DialogTitle>
           <DialogDescription>
             {item
               ? '强化与重铸确定生效；定向词条消耗同品质分解材料。出征角色携带的装备归来后可整备。'

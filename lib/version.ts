@@ -1,2 +1,2 @@
 // Release version; independent of the save schema version in realm.ts.
-export const GAME_VERSION = '0.1.4';
+export const GAME_VERSION = '0.1.5';

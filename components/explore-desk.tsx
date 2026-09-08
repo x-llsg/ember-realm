@@ -145,6 +145,8 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
       ? focus.guardian
       : Math.min(4, frontier.depth);
   const rematch = G.guardianRematch(s, region, guardianNode);
+  const guardianLoot = G.dropProfile(s, region, 'guardian', guardianNode, !rematch);
+  const bossLoot = G.dropProfile(s, region, 'boss', 5, !s.cleared.includes(region));
   const guardian = G.enemyDefinition(s, region, 'guardian', guardianNode),
     boss = G.enemyDefinition(s, region, 'boss'),
     guardReady = rematch || G.guardianReady(s, region);
@@ -371,10 +373,10 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
         </button>
         <InfoHint
           title="首领套装与残响"
-          body="胜利必掉1件当地套装：蓝60%、紫30%、金8%、红2%。首胜后每180游戏秒可再次挑战，仍需支付出战补给；不重复发首通物资、经验、解锁和剧情。读档保留战斗随机序列。"
+          body={`${G.dropHelp(bossLoot).body}\n首胜后每180游戏秒可再次挑战，仍需支付出战补给；不重复发首通物资、经验、解锁和剧情。读档保留战斗随机序列。`}
         >
           <span className="boss-loot-note">
-            套装必掉 · 神话2% · 同世界可再战
+            {G.dropSummary(bossLoot)}
           </span>
         </InfoHint>
         <div className="explore-boss-actions">
@@ -662,13 +664,13 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
               <div>
                 <InfoHint
                   title={guardian.name}
-                  body={`生命 ${guardian.hp} · 攻击 ${guardian.attack} · 护甲 ${guardian.defense}。${G.ELEMENT_NAMES[guardian.element]}伤害。${rematch ? '再战胜利有40%概率掉落当地套装，不重复首占奖励、经验或据点进度。' : '推荐练度包括装备与技能养成；战败保留路线。'}`}
+                  body={`生命 ${guardian.hp} · 攻击 ${guardian.attack} · 护甲 ${guardian.defense}。${G.ELEMENT_NAMES[guardian.element]}伤害。${rematch ? '再战按所选节点掉落当地套装，不重复首占奖励、经验或据点进度。' : '推荐练度包括装备与技能养成；战败保留路线。'}`}
                 >
                   <strong>{guardian.name}</strong>
                 </InfoHint>
                 <small>
                   {rematch
-                    ? '再战：40%掉当地套装，不重复首占奖励'
+                    ? '再战守敌 · 不重复首占奖励'
                     : guardReady
                       ? '守敌已现身'
                       : '当前节点守敌'}{' '}
@@ -692,6 +694,9 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
               >
                 {rematch ? '再战守敌' : guardReady ? '挑战守敌' : '推进后挑战'}
               </button>
+              <InfoHint {...G.dropHelp(guardianLoot)} className="guardian-loot-note">
+                {G.dropSummary(guardianLoot)}
+              </InfoHint>
               {guardReady && guardianBlocker && (
                 <small>{guardianBlocker}</small>
               )}

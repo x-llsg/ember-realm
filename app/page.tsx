@@ -18,6 +18,7 @@ import {
   RotateCcw,
   Check,
   Sun,
+  PackageOpen,
 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
@@ -57,6 +58,7 @@ const NAV = [
   { id: 'town' as const, name: '城镇', icon: Castle },
   { id: 'recruit' as const, name: '招募', icon: Users },
   { id: 'heroes' as const, name: '队伍', icon: Users },
+  { id: 'equipment' as const, name: '装备仓库', icon: PackageOpen },
   { id: 'explore' as const, name: '远征', icon: Compass },
   { id: 'research' as const, name: '研究', icon: BookOpen },
   { id: 'destiny' as const, name: '手册', icon: BookOpen },
@@ -389,12 +391,14 @@ export default function Home() {
   const goal = G.objective(s),
     e = s.expedition,
     stage = s.buildings.fire ? G.TOWN_RANK_NAMES[G.townRank(s)] : '无人之地';
+  const inventoryOpen = view === 'heroes' && focus.tab === 'inventory';
+  const navValue = inventoryOpen ? 'equipment' : view;
+  const equipmentVisible = s.guild.inventory.length > 0 || s.guild.crafts > 0 || s.buildings.forge > 0;
   return (
     <Tabs
-      value={view}
+      value={navValue}
       onValueChange={(v) => {
-        setView(v as G.View);
-        setFocus({ view: v as G.View, nonce: Date.now() });
+        go(v === 'equipment' ? { view: 'heroes', tab: 'inventory' } : { view: v as G.View });
       }}
       orientation="vertical"
       className="life-shell v7-ui v8-ui v9-ui"
@@ -422,13 +426,14 @@ export default function Home() {
         <aside className="life-nav">
           <span className="life-kicker">领主议事厅</span>
           <TabsList className="life-nav-list" aria-label="游戏区域">
-            {NAV.filter((n) => G.viewDiscovered(s, n.id)).map((n) => (
+            {NAV.filter((n) => n.id === 'equipment' ? equipmentVisible : G.viewDiscovered(s, n.id)).map((n) => (
               <TabsTrigger value={n.id} key={n.id}>
                 <n.icon />
                 {n.name}
                 {n.id === 'explore' && (e || s.battle) && (
                   <span className="life-dot" />
                 )}
+                {n.id === 'equipment' && G.lootUnread(s) > 0 && <span className="life-dot" />}
               </TabsTrigger>
             ))}
           </TabsList>
@@ -477,7 +482,7 @@ export default function Home() {
               <h1>
                 {view === 'town'
                   ? '余烬镇'
-                  : NAV.find((n) => n.id === view)!.name}
+                  : NAV.find((n) => n.id === navValue)!.name}
               </h1>
             </div>
             <span className="life-pill">
@@ -572,6 +577,15 @@ export default function Home() {
               act={act}
               go={go}
               focus={focus}
+            />
+          </TabsContent>
+          <TabsContent value="equipment" className="life-view">
+            <HeroesPanel
+              key={'equipment' + focus.nonce}
+              s={s}
+              act={act}
+              go={go}
+              focus={{ ...focus, view: 'heroes', tab: 'inventory' }}
             />
           </TabsContent>
           <TabsContent value="recruit" className="life-view">

@@ -193,7 +193,7 @@ test('all five occupied guardians remain farmable after a boss clear, with ordin
         assert.deepEqual(after.heroes.map((h) => h.xp), s.heroes.map((h) => h.xp));
         for (const item of after.guild.inventory) {
           found++;
-          assert.ok(item.rarity >= 2 && item.rarity <= 4);
+          assert.ok(item.rarity >= 2 && item.rarity <= 5);
           assert.equal(item.setId, G.EQUIPMENT_SETS.find((set) => set.region === region).id);
         }
       }

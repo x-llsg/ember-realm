@@ -12,6 +12,7 @@ export * from './mastery.ts';
 import { freshSalvage, validateSalvage, bulkDismantleGear, reforgeQuote, type DismantleOptions } from './equipment-management.ts';
 import { recordLoot, validateLoot } from './loot.ts';
 import { freshAchievements, validateAchievements } from './achievements.ts';
+import { dropProfile, rollDropRarity, type DropProfile } from './drop-progression.ts';
 export { EQUIPMENT_BASE_SCALE, EQUIPMENT_DEFENSE_SCALE, gearTierScale } from './equipment-growth.ts';
 export * from './skill-data.ts';
 export { talentExperience, talentTraining } from './buildcraft.ts';
@@ -523,13 +524,13 @@ export function forgeReason(s: G.State, id: string, tier = C.gearTier(s)) {
     C.materialReason(s, C.recipeMaterialCost(s, id, tier))
   );
 }
-function newGear(s: G.State, recipe: string, tier: number) {
+function newGear(s: G.State, recipe: string, tier: number, profile?: DropProfile) {
   const n = guildRandom(s);
   return {
     id: `gear-${++s.guild.serial}`,
     recipe,
     tier,
-    rarity: n < 0.5 ? 1 : n < 0.8 ? 2 : n < 0.95 ? 3 : n < 0.99 ? 4 : 5,
+    rarity: profile ? rollDropRarity(profile, n) : n < 0.5 ? 1 : n < 0.8 ? 2 : n < 0.95 ? 3 : n < 0.99 ? 4 : 5,
     affix: roll(s, D.AFFIXES.length),
     upgrade: 0,
   };
@@ -638,7 +639,8 @@ export function expeditionEquipment(
   depth: number,
   guaranteed = false,
 ) {
-  if (!guaranteed && guildRandom(s) > 0.25 + depth * 0.06) return '';
+  const profile = dropProfile(s, region, 'expedition', depth, guaranteed);
+  if (!profile.guaranteed && guildRandom(s) >= profile.chance) return '';
   const localRecipes = [
     ['blade', 'bow', 'plate', 'vitality'],
     ['staff', 'shadowcoat', 'wardstone'],
@@ -647,14 +649,14 @@ export function expeditionEquipment(
     ['firecoat', 'bow'],
     ['dawncoat', 'wardstone'],
   ][region];
-  const recipes = D.RECIPES.filter(
-    (r) => localRecipes.includes(r.id) && !C.recipeUnlockReason(s, r.id),
-  );
+  // Finding a local item does not require already knowing how to forge it.
+  const recipes = D.RECIPES.filter((r) => localRecipes.includes(r.id));
   if (!recipes.length) return '';
   const item = newGear(
     s,
     recipes[roll(s, recipes.length)].id,
-    Math.min(C.gearTier(s), [1, 2, 2, 4, 4, 6][region]),
+    profile.tier,
+    profile,
   );
   if (guaranteed) item.rarity = Math.max(3, item.rarity);
   if (s.guild.inventory.length < INVENTORY_CAP) {

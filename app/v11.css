@@ -664,11 +664,24 @@
 }
 .guardian-preview {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 10px;
   padding: 8px;
   border: 1px solid #4b4231;
   border-radius: 4px;
+}
+.guardian-preview > .guardian-loot-note {
+  flex-basis: 100%;
+  width: fit-content;
+  font-size: 12px;
+  color: #e1c394;
+  line-height: 1.4;
+}
+.mission-drop {
+  font-size: 12px;
+  color: #d9c2a1;
+  line-height: 1.4;
 }
 .guardian-preview.ready {
   border-color: #c2924c;

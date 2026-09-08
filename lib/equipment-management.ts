@@ -125,6 +125,7 @@ export function reforgeQuote(s: G.State, id: string, affix: number) {
 export const reforgeReason = (s: G.State, id: string, affix: number) => reforgeQuote(s, id, affix).reason;
 
 export type GearSort = 'recent' | 'rarity' | 'tier' | 'name';
+export type GearSortOrder = 'asc' | 'desc';
 export interface GearFilter {
   rarities?: readonly number[];
   slot?: GearSlot | 'all';
@@ -133,11 +134,14 @@ export interface GearFilter {
   locked?: 'all' | 'locked' | 'unlocked';
   search?: string;
   sort?: GearSort;
+  order?: GearSortOrder;
 }
 export function filterGear(s: G.State, filters: GearFilter = {}) {
   const equipped = new Set([...s.heroes, ...s.guild.applicants].flatMap((h) => Object.values(h.equipment)));
   const position = new Map(s.guild.inventory.map((g, i) => [g.id, i]));
   const search = filters.search?.trim().toLocaleLowerCase('zh-CN') ?? '';
+  const sort = filters.sort ?? 'rarity';
+  const order = filters.order ?? (sort === 'name' ? 'asc' : 'desc');
   return s.guild.inventory.filter((item) => {
     const recipe = G.RECIPES.find((r) => r.id === item.recipe)!;
     return (!filters.rarities?.length || filters.rarities.includes(item.rarity)) &&
@@ -147,10 +151,16 @@ export function filterGear(s: G.State, filters: GearFilter = {}) {
       (!filters.locked || filters.locked === 'all' || !!item.locked === (filters.locked === 'locked')) &&
       (!search || G.gearName(item).toLocaleLowerCase('zh-CN').includes(search));
   }).sort((a, b) => {
-    const recent = position.get(b.id)! - position.get(a.id)!;
-    if (filters.sort === 'rarity') return b.rarity - a.rarity || b.tier - a.tier || b.upgrade - a.upgrade || recent;
-    if (filters.sort === 'tier') return b.tier - a.tier || b.rarity - a.rarity || b.upgrade - a.upgrade || recent;
-    if (filters.sort === 'name') return G.gearName(a).localeCompare(G.gearName(b), 'zh-CN') || recent;
-    return recent;
+    // Inventory order is acquisition order, including visitor items with other ID prefixes.
+    // Sorting a filtered copy preserves save order, loot chronology and the game RNG.
+    const recent = position.get(a.id)! - position.get(b.id)!;
+    const comparison = sort === 'rarity'
+      ? a.rarity - b.rarity || a.tier - b.tier || a.upgrade - b.upgrade || recent
+      : sort === 'tier'
+        ? a.tier - b.tier || a.rarity - b.rarity || a.upgrade - b.upgrade || recent
+        : sort === 'name'
+          ? G.gearName(a).localeCompare(G.gearName(b), 'zh-CN') || recent
+          : recent;
+    return order === 'asc' ? comparison : -comparison;
   });
 }
