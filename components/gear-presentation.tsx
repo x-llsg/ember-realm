@@ -8,45 +8,65 @@ export function GearWearer({ s, item }: { s: G.State; item: G.Gear }) {
   const owner = G.gearOwner(s, item.id);
   if (!owner) return <span>闲置</span>;
   const applicant = !s.heroes.some((hero) => hero.id === owner.id);
-  return <span className="gear-wearer">
-    <strong className={'gear-wearer-name potential-' + owner.quality}>{owner.name}</strong>
-    <em className="gear-wearer-status">{G.heroAway(s, owner.id) ? '出征携带' : applicant ? '候选 · 已穿戴' : '已穿戴'}</em>
-  </span>;
+  return (
+    <span className="gear-wearer">
+      <strong className={'gear-wearer-name potential-' + owner.quality}>
+        {owner.name}
+      </strong>
+      <em className="gear-wearer-status">
+        {G.heroAway(s, owner.id)
+          ? '出征携带'
+          : applicant
+            ? '候选 · 已穿戴'
+            : '已穿戴'}
+      </em>
+    </span>
+  );
 }
 
-export function GearLabel({ s, item, withinControl = false }: { s: G.State; item: G.Gear; withinControl?: boolean }) {
+export function GearLabel({
+  s,
+  item,
+  withinControl = false,
+}: {
+  s: G.State;
+  item: G.Gear;
+  withinControl?: boolean;
+}) {
   const recipe = G.RECIPES.find((r) => r.id === item.recipe)!;
   const stats = G.itemStats(s, item);
   return (
-    <InfoHint
-      withinControl={withinControl}
-      className={'gear-name rarity-' + item.rarity}
-      title={G.gearName(item)}
-      body={
-        <>
-          <p>{recipe.text}</p>
-          <p>{G.gearSetHelp(item)}</p>
-          <p>
-            攻击 +{Math.round(stats.attack)} · 生命 +{Math.round(stats.hp)} ·
-            防御 +{Math.round(stats.defense)}
-            <br />
-            穿甲 {Math.round(stats.pierce * 100)}% · 暴击 +
-            {Math.round(stats.crit * 100)}% · 闪避 +
-            {Math.round(stats.dodge * 100)}%<br />火 / 暗 / 神抗{' '}
-            {Math.round(stats.fire * 100)} / {Math.round(stats.shadow * 100)} /{' '}
-            {Math.round(stats.radiant * 100)}%
-          </p>
-          <p>
-            T{item.tier} · {G.QUALITY_NAMES[item.rarity - 1]} · 强化 +
-            {item.upgrade}
-          </p>
-          <p>{HELP.tier.body}</p>
-          <p>{affixHelp(item.affix, s, item).body}</p>
-        </>
-      }
-    >
-      {G.gearName(item)}
-    </InfoHint>
+    <span className={'gear-name rarity-' + item.rarity}>
+      <InfoHint
+        withinControl={withinControl}
+        className="gear-name-text"
+        title={G.gearName(item)}
+        body={
+          <>
+            <p>{recipe.text}</p>
+            <p>{G.gearSetHelp(item)}</p>
+            <p>
+              攻击 +{Math.round(stats.attack)} · 生命 +{Math.round(stats.hp)} ·
+              防御 +{Math.round(stats.defense)}
+              <br />
+              穿甲 {Math.round(stats.pierce * 100)}% · 暴击 +
+              {Math.round(stats.crit * 100)}% · 闪避 +
+              {Math.round(stats.dodge * 100)}%<br />火 / 暗 / 神抗{' '}
+              {Math.round(stats.fire * 100)} / {Math.round(stats.shadow * 100)}{' '}
+              / {Math.round(stats.radiant * 100)}%
+            </p>
+            <p>
+              T{item.tier} · {G.QUALITY_NAMES[item.rarity - 1]} · 强化 +
+              {item.upgrade}
+            </p>
+            <p>{HELP.tier.body}</p>
+            <p>{affixHelp(item.affix, s, item).body}</p>
+          </>
+        }
+      >
+        {G.gearName(item)}
+      </InfoHint>
+    </span>
   );
 }
 export function GearStats({

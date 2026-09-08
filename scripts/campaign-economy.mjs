@@ -6,7 +6,7 @@ import { createHash } from 'node:crypto';
 
 // Every campaign mutation goes through a public action. Forecasts only inspect clones.
 const routeOrder = process.env.V12_ROUTE_ORDER || 'standard';
-const outputDir = new URL(`../.test-results/v15-${routeOrder}-balanced/`, import.meta.url);
+const outputDir = new URL(`../.test-results/v16-${routeOrder}-balanced/`, import.meta.url);
 mkdirSync(outputDir, { recursive: true });
 const seed = Number(process.env.REALM_TEST_SEED || 123456789);
 assert.ok(
@@ -20,7 +20,7 @@ const keys = Object.keys(G.RESOURCE_NAMES);
 const blank = () => Object.fromEntries(keys.map((k) => [k, 0]));
 const results = {
   version: 10,
-  rulesRevision: 'v15-regional-loot-progression',
+  rulesRevision: 'v16-continuous-hunting',
   visitorDeferred: [],
   visitorChoices: [],
   researchInvestments: [],
@@ -28,7 +28,7 @@ const results = {
   loadoutInvestments: [],
   routePreparation: [],
   seed,
-  combatSources: Object.fromEntries(['guardian-candidates', 'combat-recommendation', 'equipment-growth', 'guild', 'tactics', 'alchemy', 'mastery', 'drop-progression', 'buildcraft', 'equipment-data'].map((id) => [id, createHash('sha256').update(readFileSync(new URL(`../lib/${id}.ts`, import.meta.url))).digest('hex')])),
+  combatSources: Object.fromEntries(['guardian-candidates', 'combat-recommendation', 'equipment-growth', 'guild', 'tactics', 'alchemy', 'mastery', 'auto-hunt','drop-progression', 'buildcraft', 'equipment-data'].map((id) => [id, createHash('sha256').update(readFileSync(new URL(`../lib/${id}.ts`, import.meta.url))).digest('hex')])),
   economySignature:G.productionMultiplier.toString()+G.developmentCost.toString(),
   policy:
     'Legal steady growth; four ordinary random recruits, all discovered equipment slots, earned skill points and elemental preparation, public recommended combat policy. No injected resources or progression.',

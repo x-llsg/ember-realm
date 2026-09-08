@@ -31,7 +31,7 @@ export function BattleDesk({ s, act }: { s: G.State; act: Act }) {
   const skills = selected ? G.combatSkills(s, selected.id) : [];
   // Manual input pauses automatic execution before issuing exactly one action.
   const execute = (command: G.Command) =>
-    act((current) => G.combat(G.setCombatAuto(current, false), command));
+    act((current) => G.combat(command === 'retreat' ? current : G.setCombatAuto(current, false), command));
   const commands = selected
     ? [
         {
@@ -337,7 +337,7 @@ export function BattleDesk({ s, act }: { s: G.State; act: Act }) {
             {b.auto
               ? s.paused
                 ? '游戏已暂停 · 底栏继续后自动出招'
-                : '自动中 · 手动出招会暂停自动'
+                : s.hunt?.enabled ? '连续刷怪中 · 手动出招会结束连刷' : '自动中 · 手动出招会暂停自动'
               : '选择伙伴与查看说明不会推进回合'}
           </p>
         </div>
@@ -360,7 +360,7 @@ export function BattleDesk({ s, act }: { s: G.State; act: Act }) {
             act((current) => G.setCombatAuto(current, !current.battle?.auto))
           }
         >
-          {b.auto ? '暂停自动' : '开启自动'}
+          {b.auto ? s.hunt?.enabled ? '手动接管' : '暂停自动' : '开启自动'}
         </button>
         <button
           type="button"

@@ -11,6 +11,8 @@ import * as Discovery from './discovery.ts';
 import * as Tactics from './tactics.ts';
 import * as Economy from './economy.ts';
 import * as Civic from './civic.ts';
+import * as Hunt from './auto-hunt.ts';
+export * from './auto-hunt.ts';
 export * from './civic.ts';
 export * from './equipment-data.ts';
 export * from './equipment-management.ts';
@@ -89,6 +91,7 @@ export interface Order {
   reason: string;
 }
 export interface Battle {
+  hunt?: boolean;
   boss?: import('./boss-mechanics.ts').BossRuntime;
   dots?: {
     source: string;
@@ -145,6 +148,7 @@ export interface Battle {
 }
 export interface State {
   version: 10;
+  hunt?: Hunt.HuntState;
   civic: Civic.CivicState;
   lastMap: number;
   combatAuto: boolean;
@@ -235,6 +239,7 @@ export const freshState = (
   journeys = 0,
 ): State => ({
   version: 10,
+  hunt: Hunt.freshHunt(),
   civic: Civic.freshCivic(),
   lastMap: 0,
   combatAuto: false,
@@ -1094,6 +1099,7 @@ export function expedition(s0: State, r: number, route: Route = 'survey') {
   )
     return s0;
   const s = clone(s0);
+  Hunt.haltHunt(s, '已改为远征');
   dispatch(s, r, route);
   log(
     s,
@@ -1145,6 +1151,7 @@ export function setOrder(
     return s0;
   const s = clone(s0);
   s.order = next;
+  if (next.enabled) Hunt.haltHunt(s, '已改为远征委托');
   if (!s.expedition && s.order.enabled) resumeOrder(s);
   return s;
 }
@@ -1343,6 +1350,7 @@ export function advance(s0: State, seconds: number) {
     Economy.economyTick(s);
     Campaign.worldTick(s);
     if (s.expedition && s.time >= s.expedition.end) settleExpedition(s);
+    s = Hunt.huntTick(s);
     if (
       !s.battle &&
       !s.expedition &&
@@ -1352,7 +1360,7 @@ export function advance(s0: State, seconds: number) {
       Tactics.guardianReady(s, s.order.region)
     )
       s = Tactics.beginBattle(s, s.order.region, 'guardian');
-    if (s.battle?.auto) s = Tactics.tacticalCombat(s, Tactics.autoCommand(s));
+    if (s.battle?.auto) s = Tactics.tacticalCombat(s, Tactics.autoCommand(s), true);
     resumeOrder(s);
     s = Discovery.settleStory(s);
     if (s.event === null) {
@@ -2478,6 +2486,7 @@ export function decodeSave(raw: string): State {
     if (upgradingCombat && s.battle.system !== 2) Tactics.migrateBattle(s);
     Tactics.validateBattle(s);
   }
+  Hunt.validateHunt(s);
   if (s.expedition && !i(s.expedition.outcome, 0, 3))
     throw Error('远征结果记录无效');
   if (s.lastExpedition !== null) {

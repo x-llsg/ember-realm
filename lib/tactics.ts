@@ -313,6 +313,7 @@ export function beginBattle(
   region: number,
   kind: 'boss' | 'guardian',
   node = s0.guild.depths[region],
+  origin: 'manual' | 'hunt' = 'manual',
 ) {
   if (
     !Number.isInteger(region) ||
@@ -323,6 +324,7 @@ export function beginBattle(
   )
     return s0;
   const s = G.clone(s0);
+  if (origin !== 'hunt') G.haltHunt(s, '已开始手动挑战');
   spend(s, G.battlePreparationCost(s));
   s.battle = createCombat(s, region, kind, kind === 'boss' ? s.guild.depths[region] : node);
   G.consumePreparedPotion(s);
@@ -507,6 +509,7 @@ export function setCombatAuto(s0: G.State, enabled: boolean) {
   if (typeof enabled !== 'boolean') return s0;
   const s = G.clone(s0);
   s.combatAuto = enabled;
+  if (!enabled) G.haltHunt(s, '已切换为手动战斗');
   if (s.battle) s.battle.auto = enabled;
   return s;
 }
@@ -587,6 +590,7 @@ function finish(s: G.State, won: boolean, retreat = false) {
     );
   }
   s.battle = null;
+  G.finishHuntBattle(s, b, won, retreat);
   return s;
 }
 /** Visible damage estimate shared by actual resolution and automatic defensive choices. */
@@ -746,10 +750,14 @@ function enemyTurn(s: G.State) {
   else b.target = chooseTarget(b);
   return s;
 }
-export function tacticalCombat(s0: G.State, command: G.Command): G.State {
+export function tacticalCombat(s0: G.State, command: G.Command, automatic = false): G.State {
   if (!s0.battle || tacticalReason(s0, command)) return s0;
   const s = G.clone(s0),
     b = s.battle!;
+  if (!automatic && command !== 'retreat' && s.hunt?.enabled) {
+    G.haltHunt(s, '已手动接管战斗');
+    b.auto = false;
+  }
   if (command === 'retreat') return finish(s, false, true);
   const { id, action, target } = parse(s, command),
     u = b.units.find((x) => x.id === id)!;

@@ -1,4 +1,6 @@
 /* Equipment pickers and workshop dialogs render through portals outside .v9-ui. */
+/* Layout may stretch the outer name row; only inline text fragments trigger the tooltip. */
+.gear-name > .gear-name-text.realm-hint-trigger { display: inline; color: inherit; }
 .gear-name.rarity-1, .gear-wearer .gear-wearer-name.potential-1 { color: #e6e5e1 !important; }
 .gear-name.rarity-2, .gear-wearer .gear-wearer-name.potential-2 { color: #86d19a !important; }
 .gear-name.rarity-3, .gear-wearer .gear-wearer-name.potential-3 { color: #79baff !important; }

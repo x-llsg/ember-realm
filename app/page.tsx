@@ -1,4 +1,5 @@
 'use client';
+import { HuntActivity } from '@/components/hunt-controls';
 import { useEffect, useRef, useState } from 'react';
 import { GAME_VERSION } from '@/lib/version';
 import {
@@ -66,6 +67,8 @@ const NAV = [
 type Welcome = {
   seconds: number;
   trips: number;
+  hunts: number;
+  drops: number;
   gains: G.Cost;
   message: string;
 };
@@ -268,7 +271,15 @@ export default function Home() {
               loaded.explored.reduce((a, b) => a + b, 0) -
               before.explored.reduce((a, b) => a + b, 0),
             gains,
-            message: loaded.order.enabled
+            hunts: Math.max(0, (loaded.hunt?.wins ?? 0) - (before.hunt?.wins ?? 0)),
+            drops: Math.max(0, (loaded.hunt?.drops ?? 0) - (before.hunt?.drops ?? 0)),
+            message: before.hunt?.enabled
+              ? loaded.hunt?.enabled
+                ? `仍在连刷：${G.huntStatus(loaded).target}。`
+                : `连刷已停止：${loaded.hunt?.reason || '安排已结束'}。`
+              : loaded.battle
+                ? '队伍仍在战斗中。'
+                : loaded.order.enabled
               ? loaded.order.reason || '持续委托仍在执行。'
               : '队伍正在镇内休息。',
           });
@@ -348,6 +359,7 @@ export default function Home() {
             resources: ref.current.resources,
             order: ref.current.order,
             expedition: ref.current.expedition,
+            hunt: G.huntStatus(ref.current),
             party: G.partyStats(ref.current),
             objective: G.objective(ref.current),
             cleared: ref.current.cleared,
@@ -522,6 +534,7 @@ export default function Home() {
           )}
           {!(view === 'explore' && s.battle) && <GrowthChoices s={s} go={go} />}
           <LootNotice s={s} act={act} go={go} />
+          <HuntActivity s={s} act={act} go={go} />
           {(e || s.order.enabled) && view !== 'explore' && (
             <div className="life-activity">
               {e && (
@@ -835,6 +848,9 @@ export default function Home() {
               <p>
                 小队完成了 <strong>{welcome.trips}</strong> 次往返。
               </p>
+              {(welcome.hunts > 0 || welcome.drops > 0) && <p>
+                自动刷怪获胜 <strong>{welcome.hunts}</strong> 场，获得 <strong>{welcome.drops}</strong> 件装备。可在近期收获中查看。
+              </p>}
               <p className="life-hint">{welcome.message}</p>
               <button
                 className="primary-button"

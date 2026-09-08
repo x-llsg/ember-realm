@@ -1,5 +1,6 @@
 'use client';
 import { BattleLoot } from './loot-notice';
+import { HuntControl } from './hunt-controls';
 
 import { InfoHint } from './info-hint';
 import { CombatRecommendation } from './combat-recommendation';
@@ -355,6 +356,7 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
           </span>
         </InfoHint>
         <CombatRecommendation s={s} region={region} node={6} />
+        <HuntControl s={s} act={act} region={region} kind="boss" />
         <p className="explore-match">
           敌情仅提供伤害增益，当前 +{(s.guild.intel[region] / 10).toFixed(1)}
           %；可自行选择挑战时机。 对应抗性{' '}
@@ -694,6 +696,7 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
               >
                 {rematch ? '再战守敌' : guardReady ? '挑战守敌' : '推进后挑战'}
               </button>
+              <HuntControl s={s} act={act} region={region} kind="guardian" node={guardianNode} />
               <InfoHint {...G.dropHelp(guardianLoot)} className="guardian-loot-note">
                 {G.dropSummary(guardianLoot)}
               </InfoHint>
