@@ -2,11 +2,11 @@
 
 **V0.1.3** · 中文西幻增量文字游戏 · MIT
 
-### [⬇ 下载游戏 · Windows 免安装版](https://github.com/xhb697120-png/ember-realm/releases/latest/download/ember-realm-windows-portable.zip)
+### [⬇ 下载游戏 · Windows 免安装版](https://github.com/x-llsg/ember-realm/releases/latest/download/ember-realm-windows-portable.zip)
 
 **下载 → 完整解压 → 双击「启动余烬之境.exe」即可游玩。无需安装任何开发工具。**
 
-[最新版本与更新说明](https://github.com/xhb697120-png/ember-realm/releases/latest) · [反馈问题](https://github.com/xhb697120-png/ember-realm/issues)
+[最新版本与更新说明](https://github.com/x-llsg/ember-realm/releases/latest) · [反馈问题](https://github.com/x-llsg/ember-realm/issues)
 
 你在陌生世界醒来，身边只有一簇将熄的营火。
 
