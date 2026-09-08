@@ -227,6 +227,237 @@
   font-size: 12px;
   line-height: 1.5;
 }
+.potion-workshop {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 7px 0;
+  border-block: 1px solid #53412b;
+  font-size: 12px;
+}
+.potion-workshop-head,
+.potion-workshop-cost {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px 9px;
+}
+.potion-workshop-head {
+  justify-content: space-between;
+  color: #d9c49f;
+}
+.potion-workshop-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 76px;
+  gap: 6px;
+}
+.potion-workshop :is(.life-select, .secondary-button) {
+  min-height: 28px !important;
+  height: 28px !important;
+  padding: 3px 6px !important;
+  font-size: 12px !important;
+}
+.potion-workshop small {
+  font-size: 11px;
+  line-height: 1.4;
+  color: #b7ab95;
+}
+.potion-workshop-cost > span {
+  white-space: nowrap;
+}
+.boss-approach-state {
+  color: #e4b575;
+  font-size: 12px;
+}
+.v9-ui .explore-path > li {
+  padding: 0;
+}
+.v9-ui .explore-path > li > button {
+  width: 100%;
+  height: 100%;
+  min-height: 34px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  padding: 5px;
+  color: inherit;
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+.v9-ui .explore-path > li > button[aria-pressed='true'] {
+  border-color: #e4b575;
+}
+.v9-ui .explore-path > li > button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+.v9-ui .explore-path > li > button:focus-visible {
+  outline: 2px solid #f0c38b;
+  outline-offset: -2px;
+}
+.discovery-journal {
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr);
+  gap: 14px;
+  height: 100%;
+  min-height: 0;
+}
+.journal-regions {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 10px;
+  border-right: 1px solid #51402b;
+}
+.journal-regions > strong {
+  color: #e1c59b;
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+.journal-regions > button {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  text-align: left;
+  padding: 9px;
+  background: #28231b;
+  border: 1px solid #51402b;
+  color: #cbbba1;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.journal-regions > button[aria-pressed='true'] {
+  border-color: #cb9b60;
+  background: #3b2c1c;
+  color: #f0cd98;
+}
+.journal-regions small {
+  font-size: 11px;
+  color: #ada48f;
+}
+.journal-detail {
+  min-height: 0;
+  overflow: auto;
+  padding: 8px 8px 8px 0;
+}
+.journal-detail > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.journal-detail h2 {
+  font-size: 20px;
+  color: #f2d8af;
+  margin: 0;
+}
+.journal-detail > header > span {
+  color: #b5a789;
+  font-size: 12px;
+}
+.journal-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.journal-grid > section {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid #51422d;
+  border-radius: 4px;
+  padding: 14px;
+  background: #211e18;
+}
+.journal-grid h3 {
+  font-size: 15px;
+  color: #dfc497;
+  margin: 0;
+}
+.journal-grid p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #c3b79f;
+}
+.journal-grid small {
+  font-size: 11px;
+  color: #afa088;
+}
+.journal-grid .secondary-button {
+  margin-top: auto;
+  min-height: 30px;
+  padding: 5px 8px;
+  font-size: 12px;
+}
+.journal-technology {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 9px;
+  border: 0;
+  border-bottom: 1px solid #453b2b;
+  background: transparent;
+  padding: 7px 0;
+  color: #d5c29f;
+  text-align: left;
+  cursor: pointer;
+}
+.journal-set-slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.journal-set-slots > span {
+  border: 1px solid #4c4234;
+  padding: 3px 6px;
+  color: #8f8778;
+  font-size: 11px;
+}
+.journal-set-slots > .owned {
+  border-color: #67764d;
+  color: #b9cf92;
+  background: #293021;
+}
+@media (max-width: 900px) {
+  .discovery-journal {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 6px;
+  }
+  .journal-regions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    border-right: 0;
+    padding: 4px;
+  }
+  .journal-regions > strong {
+    width: 100%;
+  }
+  .journal-regions > button {
+    padding: 5px 8px;
+  }
+  .journal-detail {
+    padding: 3px;
+  }
+}
+@media (max-width: 650px) {
+  .journal-grid {
+    grid-template-columns: 1fr;
+  }
+  .journal-detail > header {
+    flex-wrap: wrap;
+  }
+  .v9-ui .explore-path > li > button {
+    flex-direction: column;
+    gap: 2px;
+    font-size: 11px;
+  }
+}
 .v9-ui .forge-slot-filter {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -306,5 +537,84 @@
   }
   .v9-ui .civic-buff-strip {
     gap: 3px;
+  }
+}
+.v9-ui .market-desk {
+  padding: 12px;
+  gap: 8px;
+}
+.v9-ui .market-desk .life-title h2 {
+  font-size: 20px;
+}
+.v9-ui .market-desk .life-market {
+  flex: 0 0 auto;
+  gap: 4px;
+}
+.v9-ui .market-desk .market-goods-row {
+  padding: 7px 8px;
+  min-height: 60px;
+}
+.v9-ui .market-desk .market-goods-row > strong {
+  display: grid;
+  grid-template-columns: minmax(65px, auto) minmax(150px, 1fr);
+  gap: 2px 16px;
+  align-items: center;
+}
+.v9-ui .market-desk .market-goods-row > strong small:last-child {
+  grid-column: 2;
+}
+.v9-ui .market-desk .market-goods-row > .secondary-button {
+  min-height: 40px;
+  padding: 5px 10px;
+}
+.v9-ui .market-desk > .life-hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.v9-ui .market-batches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  flex-shrink: 0;
+}
+.v9-ui .market-batches > span {
+  color: #b7ad98;
+  font-size: 12px;
+  margin-right: 4px;
+}
+.v9-ui .market-batches .secondary-button {
+  min-height: 28px;
+  padding: 3px 13px;
+}
+.v9-ui .market-batches [aria-pressed='true'] {
+  border-color: #a67c43;
+  color: #f0c58b;
+  background: #392b1b;
+}
+.v9-ui .market-quantity-hint {
+  margin-block: 7px;
+}
+.v9-ui .market-goods-row > .secondary-button {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 155px;
+}
+.v9-ui .market-goods-row > .secondary-button small {
+  color: inherit;
+  opacity: 0.75;
+}
+@media (max-width: 700px) {
+  .v9-ui .market-goods-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .v9-ui .market-goods-row > strong {
+    grid-column: 1 / -1;
+  }
+  .v9-ui .market-goods-row > .secondary-button {
+    min-width: 0;
   }
 }

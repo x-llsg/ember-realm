@@ -1,6 +1,7 @@
 'use client';
 import * as G from '@/lib/realm';
 import { InfoHint, MaterialName } from './info-hint';
+import { PotionWorkshop } from './potion-workshop';
 import { Pick, type Act, type Destination, short } from './realm-panels';
 
 type Props = { s: G.State; act: Act; go?: (d: Destination) => void };
@@ -77,6 +78,7 @@ export function EconomyDesk({ s, act, go }: Props) {
       </div>
       <div className="flow-columns">
         <div className="flow-column">
+          <PotionWorkshop s={s} act={act} />
           <div className="flow-section-title">
             <strong>材料加工</strong>
             <small>产能、用料、库存共同决定产出</small>

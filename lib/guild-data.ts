@@ -12,6 +12,7 @@ export type TalentId = (typeof TALENTS)[number]['id'];
 export type FlawId = (typeof FLAWS)[number]['id'] | 'overcome';
 export type GearSlot = 'weapon' | 'armor' | 'charm' | 'head' | 'hands' | 'feet';
 export type Element = 'physical' | 'shadow' | 'fire' | 'radiant';
+export type PotionId = Exclude<Element, 'physical'>;
 export const ELEMENT_NAMES: Record<Element, string> = {
   physical: '物理',
   shadow: '暗影',
@@ -61,8 +62,8 @@ export const AFFIXES = [
   { name: '辟火', text: '火抗 +15%', stat: 'fire', value: 0.15 },
   { name: '镇魂', text: '暗抗 +15%', stat: 'shadow', value: 0.15 },
   { name: '逆律', text: '神圣抗性 +15%', stat: 'radiant', value: 0.15 },
-  { name: '会心', text: '暴击率 +8个百分点', stat: 'crit', value: 0.08 },
-  { name: '轻灵', text: '闪避率 +6个百分点', stat: 'dodge', value: 0.06 },
+  { name: '会心', text: '暴击率 +8%', stat: 'crit', value: 0.08 },
+  { name: '轻灵', text: '闪避率 +6%', stat: 'dodge', value: 0.06 },
   { name: '致命', text: '暴击伤害 +20%', stat: 'critDamage', value: 0.2 },
 ] as const;
 export const RECIPES: {
@@ -263,9 +264,9 @@ export const FRONTIER_RESOURCES = [
 export const FRONTIER_REWARDS = [
   '开放地区驻地',
   '本地区资源生产 +15%',
-  '获得一件稀有以上装备',
+  '获得一件稀有以上装备，开放首领道路（可提前挑战全盛首领）',
   '首领护甲永久降低15%',
-  '打通首领决战道路',
+  '补给材料基础运量增至14，集市与仓库可进一步增加运量',
 ];
 export const ENEMIES: { element: Element; defense: number; tip: string }[] = [
   {

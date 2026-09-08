@@ -21,7 +21,14 @@ function fixture({quality=3,level=30,tier=4,aptitude=100,mastery=3,seed=12345678
   for(const h of s.heroes)for(const [slot,recipe,affix] of [['weapon',['finn','ash'].includes(h.role)?'bow':'staff',3],['armor','dawncoat',6],['charm','wardstone',1]]){
     const id=`gear-${++s.guild.serial}`;s.guild.inventory.push({id,recipe,tier,rarity:2,upgrade:2,affix});h.equipment[slot]=id;
   }
-  return s;
+  // This constructed arena supplies one recipe's inputs; the public action
+  // must still pay the bill and create an actual dose before any forecast.
+  s.world.materials.runes = 1;
+  assert.equal(G.craftPotionReason(s, 'radiant'), '');
+  const prepared = G.craftPotion(s, 'radiant');
+  assert.equal(prepared.guild.potions.radiant, 1);
+  assert.equal(prepared.world.materials.runes, 0);
+  return prepared;
 }
 function summary(s){const snapshot=JSON.stringify(s);const f=G.forecastBattle(s,5);assert.equal(JSON.stringify(s),snapshot,'forecast mutated input');assert.equal(f.reason,'');
   return{...G.partyStats(s),win:f.win,rounds:f.rounds,hpAfter:f.hp,commands:f.trace.reduce((o,c)=>(o[c]=(o[c]||0)+1,o),{})};}

@@ -40,6 +40,7 @@ export function recommendedFixture(region, node, { bare = false, baseline = fals
   s.kit = baseline ? 0 : q.kit;
   s.guild.doctrine.smithing = baseline ? 0 : q.smithing;
   s.guild.preparation = { ...s.guild.preparation, element: q.element, stance: q.stance, remedy: q.remedy };
+  if (q.element !== 'physical') s.guild.potions[q.element] = 1;
   assert.ok(q.level <= G.levelCap(s), `${region}/${node} level legal`);
   assert.ok(q.tier <= G.gearTier(s), `${region}/${node} tier legal`);
   for (let i = 0; i < q.count; i++) {

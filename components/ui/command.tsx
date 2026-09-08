@@ -31,8 +31,8 @@ function Command({
 }
 
 function CommandDialog({
-  title = 'Command Palette',
-  description = 'Search for a command to run...',
+  title = '快捷操作',
+  description = '搜索需要执行的操作…',
   children,
   className,
   showCloseButton = false,

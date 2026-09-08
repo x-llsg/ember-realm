@@ -28,7 +28,7 @@ const results = {
   loadoutInvestments: [],
   routePreparation: [],
   seed,
-  combatSources: Object.fromEntries(['guardian-candidates', 'combat-recommendation', 'equipment-growth', 'guild', 'tactics'].map((id) => [id, createHash('sha256').update(readFileSync(new URL(`../lib/${id}.ts`, import.meta.url))).digest('hex')])),
+  combatSources: Object.fromEntries(['guardian-candidates', 'combat-recommendation', 'equipment-growth', 'guild', 'tactics', 'alchemy'].map((id) => [id, createHash('sha256').update(readFileSync(new URL(`../lib/${id}.ts`, import.meta.url))).digest('hex')])),
   economySignature:G.productionMultiplier.toString()+G.developmentCost.toString(),
   policy:
     'Legal steady growth; four ordinary random recruits, all discovered equipment slots, earned skill points and elemental preparation, public recommended combat policy. No injected resources or progression.',
@@ -455,6 +455,18 @@ function loadout(r, enhancement = r ? 2 : 0, tier = G.gearTier(s), minimumRarity
   );
   results.loadoutInvestments.push({region:r,tier,minimumRarity,enhancement,start:fundingStart,time:s.time,actions:actions-fundingStart.actions,stats:G.partyStats(s),spent:Object.fromEntries(keys.map(k=>[k,results.totals.spent[k]-fundingStart.spent[k]])),wait:Object.fromEntries(Object.keys(waitByPurpose).map(k=>[k,waitByPurpose[k]-(fundingStart.wait[k]||0)]))});
 }
+function ensureBattleSupplies(label = 'battle supplies') {
+  const id = s.guild.preparation.element;
+  if (id !== 'physical' && G.potionCount(s, id) === 0) {
+    const recipe = G.POTIONS.find((p) => p.id === id);
+    assert.equal(G.potionUnlockReason(s, id), '', 'recommended potion uses available technology');
+    ensureMaterials(recipe.materials);
+    ensure(recipe.cost, 'potion ingredients');
+    act((x) => G.craftPotion(x, id), 'alchemy:craft ' + id);
+  }
+  ensure(G.battlePreparationCost(s), label);
+  assert.equal(G.preparedPotionReason(s), '', 'battle dose was actually crafted');
+}
 function prepareRecommendedCombat(r, kind = 'guardian') {
   stopOrder();
   const q = combatRecommendation(r, kind === 'boss' ? 6 : s.guild.depths[r] + 1);
@@ -497,7 +509,7 @@ function prepareRecommendedCombat(r, kind = 'guardian') {
   }
   act((x) => G.setPreparation(x, { element: q.element, stance: q.stance, remedy: q.remedy }), 'preparation:recommended');
   rest();
-  ensure(G.battlePreparationCost(s), 'recommended battle supplies');
+  ensureBattleSupplies('recommended battle supplies');
   return q;
 }
 function prepareRoute(r,route){
@@ -528,7 +540,7 @@ function fightGuardian(r){
   const recommendation = prepareRecommendedCombat(r);
   let tries=0;
   while(G.guardianReady(s,r)){
-    ensure(G.battlePreparationCost(s),'guardian preparation');
+    ensureBattleSupplies('guardian preparation');
     const preview=G.resolveBattle(G.beginBattle(s,r,'guardian'));
     if(preview.guild.depths[r]>s.guild.depths[r]){
       const depth=s.guild.depths[r];act(x=>G.beginBattle(x,r,'guardian'),'combat:guardian start');
@@ -607,7 +619,7 @@ function withoutEquipment(state) {
 function resolveChapter(r) {
   rest();
   prepareRecommendedCombat(r, 'boss');
-  ensure(G.battlePreparationCost(s), 'battle preparation');
+  ensureBattleSupplies('battle preparation');
   let forecast = G.forecastBattle(s, r),
     attempts = 0;
   while (!forecast.win && attempts < 6) {
@@ -641,7 +653,7 @@ function resolveChapter(r) {
       (x) => G.setPreparation(x, { stance: 'cautious' }),
       'preparation:cautious',
     );
-    ensure(G.battlePreparationCost(s));
+    ensureBattleSupplies();
     forecast = G.forecastBattle(s, r);
     attempts++;
   }
@@ -962,16 +974,16 @@ function combatReady(r){
     // No legacy population gate: actual combat forecast decides preparation.
     // No legacy forge/kit hard gate; optional unlocked kit investments remain below.
     while(s.kit<5&&!G.kitReason(s)){ensure(G.kitCost(s));ensureMaterials(G.kitMaterialCost(s));ensure(G.kitCost(s),'reserved kit');act(G.upgradeKit,'kit:upgrade');}
-    ensure(G.battlePreparationCost(s),'fund actual boss preparation');
+    ensureBattleSupplies('fund actual boss preparation');
     if(G.bossReason(s,r))return false;
     if(r===4&&!s.world.tech.includes('runecraft')){autoUntil(1,'survey',()=>G.discoveryCount(s,1)>=1);autoUntil(1,'frontier',()=>s.guild.depths[1]>=1);technologies();}
     const dragonBefore=r===4?{gameSeconds:s.time,decisions:actions,stats:G.partyStats(s),forecast:G.forecastBattle(s,r),spent:G.clone(results.totals.spent),materials:G.clone(s.world.materials)}:null;
     loadout(r,r===4?4:r?2:0);
     let dragonEquipment=null;
     if(r===4){
-      act(x=>G.setPreparation(x,{stance:'balanced',element:'fire',remedy:true}),'preparation:dragon');ensure(G.battlePreparationCost(s));rest();dragonEquipment={gameSeconds:s.time,stats:G.partyStats(s),forecast:G.forecastBattle(s,r),spent:G.clone(results.totals.spent)};
-      for(let tries=0;tries<8;tries++){rest();ensure(G.battlePreparationCost(s));const prediction=G.forecastBattle(s,r);if(prediction.win&&prediction.rounds<=20)break;const level=Math.max(...s.party.map(id=>s.heroes.find(h=>h.id===id).level));if(level>=G.levelCap(s))break;train(Math.min(G.levelCap(s),level+2));}
-      rest();ensure(G.battlePreparationCost(s));
+      act(x=>G.setPreparation(x,{stance:'balanced',element:'fire',remedy:true}),'preparation:dragon');ensureBattleSupplies();rest();dragonEquipment={gameSeconds:s.time,stats:G.partyStats(s),forecast:G.forecastBattle(s,r),spent:G.clone(results.totals.spent)};
+      for(let tries=0;tries<8;tries++){rest();ensureBattleSupplies();const prediction=G.forecastBattle(s,r);if(prediction.win&&prediction.rounds<=20)break;const level=Math.max(...s.party.map(id=>s.heroes.find(h=>h.id===id).level));if(level>=G.levelCap(s))break;train(Math.min(G.levelCap(s),level+2));}
+      rest();ensureBattleSupplies();
       results.dragonTraining.push({before:dragonBefore,afterEquipment:dragonEquipment,after:{gameSeconds:s.time,decisions:actions,stats:G.partyStats(s),profile:G.partyProfile(s),levels:s.party.map(id=>s.heroes.find(h=>h.id===id).level),forecast:G.forecastBattle(s,r),attackOnly:G.forecastBattle(s,r,'attack')},spent:Object.fromEntries(keys.map(k=>[k,results.totals.spent[k]-dragonBefore.spent[k]])),waitSeconds:s.time-dragonBefore.gameSeconds});
     }
     for(const id of ['logistics','scholarship','smithing']){

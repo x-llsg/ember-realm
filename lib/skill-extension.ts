@@ -25,7 +25,7 @@ export const V14_ACTIVE_SKILLS = [
     role: 'rhea',
     name: '游身还击',
     description:
-      '造成125%本人攻击伤害；自己在下次敌方阶段闪避率增加10个百分点，仍受40%总上限约束。',
+      '造成125%本人攻击伤害；自己在下次敌方阶段闪避率增加10%，仍受40%总上限约束。',
     target: 'self',
     energy: 2,
     cooldown: 3,
@@ -37,7 +37,7 @@ export const V14_ACTIVE_SKILLS = [
     role: 'rhea',
     name: '摧阵突进',
     description:
-      '造成200%本人攻击伤害并击碎当前护盾；本次暴击率增加5个百分点，不打断补给或咏唱。',
+      '造成200%本人攻击伤害并击碎当前护盾；本次暴击率增加5%，不打断补给或咏唱。',
     target: 'enemy',
     energy: 3,
     cooldown: 4,
@@ -109,7 +109,7 @@ export const V14_ACTIVE_SKILLS = [
     role: 'finn',
     name: '穿云狙击',
     description:
-      '造成240%本人投射伤害，本次额外穿甲20个百分点、暴击率增加10个百分点；不打断、不破盾。',
+      '造成240%本人投射伤害，本次额外穿甲20%、暴击率增加10%；不打断、不破盾。',
     target: 'enemy',
     energy: 4,
     cooldown: 5,
@@ -254,7 +254,7 @@ export const V14_ACTIVE_SKILLS = [
     role: 'kael',
     name: '奥术解构',
     description:
-      '造成210%本人投射伤害，额外穿甲20个百分点并打断当前补给或咏唱；耗5士气返1，净消耗4点。',
+      '造成210%本人投射伤害，额外穿甲20%并打断当前补给或咏唱；耗5士气返1，净消耗4点。',
     target: 'enemy',
     energy: 5,
     cooldown: 6,
@@ -312,7 +312,7 @@ export const V14_ACTIVE_SKILLS = [
     role: 'orin',
     name: '破晓裁断',
     description:
-      '造成200%本人攻击伤害，本次额外穿甲20个百分点；回复自身最大生命8%与攻击30%的生命。',
+      '造成200%本人攻击伤害，本次额外穿甲20%；回复自身最大生命8%与攻击30%的生命。',
     target: 'self',
     energy: 4,
     cooldown: 5,
@@ -360,7 +360,7 @@ export const V14_ACTIVE_SKILLS = [
     role: 'ash',
     name: '绝峰贯矢',
     description:
-      '造成220%本人投射伤害并击碎护盾，本次额外穿甲20个百分点；在龙脊雪山与破碎天穹再增伤15%，不打断。',
+      '造成220%本人投射伤害并击碎护盾，本次额外穿甲20%；在龙脊雪山与破碎天穹再增伤15%，不打断。',
     target: 'enemy',
     energy: 5,
     cooldown: 6,
@@ -392,7 +392,7 @@ export const V14_ACTIVE_SKILLS = [
     role: 'nyx',
     name: '舞刃',
     description:
-      '造成110%本人攻击伤害；自己在下次敌方阶段闪避率增加15个百分点，受40%总上限约束。',
+      '造成110%本人攻击伤害；自己在下次敌方阶段闪避率增加15%，受40%总上限约束。',
     target: 'self',
     energy: 2,
     cooldown: 3,
@@ -420,7 +420,7 @@ export const V14_ACTIVE_SKILLS = [
     role: 'nyx',
     name: '影返',
     description:
-      '造成160%本人攻击伤害；自己在下次敌方阶段闪避率增加25个百分点且承伤降低35%，闪避仍受40%上限约束。',
+      '造成160%本人攻击伤害；自己在下次敌方阶段闪避率增加25%且承伤降低35%，闪避仍受40%上限约束。',
     target: 'self',
     energy: 4,
     cooldown: 5,
@@ -433,7 +433,7 @@ export const V14_ACTIVE_SKILLS = [
     role: 'nyx',
     name: '终幕剪影',
     description:
-      '造成300%本人攻击伤害，本次暴击率增加20个百分点、穿甲增加10个百分点；高消耗长冷却，不保证暴击。',
+      '造成300%本人攻击伤害，本次暴击率增加20%、穿甲增加10%；高消耗长冷却，不保证暴击。',
     target: 'enemy',
     energy: 5,
     cooldown: 7,
@@ -566,7 +566,7 @@ export const V14_ACTIVE_SKILLS = [
     role: 'vera',
     name: '解构爆剂',
     description:
-      '造成200%本人投射伤害并击碎护盾，本次额外穿甲25个百分点；不打断补给或咏唱。',
+      '造成200%本人投射伤害并击碎护盾，本次额外穿甲25%；不打断补给或咏唱。',
     target: 'enemy',
     energy: 4,
     cooldown: 5,

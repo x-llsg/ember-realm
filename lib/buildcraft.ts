@@ -28,9 +28,9 @@ export function characterTalentHelp(h: G.Hero) {
   const talent = G.TALENTS.find((t) => t.id === h.talent)!;
   const old: Record<string, string> = {
     hunter: '攻击 +8%；森林与龙巢伤害 +12%。',
-    breaker: '穿甲 +25个百分点。',
-    warden: '三种元素抗性 +20个百分点。',
-    healer: '全队补给治疗 +5个百分点（同名不叠加）。',
+    breaker: '穿甲 +25%。',
+    warden: '三种元素抗性 +20%。',
+    healer: '全队补给治疗 +5%（同名不叠加）。',
     scholar: '调查额外3敌情（同名不叠加）。',
     scout: '远征耗时 -10%（同名不叠加）。',
     diligent: '经验 +30%；训练金币 -15%。',
@@ -83,6 +83,7 @@ export function monsterEquipment(
   s: G.State,
   region: number,
   kind: 'boss' | 'guardian',
+  firstClear = true,
 ) {
   const random = () => {
     if (!s.battle?.rng) return G.guildRandom(s);
@@ -93,7 +94,7 @@ export function monsterEquipment(
     s.battle.rng = x >>> 0 || 1;
     return s.battle.rng / 4294967296;
   };
-  const guaranteed = s.battle?.node === 2;
+  const guaranteed = firstClear && s.battle?.node === 2;
   if (kind === 'guardian' && !guaranteed && random() >= 0.4) return;
   const n = random(),
     rarity =

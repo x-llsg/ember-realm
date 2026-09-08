@@ -474,7 +474,7 @@ export const TREE_SKILLS = [
     role: 'finn',
     name: '贯甲连射',
     description:
-      '造成145%本人投射伤害，本次攻击额外穿甲30个百分点；不清除魔法护盾。',
+      '造成145%本人投射伤害，本次攻击额外穿甲30%；不清除魔法护盾。',
     target: 'enemy',
     energy: 3,
     cooldown: 3,
@@ -504,7 +504,7 @@ export const TREE_SKILLS = [
     role: 'kael',
     name: '星陨咒',
     description:
-      '造成240%本人投射伤害，本次暴击率额外10个百分点；不破盾，不打断。',
+      '造成240%本人投射伤害，本次暴击率额外10%；不破盾，不打断。',
     target: 'enemy',
     energy: 4,
     cooldown: 4,
@@ -549,7 +549,7 @@ export const TREE_SKILLS = [
     id: 'shadow_stab',
     role: 'nyx',
     name: '潜影刺',
-    description: '造成125%本人攻击伤害，本次暴击率额外15个百分点。',
+    description: '造成125%本人攻击伤害，本次暴击率额外15%。',
     target: 'enemy',
     energy: 2,
     cooldown: 2,
@@ -577,7 +577,7 @@ export const TREE_SKILLS = [
     role: 'nyx',
     name: '烟幕步',
     description:
-      '造成50%本人攻击伤害，自己在下次敌方阶段闪避率增加25个百分点；无法保证闪避。',
+      '造成50%本人攻击伤害，自己在下次敌方阶段闪避率增加25%；无法保证闪避。',
     target: 'self',
     energy: 1,
     cooldown: 3,
@@ -644,7 +644,7 @@ export const TREE_SKILLS = [
     role: 'vera',
     name: '蚀甲药瓶',
     description:
-      '造成110%本人投射伤害，本次攻击额外穿甲25个百分点；不清除魔法护盾。',
+      '造成110%本人投射伤害，本次攻击额外穿甲25%；不清除魔法护盾。',
     target: 'enemy',
     energy: 2,
     cooldown: 2,

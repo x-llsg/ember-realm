@@ -719,9 +719,7 @@ export function GuildTeam({ s, act, go, focus }: Props) {
             onChange={setSlotFilter}
             options={[
               { value: 'all', label: '全部 · 最近获得优先' },
-              { value: 'weapon', label: '武器' },
-              { value: 'armor', label: '护甲' },
-              { value: 'charm', label: '饰品' },
+              ...G.GEAR_SLOT_OPTIONS,
             ]}
           />
           <div className="gear-picker-list">

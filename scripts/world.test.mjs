@@ -192,7 +192,10 @@ for (const [label, old] of oldCases) test(`v4 migration preserves investment and
 });
 
 test('v4 in-progress battle safely exits while retaining the resources already paid to start it', () => {
-  const current = G.decodeSave(JSON.stringify(legacyFixtures.beforeBattles[5]));
+  const current = G.setPreparation(
+    G.decodeSave(JSON.stringify(legacyFixtures.beforeBattles[5])),
+    { element: 'physical' },
+  );
   const started = G.startBattle(current, 5);
   assert.ok(started.battle, G.bossReason(current, 5));
   const legacy = clone(started); legacy.version = 4; delete legacy.world;

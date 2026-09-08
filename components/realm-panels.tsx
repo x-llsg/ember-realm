@@ -3,6 +3,7 @@ import { BattleDesk } from './battle-desk';
 import { InfoHint, ResourceName, MaterialName } from './info-hint';
 import { GuildTeam } from './guild-panels';
 import { ExploreDesk } from './explore-desk';
+import { DiscoveryJournal } from './discovery-journal';
 import { useState, type ReactNode } from 'react';
 import {
   Flame,
@@ -32,6 +33,8 @@ import * as G from '@/lib/realm';
 import { EngineeringBoard } from './engineering-board';
 import { BuildingBoard } from './economy-panels';
 import { EconomyDesk } from './economy-desk';
+import { MarketDesk } from './market-desk';
+import { optionLabel } from '@/lib/display';
 export type Destination = {
   view: G.View;
   tab?: string;
@@ -41,6 +44,7 @@ export type Destination = {
   hero?: string;
   recipe?: string;
   tier?: number;
+  guardian?: number;
   work?: G.WorkId;
   route?: G.Route;
 };
@@ -62,8 +66,8 @@ const icons = {
 const resources = Object.keys(G.RESOURCE_NAMES) as G.Resource[];
 export const number = (n: number) => Math.floor(n).toLocaleString('zh-CN');
 export const short = (n: number) =>
-  n >= 1e6
-    ? (n / 1e6).toFixed(1) + 'm'
+  n >= 1e8
+    ? (n / 1e8).toFixed(1) + '亿'
     : n >= 1e4
       ? (n / 1e4).toFixed(1) + '万'
       : number(n);
@@ -96,7 +100,7 @@ export function Pick({
       items={options}
     >
       <SelectTrigger id={id} className="life-select" aria-label={label}>
-        <SelectValue />
+        <SelectValue>{optionLabel(options, value)}</SelectValue>
       </SelectTrigger>
       <SelectContent className="life-options" alignItemWithTrigger={false}>
         {options.map((o) => (
@@ -568,43 +572,7 @@ export function TownPanel({ s, act, go, focus }: Props) {
         <EngineeringBoard s={s} act={act} go={go} focus={focus} />
       </Pane>
       <Pane value="market">
-        <div className="life-card">
-          <div className="life-title">
-            <h2>边境集市</h2>
-            <span>每份 20 单位</span>
-          </div>
-          <div className="life-card-body life-market">
-            {resources
-              .filter((k) => G.tradeUnlocked(s, k))
-              .map((k) => (
-                <div key={k}>
-                  <strong>
-                    {G.RESOURCE_NAMES[k]}
-                    <small>持有 {short(s.resources[k])}</small>
-                  </strong>
-                  <button
-                    className="secondary-button"
-                    disabled={!!G.tradeReason(s, k, true)}
-                    onClick={() => act((x) => G.trade(x, k, true))}
-                  >
-                    {G.tradeReason(s, k, true) ||
-                      `买入 · ${G.tradePrice(s, k)} 金`}
-                  </button>
-                  <button
-                    className="secondary-button"
-                    disabled={!!G.tradeReason(s, k, false)}
-                    onClick={() => act((x) => G.trade(x, k, false))}
-                  >
-                    {G.tradeReason(s, k, false) ||
-                      `卖出 · ${G.tradePrice(s, k, false)} 金`}
-                  </button>
-                </div>
-              ))}
-          </div>
-          <p className="life-hint">
-            商队适合临时补缺。远征与工坊能提供更稳定的材料来源。
-          </p>
-        </div>
+        <MarketDesk s={s} act={act} />
       </Pane>
       <Pane value="events">
         <div className="life-card">
@@ -712,67 +680,24 @@ export function DestinyPanel({
           ? 'rebuild'
           : 'chapters',
     ),
-    [chapter, setChapter] = useState(s.lastExpedition?.region ?? 0),
     [rebuild, setRebuild] = useState(
       G.REBUILD.find((r) => !s.rebuild.includes(r.id))?.id || 'homes',
     );
   const p = G.REBUILD.find((p) => p.id === rebuild)!;
+  if (!s.ending) return <DiscoveryJournal s={s} go={go} />;
   return (
     <PaneTabs
       value={tab}
       onChange={setTab}
       items={[
-        { id: 'chapters', label: '旅程' },
+        { id: 'chapters', label: '冒险资料' },
         ...(s.ending
           ? [{ id: 'rebuild', label: '人间的明天', dot: s.rebuild.length < 3 }]
           : []),
       ]}
     >
       <Pane value="chapters">
-        <div className="life-card">
-          <Pick
-            label="翻阅章节"
-            value={String(chapter)}
-            onChange={(v) => setChapter(Number(v))}
-            options={G.REGIONS.map((r, i) => ({ r, i }))
-              .filter(({ i }) => G.regionVisited(s, i))
-              .map(({ r, i }) => ({
-                value: String(i),
-                label: `第 ${i + 1} 章 · ${r.name}`,
-              }))}
-          />
-          <span className="life-kicker">
-            {s.cleared.includes(chapter) ? '已经写下的故事' : '未尽的旅程'}
-          </span>
-          <h2>{G.REGIONS[chapter].name}</h2>
-          <p className="life-prose">
-            {s.cleared.includes(chapter)
-              ? G.REGIONS[chapter].story
-              : G.REGIONS[chapter].desc}
-          </p>
-          <div className="life-vows">
-            {[
-              { r: 3, text: '击败魔王' },
-              { r: 4, text: '屠灭古龙' },
-              { r: 5, text: '凡人弑神' },
-            ]
-              .filter((v) => G.regionOpen(s, v.r))
-              .map((v) => (
-                <span key={v.r}>
-                  {s.cleared.includes(v.r) ? <Check /> : <Swords />}
-                  {v.text}
-                </span>
-              ))}
-          </div>
-          <button
-            className="secondary-button"
-            disabled={!G.regionOpen(s, chapter)}
-            onClick={() => go({ view: 'explore', region: chapter })}
-          >
-            走进这片土地
-            <ArrowRight />
-          </button>
-        </div>
+        <DiscoveryJournal s={s} go={go} />
       </Pane>
       <Pane value="rebuild">
         <div className="life-card">

@@ -6,6 +6,7 @@ import * as Skills from './skill-data.ts';
 import { TALENT_RARITY_WEIGHTS } from './talent-data.ts';
 import { GEAR_SLOTS, INVENTORY_CAP, RARITY_SCALE } from './equipment-data.ts';
 import { gearTierScale, EQUIPMENT_DEFENSE_SCALE } from './equipment-growth.ts';
+import { freshPotions, hasPreparedPotion, validatePotions } from './alchemy.ts';
 export { EQUIPMENT_BASE_SCALE, EQUIPMENT_DEFENSE_SCALE, gearTierScale } from './equipment-growth.ts';
 export * from './skill-data.ts';
 export { talentExperience, talentTraining } from './buildcraft.ts';
@@ -14,12 +15,14 @@ import type { HeroId, Cost } from './realm-data.ts';
 
 export function freshGuild(): G.State['guild'] {
   return {
+    guardianHunts: { readyAt: [0, 0, 0, 0, 0, 0] },
     applicants: [],
     refreshAt: 0,
     rolls: 0,
     fiveStarMisses: 0,
     serial: 0,
     inventory: [],
+    potions: freshPotions(),
     crafts: 0,
     dust: 0,
     depths: [0, 0, 0, 0, 0, 0],
@@ -811,7 +814,7 @@ export function settleFrontier(s: G.State, e: G.Expedition) {
       progress = s.guild.progress[e.region] - before;
       say(
         s,
-        `推进受挫，仍保留 ${progress} 点推进与 2 点情报。下次成功率 +8 个百分点，连续三次失败后下次必定成功。`,
+        `推进受挫，仍保留 ${progress} 点推进与 2 点情报。下次成功率 +8%，连续三次失败后下次必定成功。`,
       );
     }
   }
@@ -837,10 +840,7 @@ export function battlePreparationCost(s: G.State): Cost {
   const p = s.guild.preparation;
   return {
     food: G.battleFood(s) + (p.remedy ? 30 : 0),
-    gold:
-      (p.element !== 'physical' ? 30 + s.cleared.length * 15 : 0) +
-      (p.remedy ? 25 : 0),
-    ...(p.element !== 'physical' ? { crystal: 3 + s.cleared.length * 2 } : {}),
+    gold: p.remedy ? 25 : 0,
   };
 }
 export function battleModifiers(s: G.State, r: number) {
@@ -851,7 +851,7 @@ export function battleModifiers(s: G.State, r: number) {
     resistance: Math.min(
       0.75,
       (e === 'physical' ? 0 : p[e]) +
-        (prep.element === e && e !== 'physical' ? 0.2 : 0),
+        (hasPreparedPotion(s, e) ? 0.2 : 0),
     ),
     pierce: p.pierce,
     ranged: p.ranged,
@@ -863,7 +863,7 @@ export function battleModifiers(s: G.State, r: number) {
   };
 }
 export const enemyArmor = (s: G.State, r: number) =>
-  G.enemyDefinition(s, r, 'boss').defense * (s.guild.depths[r] >= 4 ? 0.85 : 1);
+  G.enemyDefinition(s, r, 'boss').defense * G.bossArmorScale(s, r);
 export function legacyCharacter(h: {
   id: HeroId;
   level: number;
@@ -916,6 +916,17 @@ export function validateGuild(s: G.State) {
     n(x, min, max) && Number.isInteger(x);
   const list = (x: unknown, max: number) => Array.isArray(x) && x.length <= max;
   const g = s.guild;
+  if (
+    g.guardianHunts !== undefined &&
+    (!g.guardianHunts ||
+      typeof g.guardianHunts !== 'object' ||
+      Array.isArray(g.guardianHunts) ||
+      Object.keys(g.guardianHunts).length !== 1 ||
+      !list(g.guardianHunts.readyAt, 6) ||
+      g.guardianHunts.readyAt.length !== 6 ||
+      !g.guardianHunts.readyAt.every((v) => n(v, 0, 1e8)))
+  )
+    throw Error('守敌再战记录无效');
   if (
     g.bossHunts !== undefined &&
     (!g.bossHunts ||
@@ -970,6 +981,7 @@ export function validateGuild(s: G.State) {
     typeof g.preparation.remedy !== 'boolean'
   )
     throw Error('备战方案无效');
+  validatePotions(s);
   // Old saves kept batches but not the history of five-star draws. Credit completed batches.
   // A still-visible five-star is the only recent result we can verify.
   if (!Object.hasOwn(g, 'fiveStarMisses')) {

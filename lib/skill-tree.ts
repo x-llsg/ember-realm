@@ -105,7 +105,7 @@ export function skillNodeHelp(h: G.Hero, node: SkillTreeNode) {
     : Object.entries(node.modifiers || {})
         .map(
           ([key, value]) =>
-            `${names[key as keyof SkillModifier]} +${Math.round(value! * 100)}${['crit', 'dodge'].includes(key) ? '个百分点' : '%'}`,
+            `${names[key as keyof SkillModifier]} ${value! >= 0 ? '+' : ''}${Math.round(value! * 100)}%`,
         )
         .join('；');
   return {

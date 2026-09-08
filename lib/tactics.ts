@@ -71,19 +71,42 @@ export function guardianReady(s: G.State, region: number) {
     s.guild.progress[region] >= G.FRONTIER_REQUIREMENTS[s.guild.depths[region]]
   );
 }
-export function guardianReason(s: G.State, region: number) {
+export const GUARDIAN_REMATCH_SECONDS = 30;
+export function guardianRematch(s: G.State, region: number, node: number) {
+  return (
+    Number.isInteger(region) && region >= 0 && region < 6 &&
+    Number.isInteger(node) && node >= 0 && node < 5 &&
+    node < s.guild.depths[region]
+  );
+}
+export function guardianRematchWait(s: G.State, region: number) {
+  return Math.max(0, Math.ceil((s.guild.guardianHunts?.readyAt[region] || 0) - s.time));
+}
+export function guardianReason(
+  s: G.State,
+  region: number,
+  node = s.guild.depths[region],
+) {
+  if (!Number.isInteger(region) || region < 0 || region > 5)
+    return '尚未发现通往这里的道路';
   if (s.guild.inventory.length >= G.INVENTORY_CAP)
     return '装备库已满，先为守敌掉落留出1格';
   if (!G.regionOpen(s, region)) return '尚未发现通往这里的道路';
-  if (!guardianReady(s, region))
+  const rematch = guardianRematch(s, region, node);
+  if (!rematch && (node !== s.guild.depths[region] || !guardianReady(s, region)))
     return s.guild.depths[region] >= 5
-      ? '五处守敌已击败'
+      ? '五处守敌已击败，可选择已占据点再次挑战'
       : '先将当前路线推进至守敌所在处';
+  if (!Number.isInteger(node) || node < 0 || node >= 5)
+    return '请选择有效的据点守敌';
+  if (rematch && guardianRematchWait(s, region))
+    return `本地区守敌重整中，还需 ${guardianRematchWait(s, region)} 秒`;
   if (s.expedition) return '队伍在外，可立即撤回后准备';
   if (s.battle) return '先结束当前战斗';
   if (!s.party.length) return '请先编入旅人';
   if (s.recoveryUntil > s.time)
     return `队伍休整中，还需 ${Math.ceil(s.recoveryUntil - s.time)} 秒`;
+  if (G.preparedPotionReason(s)) return G.preparedPotionReason(s);
   if (!G.canPay(s, G.battlePreparationCost(s)))
     return `准备不足：${G.costText(G.battlePreparationCost(s))}`;
   return '';
@@ -145,9 +168,7 @@ function makeUnits(
       resistance: Math.min(
         0.75,
         (element === 'physical' ? 0 : a[element]) +
-          (s.guild.preparation.element === element && element !== 'physical'
-            ? 0.2
-            : 0),
+          (G.hasPreparedPotion(s, element) ? 0.2 : 0),
       ),
       shield: 0,
       shieldTurns: 0,
@@ -226,7 +247,7 @@ export function createCombat(
     enemyAttack: enemy.attack,
     enemyDefense:
       enemy.defense *
-      (kind === 'boss' && s.guild.depths[region] >= 4 ? 0.85 : 1),
+      (kind === 'boss' ? G.bossArmorScale(s, region) : 1),
     enemyCrit: enemy.crit,
     enemyDodge: enemy.dodge,
     enemyElement: enemy.element,
@@ -290,21 +311,24 @@ export function beginBattle(
   s0: G.State,
   region: number,
   kind: 'boss' | 'guardian',
+  node = s0.guild.depths[region],
 ) {
   if (
     !Number.isInteger(region) ||
     region < 0 ||
     region > 5 ||
-    (kind === 'boss' ? G.bossReason(s0, region) : guardianReason(s0, region))
+    !['boss', 'guardian'].includes(kind) ||
+    (kind === 'boss' ? G.bossReason(s0, region) : guardianReason(s0, region, node))
   )
     return s0;
   const s = G.clone(s0);
   spend(s, G.battlePreparationCost(s));
-  s.battle = createCombat(s, region, kind);
-  if (kind === 'boss') s.order.enabled = false;
+  s.battle = createCombat(s, region, kind, kind === 'boss' ? s.guild.depths[region] : node);
+  G.consumePreparedPotion(s);
+  if (kind === 'boss' || guardianRematch(s, region, node)) s.order.enabled = false;
   G.log(
     s,
-    `${kind === 'boss' ? '首领' : '据点守敌'}战开始：${s.battle.enemyName}。`,
+    `${kind === 'boss' ? '首领战' : guardianRematch(s, region, node) ? '守敌再战' : '据点守敌战'}开始：${s.battle.enemyName}。`,
     'danger',
   );
   return s;
@@ -493,6 +517,7 @@ function healUnit(b: G.Battle, u: CombatUnit, amount: number) {
 }
 function finish(s: G.State, won: boolean, retreat = false) {
   const b = s.battle!;
+  const firstGuardian = b.kind === 'guardian' && s.guild.depths[b.region] === b.node;
   s.lastBattle = {
     region: b.region,
     kind: b.kind,
@@ -509,7 +534,7 @@ function finish(s: G.State, won: boolean, retreat = false) {
   };
   if (won) {
     if (b.kind === 'guardian') {
-      if (s.guild.depths[b.region] === b.node) {
+      if (firstGuardian) {
         s.guild.depths[b.region]++;
         s.guild.progress[b.region] = 0;
         s.guild.failures[b.region] = 0;
@@ -520,6 +545,8 @@ function finish(s: G.State, won: boolean, retreat = false) {
           'story',
         );
       }
+      s.guild.guardianHunts ||= { readyAt: [0, 0, 0, 0, 0, 0] };
+      s.guild.guardianHunts.readyAt[b.region] = s.time + GUARDIAN_REMATCH_SECONDS;
     } else if (!s.cleared.includes(b.region)) {
       s.cleared.push(b.region);
       G.grant(s, G.REGIONS[b.region].first);
@@ -534,7 +561,7 @@ function finish(s: G.State, won: boolean, retreat = false) {
         );
       }
     }
-    G.monsterEquipment(s, b.region, b.kind);
+    G.monsterEquipment(s, b.region, b.kind, firstGuardian);
     if (b.kind === 'boss') {
       s.guild.bossHunts ||= {
         wins: [0, 0, 0, 0, 0, 0],
@@ -1224,6 +1251,7 @@ export function validateBattle(s: G.State) {
     throw Error('角色行动顺序无效');
   if (
     b.kind === 'guardian' &&
+    !guardianRematch(s, b.region, b.node) &&
     (!guardianReady(s, b.region) || b.node !== s.guild.depths[b.region])
   )
     throw Error('据点守敌状态无效');

@@ -39,11 +39,13 @@ export function MissionPlanner({
   act,
   region,
   initial,
+  onRouteChange,
 }: {
   s: G.State;
   act: Act;
   region: number;
   initial?: G.Route;
+  onRouteChange?: (route: G.Route) => void;
 }) {
   const [route, setRoute] = useState<G.Route>(initial || 'survey');
   const [repeat, setRepeat] = useState(false),
@@ -66,7 +68,10 @@ export function MissionPlanner({
               key={p.id}
               className={p.id === route ? 'selected' : ''}
               aria-pressed={p.id === route}
-              onClick={() => setRoute(p.id)}
+              onClick={() => {
+                setRoute(p.id);
+                onRouteChange?.(p.id);
+              }}
             >
               <p.icon />
               <strong>

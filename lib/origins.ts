@@ -29,7 +29,7 @@ export const ORIGINS = [
   },
   {
     name: '山地猎户',
-    text: '穿甲 +12%、远程贡献 +20 个百分点。追猎的本领不限于弓箭。',
+    text: '穿甲 +12%、远程贡献 +20%。追猎的本领不限于弓箭。',
     ...ordinary,
     pierce: 0.12,
     ranged: 0.2,
@@ -50,7 +50,7 @@ export const ORIGINS = [
   },
   {
     name: '隐修者',
-    text: '火、暗、神抗各 +10 个百分点；专精费用 −15%。静修留下了稳定的心志。',
+    text: '火、暗、神抗各 +10%；专精费用 −15%。静修留下了稳定的心志。',
     ...ordinary,
     resistance: 0.1,
     mastery: 0.85,

@@ -23,7 +23,7 @@ export function BattleDesk({ s, act }: { s: G.State; act: Act }) {
   const target = b.units.find((u) => u.id === (b.taunt || b.target));
   const living = b.units.filter((u) => u.hp > 0);
   const roleName = (role: string) =>
-    G.HEROES.find((h) => h.id === role)?.role || role;
+    G.HEROES.find((h) => h.id === role)?.role || '旅人';
   const number = (n: number) =>
     Math.max(0, Math.round(n)).toLocaleString('zh-CN');
   const pct = (n: number, max: number) =>

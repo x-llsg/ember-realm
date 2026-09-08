@@ -2,6 +2,7 @@
 
 import { InfoHint } from './info-hint';
 import { CombatRecommendation } from './combat-recommendation';
+import { PotionWorkshop } from './potion-workshop';
 import { useState } from 'react';
 import {
   ArrowRight,
@@ -110,9 +111,7 @@ function commandName(s: G.State, command: G.Command) {
 
 /** Focus changes remount ExplorePanel through the existing focus.nonce key in app/page. */
 export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
-  const [selectedRegion, setSelectedRegion] = useState(() =>
-    initialRegion(s, focus.region),
-  );
+  const [selectedRegion] = useState(() => initialRegion(s, focus.region));
   const [mission, setMission] = useState(() => ({
     route: initialRoute(s, focus),
     revision: 0,
@@ -138,15 +137,24 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
     : (regions[0]?.id ?? 0);
   const enemy = G.REGIONS[region],
     frontier = G.frontierInfo(s, region);
-  const guardian = G.enemyDefinition(s, region, 'guardian'),
+  const guardianNode =
+    focus.guardian !== undefined &&
+    focus.guardian >= 0 &&
+    focus.guardian <= Math.min(4, frontier.depth)
+      ? focus.guardian
+      : Math.min(4, frontier.depth);
+  const rematch = G.guardianRematch(s, region, guardianNode);
+  const guardian = G.enemyDefinition(s, region, 'guardian', guardianNode),
     boss = G.enemyDefinition(s, region, 'boss'),
-    guardReady = G.guardianReady(s, region);
+    guardReady = rematch || G.guardianReady(s, region);
+  const guardianBlocker = G.guardianReason(s, region, guardianNode);
   const clues = G.discoveryCount(s, region),
     intel = s.guild.intel[region],
     outpost = s.guild.outposts[region];
   const visited = G.regionVisited(s, region),
     returned = G.hasReturned(s);
-  const bossRevealed = frontier.depth >= 4 || s.cleared.includes(region);
+  const approach = G.bossApproach(s, region);
+  const bossRevealed = approach.accessible || s.cleared.includes(region);
   const modifiers = G.battleModifiers(s, region),
     prep = s.guild.preparation;
   const reason = G.bossReason(s, region),
@@ -161,6 +169,7 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
     heroes: s.heroes,
     inventory: s.guild.inventory,
     preparation: prep,
+    potions: s.guild.potions,
     doctrine: s.guild.doctrine,
     intel: s.guild.intel,
     depths: s.guild.depths,
@@ -194,10 +203,7 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
 
   function selectRegion(id: number) {
     if (id === selectedRegion) return;
-    setSelectedRegion(id);
-    act((current) => G.rememberMap(current, id));
-    setDetail(null);
-    setForecast(null);
+    go({ view: 'explore', region: id, route: 'survey' });
   }
   function prepareMission(route: G.Route) {
     setMission((previous) => ({
@@ -254,6 +260,12 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
   }
 
   function renderPreparation(prefix: string) {
+    const potions = G.POTIONS.filter(
+      (p) =>
+        !G.potionUnlockReason(s, p.id) ||
+        G.potionCount(s, p.id) > 0 ||
+        prep.element === p.id,
+    );
     return (
       <>
         <fieldset className="explore-preparations" disabled={preparationLocked}>
@@ -274,24 +286,26 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
               ]}
             />
           </div>
-          <div className="explore-prep-row">
-            <label htmlFor={`${prefix}-element`}>药剂</label>
-            <Pick
-              id={`${prefix}-element`}
-              label="抗性药剂"
-              value={prep.element}
-              onChange={(value) =>
-                changePreparation({ element: value as G.Element })
-              }
-              options={[
-                { value: 'physical', label: '不携带抗性药剂' },
-                ...(['shadow', 'fire', 'radiant'] as const).map((element) => ({
-                  value: element,
-                  label: `${G.ELEMENT_NAMES[element]}抗性 +20%`,
-                })),
-              ]}
-            />
-          </div>
+          {potions.length > 0 && (
+            <div className="explore-prep-row">
+              <label htmlFor={`${prefix}-element`}>药剂</label>
+              <Pick
+                id={`${prefix}-element`}
+                label="抗性药剂"
+                value={prep.element}
+                onChange={(value) =>
+                  changePreparation({ element: value as G.Element })
+                }
+                options={[
+                  { value: 'physical', label: '不携带抗性药剂' },
+                  ...potions.map((potion) => ({
+                    value: potion.id,
+                    label: `${potion.name} · ${G.potionCount(s, potion.id)}份 · ${G.ELEMENT_NAMES[potion.element]}抗性 +20%`,
+                  })),
+                ]}
+              />
+            </div>
+          )}
           <label className="explore-remedy" htmlFor={`${prefix}-remedy`}>
             <span>额外药囊 +2</span>
             <Switch
@@ -309,7 +323,10 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
           title="每次挑战守敌或首领时支付，推演不消耗材料"
         >
           出战费用：{G.costText(G.battlePreparationCost(s))}
+          {prep.element !== 'physical' &&
+            ` · 消耗1份${G.POTIONS.find((p) => p.id === prep.element)?.name || '抗性药剂'}`}
         </p>
+        <PotionWorkshop s={s} act={act} />
       </>
     );
   }
@@ -328,6 +345,12 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
           生命 {boss.hp.toLocaleString('zh-CN')} · 攻击 {boss.attack} · 护甲{' '}
           {G.enemyArmor(s, region).toFixed(1)}
         </p>
+        <InfoHint title={approach.label} body={approach.detail}>
+          <span className="boss-approach-state">
+            {approach.label}
+            {approach.weakened ? ' · 护甲 −15%' : ' · 可提前挑战'}
+          </span>
+        </InfoHint>
         <CombatRecommendation s={s} region={region} node={6} />
         <p className="explore-match">
           敌情仅提供伤害增益，当前 +{(s.guild.intel[region] / 10).toFixed(1)}
@@ -366,10 +389,22 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
             type="button"
             className="primary-button"
             disabled={!!reason}
-            onClick={() => act((current) => G.startBattle(current, region))}
+            onClick={() => {
+              go({
+                view: 'explore',
+                region,
+                guardian: guardianNode,
+                route: mission.route,
+              });
+              act((current) => G.startBattle(current, region));
+            }}
           >
             <Swords aria-hidden="true" />
-            {s.cleared.includes(region) ? '再战首领残响' : '发起决战'}
+            {s.cleared.includes(region)
+              ? '再战首领残响'
+              : approach.weakened
+                ? '发起决战'
+                : '挑战全盛首领'}
           </button>
         </div>
         {reason && (
@@ -391,8 +426,8 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
           <span>据点 {frontier.depth}/5</span>
         </div>
         <p>
-          姿态与药剂同时用于守敌和首领。当前守敌：
-          {G.ELEMENT_NAMES[guardian.element]}伤害。
+          当前守敌：{G.ELEMENT_NAMES[guardian.element]}伤害。占领
+          {approach.required}处据点后可挑战首领。
         </p>
         {renderPreparation(prefix)}
         {preparationLocked && <small>队伍归来后可调整准备。</small>}
@@ -450,7 +485,7 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
               <span>
                 {String(id + 1).padStart(2, '0')} ·{' '}
                 {s.cleared.includes(id)
-                  ? '已平定'
+                  ? `首领已败 · 据点 ${s.guild.depths[id]}/5`
                   : returned
                     ? `据点 ${s.guild.depths[id]}/5`
                     : '待调查'}
@@ -541,14 +576,29 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
                       }
                       title={name}
                     >
-                      <b>
-                        {index < frontier.depth ? (
-                          <Check aria-label="已夺取" />
-                        ) : (
-                          index + 1
-                        )}
-                      </b>
-                      <span>{name}</span>
+                      <button
+                        type="button"
+                        disabled={index > frontier.depth}
+                        aria-label={`${name}${index < frontier.depth ? ' · 已夺取，可再战' : index === frontier.depth ? ' · 当前据点' : ' · 尚未抵达'}`}
+                        aria-pressed={index === guardianNode}
+                        onClick={() =>
+                          go({
+                            view: 'explore',
+                            region,
+                            guardian: index,
+                            route: mission.route,
+                          })
+                        }
+                      >
+                        <b>
+                          {index < frontier.depth ? (
+                            <Check aria-label="已夺取" />
+                          ) : (
+                            index + 1
+                          )}
+                        </b>
+                        <span>{name}</span>
+                      </button>
                     </li>
                   ))}
                 </ol>
@@ -566,7 +616,10 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
                               )
                               .join(' → ')}
                           </p>
-                          <p>本层奖励：{layerReward}</p>
+                          <p>
+                            {frontier.depth < 5 ? '下一据点首占奖励：' : ''}
+                            {layerReward}
+                          </p>
                           <p>
                             成功推进 +{frontier.progress}；当前{' '}
                             {s.guild.progress[region]}/{frontier.required}。
@@ -592,7 +645,7 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
                   label="当前据点推进"
                 />
                 <p className="explore-reward" title={layerReward}>
-                  {frontier.depth < 5 ? '夺取奖励：' : ''}
+                  {frontier.depth < 5 ? '下一据点首占奖励：' : ''}
                   {layerReward}
                 </p>
               </>
@@ -603,37 +656,51 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
             )}
           </div>
 
-          {returned && frontier.depth < 5 && (
+          {returned && (
             <div className={`guardian-preview${guardReady ? ' ready' : ''}`}>
               <div>
                 <InfoHint
                   title={guardian.name}
-                  body={`生命 ${guardian.hp} · 攻击 ${guardian.attack} · 护甲 ${guardian.defense}。${G.ELEMENT_NAMES[guardian.element]}伤害。推荐等级以配齐装备、强化和技能养成为前提；下方养成参考可悬停查看完整配置。战胜守敌后取得据点奖励，失败保留路线。`}
+                  body={`生命 ${guardian.hp} · 攻击 ${guardian.attack} · 护甲 ${guardian.defense}。${G.ELEMENT_NAMES[guardian.element]}伤害。${rematch ? '再战胜利有40%概率掉落当地套装，不重复首占奖励、经验或据点进度。' : '推荐练度包括装备与技能养成；战败保留路线。'}`}
                 >
                   <strong>{guardian.name}</strong>
                 </InfoHint>
                 <small>
-                  {guardReady ? '守敌已现身' : '当前节点守敌'} · 生命{' '}
-                  {guardian.hp.toLocaleString('zh-CN')}
+                  {rematch
+                    ? '再战：40%掉当地套装，不重复首占奖励'
+                    : guardReady
+                      ? '守敌已现身'
+                      : '当前节点守敌'}{' '}
+                  · 生命 {guardian.hp.toLocaleString('zh-CN')}
                 </small>
               </div>
               <button
                 className="primary-button"
-                disabled={!!G.guardianReason(s, region)}
-                onClick={() => act((x) => G.beginBattle(x, region, 'guardian'))}
+                disabled={!!guardianBlocker}
+                onClick={() => {
+                  go({
+                    view: 'explore',
+                    region,
+                    guardian: guardianNode,
+                    route: mission.route,
+                  });
+                  act((x) =>
+                    G.beginBattle(x, region, 'guardian', guardianNode),
+                  );
+                }}
               >
-                {guardReady ? '挑战守敌' : '推进后挑战'}
+                {rematch ? '再战守敌' : guardReady ? '挑战守敌' : '推进后挑战'}
               </button>
-              {guardReady && G.guardianReason(s, region) && (
-                <small>{G.guardianReason(s, region)}</small>
+              {guardReady && guardianBlocker && (
+                <small>{guardianBlocker}</small>
               )}
             </div>
           )}
-          {returned && frontier.depth < 5 && (
+          {returned && (
             <CombatRecommendation
               s={s}
               region={region}
-              node={frontier.depth + 1}
+              node={guardianNode + 1}
             />
           )}
           {returned && (
@@ -655,11 +722,16 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
             </label>
           )}
           <MissionPlanner
-            key={`${region}:${mission.route}:${mission.revision}`}
+            key={`${region}:${mission.revision}`}
             s={s}
             act={act}
             region={region}
             initial={returned ? mission.route : 'survey'}
+            onRouteChange={(route) =>
+              setMission((previous) =>
+                previous.route === route ? previous : { ...previous, route },
+              )
+            }
           />
         </section>
 

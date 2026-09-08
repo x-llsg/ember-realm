@@ -290,8 +290,9 @@ for (const [label, old] of migrationCases) test(`actual v5 regression fixture re
   assert.equal(migrated.version, 10);
   for (const key of ['resources', 'legacyStock', 'buildings', 'heroes', 'party', 'cleared', 'projects', 'research', 'kit', 'rebuild', 'world'])
     assert.deepEqual(migrated[key], old[key], key);
-  const {fiveStarMisses,...preservedGuild}=migrated.guild;
+  const {fiveStarMisses,potions,...preservedGuild}=migrated.guild;
   assert.deepEqual(preservedGuild,old.guild);
+  assert.deepEqual(potions,{shadow:0,fire:0,radiant:0},'old saves receive no free consumables');
   assert.ok(Number.isInteger(fiveStarMisses)&&fiveStarMisses>=0&&fiveStarMisses<=79);
   for (const id of old.research) assert.equal(G.researchDiscovered(migrated, id), true, `${id} disappeared during migration`);
   for (const beat of G.STORY_BEATS.filter(b => b.when(migrated)))

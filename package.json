@@ -1,6 +1,6 @@
 {
   "name": "ember-realm",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "private": true,
   "engines": {
     "node": ">=22.13.0"
@@ -11,7 +11,7 @@
     "start": "vite preview --host 127.0.0.1",
     "lint": "oxlint",
     "format": "oxfmt",
-    "test": "node --experimental-strip-types scripts/game.test.mjs && node --experimental-strip-types --test scripts/difficulty.test.mjs scripts/boss-counter.test.mjs scripts/buildcraft.test.mjs scripts/build-combat.test.mjs scripts/economy.test.mjs scripts/incremental.test.mjs scripts/civic.test.mjs scripts/guild.test.mjs scripts/world.test.mjs scripts/discovery.test.mjs scripts/objective.test.mjs scripts/onboarding.test.mjs scripts/pity-origin.test.mjs scripts/skills.test.mjs scripts/skill-tree.test.mjs scripts/navigation-recall.test.mjs scripts/reserve.test.mjs scripts/recruiting-odds.test.mjs && node --experimental-strip-types scripts/growth.test.mjs",
+    "test": "node --experimental-strip-types scripts/game.test.mjs && node --experimental-strip-types --test scripts/display.test.mjs scripts/market.test.mjs scripts/alchemy.test.mjs scripts/boss-routes.test.mjs scripts/difficulty.test.mjs scripts/boss-counter.test.mjs scripts/buildcraft.test.mjs scripts/build-combat.test.mjs scripts/economy.test.mjs scripts/incremental.test.mjs scripts/civic.test.mjs scripts/guild.test.mjs scripts/world.test.mjs scripts/discovery.test.mjs scripts/objective.test.mjs scripts/onboarding.test.mjs scripts/pity-origin.test.mjs scripts/skills.test.mjs scripts/skill-tree.test.mjs scripts/navigation-recall.test.mjs scripts/reserve.test.mjs scripts/recruiting-odds.test.mjs && node --experimental-strip-types scripts/growth.test.mjs",
     "test:campaign": "node --experimental-strip-types scripts/campaign-economy.mjs",
     "test:combat-balance": "node --experimental-strip-types scripts/combat-matrix.mjs",
     "test:campaign-demand": "node --experimental-strip-types scripts/campaign-demand.mjs",

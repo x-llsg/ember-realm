@@ -177,7 +177,7 @@ test('later boss access is not gated by population or full housing',()=>{
   const s=frontierFixture();s.guild.depths[1]=1;s.survey[1]=G.REGIONS[1].thresholds[1];s.projects.bell='alarm';s.kit=1;
   s.population=6;s.buildings.hut=1;
   const goal=G.objective(s);hasDestination(s,goal);assert.notEqual(goal.building,'hut');
-  s.guild.depths[1]=5;s.guild.intel[1]=0;fund(s);assert.equal(G.bossReason(s,1),'');
+  s.guild.depths[1]=3;s.guild.intel[1]=0;fund(s);assert.equal(G.bossReason(s,1),'');
   assert.notEqual(G.build(s,'hut'),s);
 });
 

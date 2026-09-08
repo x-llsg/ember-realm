@@ -307,7 +307,7 @@ export const transportSlots = (s: State) =>
 export const transportLines = (s: State) =>
   economy(s).routes.filter((r) => r.enabled && r.crew > 0).length;
 export const regionalDepth = (s: State, r: number) =>
-  s.cleared.includes(r) ? 5 : s.guild.depths[r] || 0;
+  s.guild.depths[r] || 0;
 export const routeDiscovered = (s: State, r: number) =>
   Number.isInteger(r) &&
   r >= 0 &&

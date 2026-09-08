@@ -493,17 +493,18 @@ test('imports reject equipment in the wrong slot, shared ownership and excessive
   }
 });
 
-test('potion and extra-supply costs add, and selecting preparation never spends resources', () => {
+test('potion selection reserves inventory while extra-supply resources are paid only for battle', () => {
   const s = unitState(4);
   const basic = G.battlePreparationCost(s);
   const potion = G.setPreparation(s, { element: 'fire' });
   assert.deepEqual(potion.resources, s.resources);
   const potionCost = G.battlePreparationCost(potion);
-  assert.equal(potionCost.gold, 90);
-  assert.equal(potionCost.crystal, 11);
+  assert.deepEqual(potionCost, basic);
+  assert.equal(G.potionCount(potion, 'fire'), 0);
+  assert.match(G.preparedPotionReason(potion), /库存不足/);
   const both = G.setPreparation(potion, { remedy: true });
   const cost = G.battlePreparationCost(both);
-  assert.equal(cost.gold, 115);
+  assert.equal(cost.gold, 25);
   assert.equal(cost.food, basic.food + 30);
   assert.equal(cost.crystal, potionCost.crystal);
   assert.deepEqual(both.resources, s.resources);
@@ -682,6 +683,11 @@ test('forecast outcomes match actual command replay including a mid-battle save 
       element: G.ENEMIES[region].element,
       remedy: true,
     });
+    if (source.guild.preparation.element !== 'physical') {
+      const element = source.guild.preparation.element;
+      source = G.craftPotion(fund(source), element);
+      assert.equal(G.potionCount(source, element), 1);
+    }
     for (const plan of ['balanced', 'attack']) {
       const untouched = G.clone(source);
       const forecast = G.forecastBattle(source, region, plan);

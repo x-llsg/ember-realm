@@ -1,4 +1,7 @@
 import * as D from './realm-data.ts';
+import { BOSS_ACCESS_DEPTH } from './boss-access.ts';
+import { preparedPotionReason } from './alchemy.ts';
+export * from './boss-access.ts';
 import { combatRecommendation } from './combat-recommendation.ts';
 import { skillPoints, roleTree, learnSkillReason } from './skill-tree.ts';
 import * as Guild from './guild.ts';
@@ -23,6 +26,7 @@ import type { Character, Gear, Element } from './guild-data.ts';
 import { FRONTIER_RESOURCES, RECIPES } from './guild-data.ts';
 export * from './guild-data.ts';
 export * from './guild.ts';
+export * from './alchemy.ts';
 export * from './origins.ts';
 import { originEffect } from './origins.ts';
 import { decodeSave as decodeLegacy } from './game.ts';
@@ -156,12 +160,14 @@ export interface State {
   party: string[];
   guild: {
     bossHunts?: { wins: number[]; readyAt: number[] };
+    guardianHunts?: { readyAt: number[] };
     applicants: Hero[];
     refreshAt: number;
     rolls: number;
     fiveStarMisses: number;
     serial: number;
     inventory: Gear[];
+    potions: Record<import('./guild-data.ts').PotionId, number>;
     crafts: number;
     dust: number;
     depths: number[];
@@ -925,11 +931,12 @@ export function research(s0: State, id: string) {
 }
 export const tradeUnlocked = (s: State, k: Resource) =>
   !!s.buildings.market &&
-  (k === 'iron'
-    ? s.cleared.length >= 1
-    : k === 'crystal'
-      ? s.cleared.length >= 2
-      : k !== 'gold');
+  Object.hasOwn(D.RESOURCE_NAMES, k) &&
+  k !== 'gold' &&
+  resourceVisible(s, k);
+export const TRADE_BATCH_SIZE = 20;
+export const TRADE_BATCH_CHOICES = [1, 10, 100, 1000] as const;
+export type TradeBatch = number | 'max';
 export function tradePrice(s: State, k: Resource, buy = true) {
   const price = {
     wood: 28,
@@ -941,51 +948,40 @@ export function tradePrice(s: State, k: Resource, buy = true) {
   }[k];
   return Math.ceil(price * (buy ? 1 : 0.24));
 }
-export function trade(s0: State, k: Resource, buy: boolean, batches = 1) {
-  if (
-    !Object.hasOwn(s0.resources, k) ||
-    !tradeUnlocked(s0, k) ||
-    !Number.isInteger(batches) ||
-    batches < 1 ||
-    batches > 20
-  )
-    return s0;
-  const cost = buy
-    ? { gold: tradePrice(s0, k) * batches }
-    : { [k]: 20 * batches };
-  const received = buy
-    ? { [k]: 20 * batches }
-    : { gold: tradePrice(s0, k, false) * batches };
-  if (
-    !canPay(s0, cost) ||
-    Object.entries(received).some(
-      ([key, v]) =>
-        s0.resources[key as Resource] + v! > capacity(s0, key as Resource),
-    )
-  )
-    return s0;
+export function tradeQuote(s: State, k: Resource, buy: boolean, requested: TradeBatch = 1) {
+  const empty = (reason: string) => ({ batches: 0, amount: 0, gold: 0, maximum: 0, limited: false, reason });
+  if (!tradeUnlocked(s, k)) return empty('先开放对应物资与集市');
+  if (typeof buy !== 'boolean' || (requested !== 'max' && (!Number.isSafeInteger(requested) || requested < 1)))
+    return empty('请选择有效交易份数');
+  const price = tradePrice(s, k, buy);
+  const available = buy ? Math.floor(s.resources.gold / price) : Math.floor(s.resources[k] / TRADE_BATCH_SIZE);
+  const room = buy
+    ? Math.floor((capacity(s, k) - s.resources[k]) / TRADE_BATCH_SIZE)
+    : Math.floor((capacity(s, 'gold') - s.resources.gold) / price);
+  const maximum = Math.max(0, Math.min(available, room));
+  if (maximum < 1) return empty(available < 1
+    ? buy ? '金币不足' : `不足 ${TRADE_BATCH_SIZE} 单位`
+    : buy ? `需要 ${TRADE_BATCH_SIZE} 个空位` : '金币仓库空间不足');
+  const batches = requested === 'max' ? maximum : Math.min(requested, maximum);
+  return { batches, amount: TRADE_BATCH_SIZE * batches, gold: price * batches, maximum,
+    limited: requested !== 'max' && batches < requested, reason: '' };
+}
+export function trade(s0: State, k: Resource, buy: boolean, batches: TradeBatch = 1) {
+  const quote = tradeQuote(s0, k, buy, batches);
+  if (quote.reason) return s0;
   const s = clone(s0);
-  pay(s, cost);
-  grant(
-    s,
-    buy ? { [k]: 20 * batches } : { gold: tradePrice(s, k, false) * batches },
-  );
+  pay(s, buy ? { gold: quote.gold } : { [k]: quote.amount });
+  grant(s, buy ? { [k]: quote.amount } : { gold: quote.gold });
   log(
     s,
     buy
-      ? `买入 ${20 * batches} ${D.RESOURCE_NAMES[k]}，支付 ${tradePrice(s, k) * batches} 金币。`
-      : `卖出 ${20 * batches} ${D.RESOURCE_NAMES[k]}，获得 ${tradePrice(s, k, false) * batches} 金币。`,
+      ? `买入 ${quote.amount} ${D.RESOURCE_NAMES[k]}，支付 ${quote.gold} 金币。`
+      : `卖出 ${quote.amount} ${D.RESOURCE_NAMES[k]}，获得 ${quote.gold} 金币。`,
   );
   return s;
 }
-export function tradeReason(s: State, k: Resource, buy: boolean) {
-  if (!tradeUnlocked(s, k)) return '先开放对应商路';
-  if (buy && s.resources.gold < tradePrice(s, k)) return '金币不足';
-  if (!buy && s.resources[k] < 20) return '不足 20 份';
-  if (buy && s.resources[k] + 20 > capacity(s, k)) return '需要 20 个空位';
-  if (!buy && s.resources.gold + tradePrice(s, k, false) > capacity(s, 'gold'))
-    return '金币仓库空间不足';
-  return '';
+export function tradeReason(s: State, k: Resource, buy: boolean, batches: TradeBatch = 1) {
+  return tradeQuote(s, k, buy, batches).reason;
 }
 export const regionOpen = Campaign.regionOpen;
 export function routeInfo(s: State, r: number, route: Route) {
@@ -1366,13 +1362,15 @@ export function bossReason(s: State, r: number) {
     return `首领残响重聚中：${Math.ceil(ready - s.time)} 秒`;
   if (s.guild.inventory.length >= 120)
     return '装备库已满，先为首领战利品留出1格';
-  if (s.guild.depths[r] < 5)
-    return `据点推进 ${s.guild.depths[r]}/5：先打通通往首领的道路`;
+  if (s.guild.depths[r] < BOSS_ACCESS_DEPTH)
+    return `据点推进 ${s.guild.depths[r]}/${BOSS_ACCESS_DEPTH}：占领第三处据点后可挑战全盛首领`;
   if (r === 5 && !s.research.includes('godslayer')) return '先领悟弑神之理';
   if (s.expedition) return '队伍正在远征，可立即撤回或等待归来';
   if (s.battle) return '正在决战';
   if (s.recoveryUntil > s.time) return '队伍正在休整';
   if (!s.party.length) return '请先组建小队';
+  const potionReason = preparedPotionReason(s);
+  if (potionReason) return potionReason;
   if (!canPay(s, Guild.battlePreparationCost(s)))
     return `准备不足：${costText(Guild.battlePreparationCost(s))}`;
   return '';

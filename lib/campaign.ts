@@ -49,9 +49,9 @@ const RECIPE_IDS = [
 const world = (s: State): WorldState => (s as CampaignState).world;
 const has = (s: State, id: string) => !!world(s)?.tech.includes(id);
 const depth = (s: State, r: number) =>
-  s.cleared.includes(r) ? 5 : Math.max(0, Math.min(5, s.guild.depths[r] || 0));
+  Math.max(0, Math.min(5, s.guild.depths[r] || 0));
 const techName = (id: string) =>
-  TECHNOLOGIES.find((t) => t.id === id)?.name || id;
+  TECHNOLOGIES.find((t) => t.id === id)?.name || '尚未掌握的工艺';
 const fmt = (n: number) => Number(n.toFixed(2)).toString();
 function note(s: State, text: string, kind = 'good') {
   s.log.unshift({ time: s.time, text, kind });

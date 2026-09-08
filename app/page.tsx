@@ -57,7 +57,7 @@ const NAV = [
   { id: 'heroes' as const, name: '队伍', icon: Users },
   { id: 'explore' as const, name: '远征', icon: Compass },
   { id: 'research' as const, name: '研究', icon: BookOpen },
-  { id: 'destiny' as const, name: '手札', icon: BookOpen },
+  { id: 'destiny' as const, name: '手册', icon: BookOpen },
 ];
 type Welcome = {
   seconds: number;
