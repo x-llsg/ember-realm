@@ -45,12 +45,13 @@ function fixture(mode) {
   s.population = G.populationCap(s);
   s.kit = 3;
   s.guild.dust = 1000;
+  s.guild.salvage[3] = 30;
   G.ensureApplicants(s);
   for (const k of resourceKeys) s.resources[k] = G.capacity(s, k);
   for (let i = 0; i < 6; i++) {
     const h = G.makeApplicant(s, G.HEROES[i].id);
     Object.assign(h, {
-      level: i < 4 ? 16 : 8,
+      level: 16,
       xp: 0,
       quality: 5,
       origin: i === 4 ? '隐修者' : '边境流民',
@@ -68,6 +69,7 @@ function fixture(mode) {
   }
   s.party = s.heroes.slice(0, 4).map((h) => h.id);
   const reserve = s.heroes.slice(4).map((h) => h.id);
+  for (const id of G.MATERIAL_IDS) s.world.materials[id] = Math.min(200, G.materialCapacity(s, id));
   const idle = [gear(s, 'blade'), gear(s, 'plate')];
   assert.deepEqual(
     reload(s),
@@ -140,7 +142,7 @@ function adjustments(start, reserve, idle) {
   s = allowed(s, (x) => G.reforgeGear(x, transfer, 3), 'reserve reforge');
   s = allowed(s, (x) => G.unequipGear(x, a, 'armor'), 'reserve unload one');
   s = allowed(s, (x) => G.unequipAllGear(x, a), 'reserve unload all');
-  s = allowed(s, (x) => G.dismantleGear(x, idle[0]), 'idle dismantle');
+  s = allowed(s, (x) => G.dismantleGear(x, idle[0], { includeEnhanced: true }), 'idle dismantle');
   s = allowed(s, (x) => G.dismissHero(x, b), 'reserve dismiss');
   return s;
 }
@@ -189,6 +191,9 @@ test('reserve training, mastery and overcoming flaws charge exact costs without 
     ]) {
       const next = allowed(s, action, `${mode}/${JSON.stringify(name)}`);
       charged(s, next, cost);
+      const materials = name === 'mastery' ? G.masteryMaterials(s, hero(s, id)) : {};
+      for (const key of G.MATERIAL_IDS)
+        assert.equal(s.world.materials[key] - next.world.materials[key], materials[key] || 0, `${name}: ${key}`);
       check(hero(next, id));
     }
   }
@@ -242,13 +247,15 @@ test('reserve and idle enhancements/reforges work; dismantling still requires an
         upgrade: original.upgrade + 1,
       });
       const dust = s.guild.dust;
+      const fragments = s.guild.salvage[original.rarity];
       s = allowed(
         s,
         (x) => G.reforgeGear(x, target, 3),
         'reforge available gear',
       );
       assert.equal(item(s, target).affix, 3);
-      assert.equal(s.guild.dust, dust - 20 * original.tier);
+      assert.equal(s.guild.dust, dust - 40 * original.tier * original.rarity);
+      assert.equal(s.guild.salvage[original.rarity], fragments - 2 * original.tier);
     }
     blocked(
       s,
@@ -257,7 +264,7 @@ test('reserve and idle enhancements/reforges work; dismantling still requires an
     );
     const unworn = copy(item(s, idle[1])),
       dust = s.guild.dust;
-    s = allowed(s, (x) => G.dismantleGear(x, idle[1]), 'idle dismantle');
+    s = allowed(s, (x) => G.dismantleGear(x, idle[1], { includeEnhanced: true }), 'idle dismantle');
     assert.equal(item(s, idle[1]), undefined);
     assert.equal(s.guild.dust, dust + unworn.tier * unworn.rarity * 4);
     s = allowed(
@@ -267,7 +274,7 @@ test('reserve and idle enhancements/reforges work; dismantling still requires an
     );
     s = allowed(
       s,
-      (x) => G.dismantleGear(x, carried),
+      (x) => G.dismantleGear(x, carried, { includeEnhanced: true }),
       'dismantle formerly worn reserve weapon',
     );
     assert.equal(item(s, carried), undefined);

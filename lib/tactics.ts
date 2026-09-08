@@ -44,6 +44,7 @@ export interface BattleReport {
   time: number;
   hp?: number;
   maxHp?: number;
+  loot?: G.LootReceipt | null;
 }
 
 const alive = (b: G.Battle) => b.units.filter((u) => u.hp > 0);
@@ -531,6 +532,7 @@ function finish(s: G.State, won: boolean, retreat = false) {
     time: s.time,
     hp: b.units.reduce((total, u) => total + u.hp, 0),
     maxHp: b.maxHp,
+    loot: null,
   };
   if (won) {
     if (b.kind === 'guardian') {
@@ -561,7 +563,7 @@ function finish(s: G.State, won: boolean, retreat = false) {
         );
       }
     }
-    G.monsterEquipment(s, b.region, b.kind, firstGuardian);
+    s.lastBattle.loot = G.monsterEquipment(s, b.region, b.kind, firstGuardian) || null;
     if (b.kind === 'boss') {
       s.guild.bossHunts ||= {
         wins: [0, 0, 0, 0, 0, 0],
@@ -1120,7 +1122,9 @@ export function validateBattleReport(s: G.State) {
         r.hp! > r.maxHp!)) ||
     !Array.isArray(r.history) ||
     r.history.length > 35 ||
-    r.history.some((l) => typeof l !== 'string' || l.length > 300)
+    r.history.some((l) => typeof l !== 'string' || l.length > 300) ||
+    (r.loot !== undefined && r.loot !== null &&
+      (!G.validLootReceipt(s, r.loot) || !r.won || r.loot.source !== r.kind || r.loot.time !== r.time))
   )
     throw Error('战斗回顾无效');
 }

@@ -1,0 +1,19 @@
+.life-tools .achievement-entry{display:flex;align-items:center;gap:5px;width:auto;font-size:12px}
+.achievement-entry>svg{width:17px;color:var(--gold)}.achievement-entry>b{font-size:10px;color:#e8bf75}
+.achievement-title{color:var(--gold);font-size:11px;border-left:1px solid var(--border);padding-left:10px}
+.achievement-dialog{width:min(900px,94vw)!important;max-width:900px!important;max-height:85dvh;display:flex!important;flex-direction:column;gap:12px}
+.achievement-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--soft)}
+.achievement-toolbar>[role=tablist]{display:flex;gap:4px;flex-wrap:wrap}
+.achievement-toolbar button{background:transparent;border:1px solid transparent;padding:7px;color:var(--soft);border-radius:3px}
+.achievement-toolbar button[aria-selected=true]{border-color:#77603d;background:#30281d;color:var(--gold)}
+.achievement-toolbar small{margin-left:5px;font-size:10px}
+.achievement-list{overflow:auto;min-height:0;overscroll-behavior:contain;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.achievement-list article{display:flex;gap:10px;padding:12px;border:1px solid var(--border);border-radius:5px;align-items:center;background:#211e18}
+.achievement-list .achievement-done{border-color:#56452c;background:linear-gradient(120deg,#2e2519,#211e18)}
+.achievement-mark{align-self:flex-start;color:var(--soft)}.achievement-done .achievement-mark{color:var(--gold)}.achievement-mark svg{width:18px}
+.achievement-copy{flex:1;min-width:0}.achievement-copy h3{font-size:14px}.achievement-copy h3 small{display:block;margin-top:3px;font-weight:400;font-size:10px;color:var(--soft)}
+.achievement-copy p{font-size:12px;line-height:1.5;margin-top:7px}.achievement-copy>small{font-size:11px;color:var(--soft)}
+.achievement-copy progress{width:100%;height:3px;accent-color:var(--gold);display:block;margin:7px 0;background:var(--border)}
+.achievement-actions .life-small-button{font-size:11px;padding:6px;white-space:nowrap;display:flex;align-items:center;gap:3px}.achievement-actions svg{width:12px}
+.achievement-footnote{font-size:11px;color:var(--soft)}
+@media(max-width:750px){.achievement-list{grid-template-columns:1fr}.achievement-title{display:none}}

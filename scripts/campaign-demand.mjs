@@ -326,8 +326,27 @@ function cleanupInventory() {
   const spare = s.guild.inventory
     .filter((g) => !worn.has(g.id))
     .sort((a, b) => a.tier - b.tier || a.rarity - b.rarity);
-  while (s.guild.inventory.length >= 25 && spare.length)
-    act((x) => G.dismantleGear(x, spare.shift().id), 'gear:dismantle');
+  while (s.guild.inventory.length >= 25 && spare.length) {
+    const item = spare.shift(), options = { includeSets: true, includeEnhanced: true, allowOverflow: true };
+    if (G.dismantleQuote(s, [item.id], options).reason) continue;
+    act((x) => G.dismantleGear(x, item.id, options), 'gear:dismantle');
+  }
+}
+function trainMastery(id, target, label) {
+  while (s.heroes.find((h) => h.id === id).mastery < target) {
+    const h = s.heroes.find((entry) => entry.id === id);
+    if (G.masteryUnlockReason(s, h)) return;
+    const cost = G.masteryCost(h), materials = G.masteryMaterials(s, h);
+    ensure(cost, label);
+    ensureMaterials(materials);
+    ensure(cost, 'reserved ' + label);
+    assert.equal(G.masteryReason(s, s.heroes.find((entry) => entry.id === id)), '', 'mastery has a complete earned bill');
+    const before = s, tier = h.mastery + 1;
+    act((x) => G.mentorHero(x, id), 'mentor:' + label);
+    for (const key of G.MATERIAL_IDS) assert.equal(before.world.materials[key] - s.world.materials[key], materials[key] || 0, 'mastery payment ' + key);
+    results.masteryInvestments ??= [];
+    results.masteryInvestments.push({ time: before.time, hero: id, tier, cost, materials, rank: G.townRank(before), level: h.level, depths: [...before.guild.depths], cleared: [...before.cleared] });
+  }
 }
 function loadout(r, enhancement = r ? 2 : 0) {
   if(G.gearTier(s)>=2&&!s.buildings.forge)build('forge',1);
@@ -420,7 +439,7 @@ function prepareRoute(r,route){
    loadout(r,Math.min(8,2+pass));
    if(G.buildingLimit(s,'tavern')>=2){
     build('tavern',2);
-    for(const id of s.party){const h=s.heroes.find(h=>h.id===id);if(h.mastery<Math.min(5,pass)){ensure(G.masteryCost(h),'frontier mastery');act(x=>G.mentorHero(x,id),'mentor:frontier');}}
+    for(const id of s.party)trainMastery(id,Math.min(5,pass),'frontier');
    }
   }
   if(!ready()&&G.partyStats(s).power<=previous&&pass>2)throw new NeedProgress('Insufficient prepared route '+r+'/'+route+': '+JSON.stringify({frontier:G.frontierInfo(s,r),levelCap:G.levelCap(s),tier:G.gearTier(s)}));
@@ -443,7 +462,7 @@ function fightGuardian(r){
     const target=G.enemyDefinition(s,r,'guardian').targetLevel;
     train(Math.min(G.levelCap(s),Math.max(target,...s.party.map(id=>s.heroes.find(h=>h.id===id).level+2))));
     loadout(r,Math.min(8,tries>1?tries:0));
-    if(tries>2&&G.buildingLimit(s,'tavern')>=2){build('tavern',2);for(const id of s.party){const h=s.heroes.find(h=>h.id===id);if(h.mastery<Math.min(5,tries-2)){ensure(G.masteryCost(h),'guardian mastery');act(x=>G.mentorHero(x,id),'mentor:guardian');}}}
+    if(tries>2&&G.buildingLimit(s,'tavern')>=2){build('tavern',2);for(const id of s.party)trainMastery(id,Math.min(5,tries-2),'guardian');}
   }
 }
 function autoUntil(r, route, predicate) {
@@ -544,8 +563,7 @@ function resolveChapter(r) {
         const h = s.heroes.find((h) => h.id === id);
         if (h.mastery < Math.min(3, attempts + 1)) {
           build('tavern',2);
-          ensure(G.masteryCost(h), 'mastery');
-          act((x) => G.mentorHero(x, id), 'mentor:mastery');
+          trainMastery(id, Math.min(3, attempts + 1), 'mastery');
         }
       }
     }

@@ -7,6 +7,11 @@ import { TALENT_RARITY_WEIGHTS } from './talent-data.ts';
 import { GEAR_SLOTS, INVENTORY_CAP, RARITY_SCALE } from './equipment-data.ts';
 import { gearTierScale, EQUIPMENT_DEFENSE_SCALE } from './equipment-growth.ts';
 import { freshPotions, hasPreparedPotion, validatePotions } from './alchemy.ts';
+import { masteryCost, masteryMaterials, masteryReason } from './mastery.ts';
+export * from './mastery.ts';
+import { freshSalvage, validateSalvage, bulkDismantleGear, reforgeQuote, type DismantleOptions } from './equipment-management.ts';
+import { recordLoot, validateLoot } from './loot.ts';
+import { freshAchievements, validateAchievements } from './achievements.ts';
 export { EQUIPMENT_BASE_SCALE, EQUIPMENT_DEFENSE_SCALE, gearTierScale } from './equipment-growth.ts';
 export * from './skill-data.ts';
 export { talentExperience, talentTraining } from './buildcraft.ts';
@@ -22,6 +27,11 @@ export function freshGuild(): G.State['guild'] {
     fiveStarMisses: 0,
     serial: 0,
     inventory: [],
+    salvage: freshSalvage(),
+    lootHistory: [],
+    lootReadSerial: 0,
+    lootSerial: 0,
+    achievements: freshAchievements(),
     potions: freshPotions(),
     crafts: 0,
     dust: 0,
@@ -318,28 +328,24 @@ export function dismissHero(s0: G.State, id: string) {
   );
   return s;
 }
-export const masteryCost = (h: G.Hero): Cost => ({
-  gold: Math.ceil(80 * (h.mastery + 1) ** 2 * originEffect(h).mastery),
-  food: Math.ceil(40 * (h.mastery + 1) * originEffect(h).mastery),
-  iron: Math.ceil(12 * (h.mastery + 1) * originEffect(h).mastery),
-});
 export function mentorHero(s0: G.State, id: string, overcome = false) {
   const h = s0.heroes.find((h) => h.id === id);
   if (!h || heroAway(s0, id) || s0.buildings.tavern < 2) return s0;
   const cost = overcome ? { gold: 120, food: 60 } : masteryCost(h);
   if (
-    (overcome ? h.flaw === 'overcome' : h.mastery >= 5) ||
+    (overcome ? h.flaw === 'overcome' : !!masteryReason(s0, h)) ||
     !G.canPay(s0, cost)
   )
     return s0;
   const s = G.clone(s0);
   spend(s, cost);
+  if (!overcome) C.spendMaterials(s, masteryMaterials(s0, h));
   const hero = s.heroes.find((h) => h.id === id)!;
   if (overcome) hero.flaw = 'overcome';
   else hero.mastery++;
   say(
     s,
-    `${hero.name}${overcome ? '克服了原有缺点' : '完成专精培养，原生生命、攻击与防御永久 +4%'}。`,
+    `${hero.name}${overcome ? '克服了原有缺点' : `完成第 ${hero.mastery} 阶专精培养，原生生命、攻击与防御永久 +4%`}。`,
   );
   return s;
 }
@@ -538,6 +544,7 @@ export function craftGear(s0: G.State, id: string, tier = C.gearTier(s0)) {
   s.guild.crafts++;
   if (s.guild.crafts % 4 === 0) item.rarity = Math.max(3, item.rarity);
   s.guild.inventory.push(item);
+  recordLoot(s, item, 'forge', '城镇锻造');
   say(s, `锻造完成：${gearName(item)}。每四次锻造至少获得一件稀有品质。`);
   return s;
 }
@@ -547,7 +554,7 @@ export function equipGear(s0: G.State, heroId: string, itemId: string) {
   if (!h || !item || heroAway(s0, heroId) || gearAway(s0, itemId)) return s0;
   const slot = D.RECIPES.find((r) => r.id === item.recipe)!.slot,
     s = G.clone(s0);
-  for (const member of s.heroes)
+  for (const member of [...s.heroes, ...s.guild.applicants])
     if (member.equipment[slot] === itemId) delete member.equipment[slot];
   s.heroes.find((h) => h.id === heroId)!.equipment[slot] = itemId;
   say(s, `${h.name}装备了${gearName(item)}。`);
@@ -556,18 +563,18 @@ export function equipGear(s0: G.State, heroId: string, itemId: string) {
 export function unequipGear(s0: G.State, id: string, slot: D.GearSlot) {
   if (
     heroAway(s0, id) ||
-    !s0.heroes.some((h) => h.id === id && h.equipment[slot])
+    ![...s0.heroes, ...s0.guild.applicants].some((h) => h.id === id && h.equipment[slot])
   )
     return s0;
   const s = G.clone(s0);
-  delete s.heroes.find((h) => h.id === id)!.equipment[slot];
+  delete [...s.heroes, ...s.guild.applicants].find((h) => h.id === id)!.equipment[slot];
   return s;
 }
 export function unequipAllGear(s0: G.State, id: string) {
-  const h = s0.heroes.find((h) => h.id === id);
+  const h = [...s0.heroes, ...s0.guild.applicants].find((h) => h.id === id);
   if (!h || heroAway(s0, id) || !Object.keys(h.equipment).length) return s0;
   const s = G.clone(s0);
-  s.heroes.find((h) => h.id === id)!.equipment = {};
+  [...s.heroes, ...s.guild.applicants].find((h) => h.id === id)!.equipment = {};
   say(s, `${h.name}卸下全部个人装备，物品已归还装备库。`);
   return s;
 }
@@ -611,32 +618,16 @@ export function enhanceGear(s0: G.State, id: string) {
   );
   return s;
 }
-export function dismantleGear(s0: G.State, id: string) {
-  const item = s0.guild.inventory.find((g) => g.id === id);
-  if (
-    !item ||
-    gearAway(s0, id) ||
-    s0.heroes.some((h) => Object.values(h.equipment).includes(id))
-  )
-    return s0;
-  const s = G.clone(s0);
-  s.guild.inventory = s.guild.inventory.filter((g) => g.id !== id);
-  s.guild.dust = Math.min(9999, s.guild.dust + item.tier * item.rarity * 4);
-  return s;
+export function dismantleGear(s0: G.State, id: string, options: DismantleOptions = {}) {
+  return bulkDismantleGear(s0, [id], options);
 }
 export function reforgeGear(s0: G.State, id: string, affix: number) {
-  const item = s0.guild.inventory.find((g) => g.id === id);
-  if (
-    !item ||
-    gearAway(s0, id) ||
-    !D.AFFIXES[affix] ||
-    !Number.isInteger(affix) ||
-    s0.guild.dust < 20 * item.tier ||
-    item.affix === affix
-  )
-    return s0;
+  const quote = reforgeQuote(s0, id, affix);
+  if (quote.reason) return s0;
   const s = G.clone(s0);
-  s.guild.dust -= 20 * item.tier;
+  s.guild.dust -= quote.dust;
+  s.guild.salvage ??= freshSalvage();
+  s.guild.salvage[quote.rarity] -= quote.material;
   s.guild.inventory.find((g) => g.id === id)!.affix = affix;
   say(s, `定向重铸完成：${D.AFFIXES[affix].name}。`);
   return s;
@@ -668,10 +659,19 @@ export function expeditionEquipment(
   if (guaranteed) item.rarity = Math.max(3, item.rarity);
   if (s.guild.inventory.length < INVENTORY_CAP) {
     s.guild.inventory.push(item);
+    G.recordLoot(s, item, 'expedition', `${G.REGIONS[region].name} · 远征收获`);
     return gearName(item);
   }
-  s.guild.dust = Math.min(9999, s.guild.dust + item.tier * item.rarity * 4);
-  return `装备库已满，战利品转为 ${item.tier * item.rarity * 4} 锻造尘`;
+  const value = G.salvageYield(item);
+  const dust = Math.min(9999 - s.guild.dust, value.dust);
+  const material = Math.min(G.SALVAGE_CAP - G.salvageCount(s, item.rarity), value.material);
+  s.guild.salvage ||= G.freshSalvage();
+  s.guild.dust += dust;
+  s.guild.salvage[item.rarity as keyof typeof s.guild.salvage] += material;
+  const receipt = G.recordLoot(s, item, 'expedition', `${G.REGIONS[region].name} · 远征收获`, 'converted', {
+    dust, rarity: item.rarity, material, lostDust: value.dust - dust, lostMaterial: value.material - material,
+  });
+  return `${gearName(item)}；${G.lootOutcomeText(receipt)}`;
 }
 export function doctrineCost(
   s: G.State,
@@ -982,6 +982,9 @@ export function validateGuild(s: G.State) {
   )
     throw Error('备战方案无效');
   validatePotions(s);
+  validateSalvage(s);
+  validateLoot(s);
+  validateAchievements(s);
   // Old saves kept batches but not the history of five-star draws. Credit completed batches.
   // A still-visible five-star is the only recent result we can verify.
   if (!Object.hasOwn(g, 'fiveStarMisses')) {
@@ -1034,6 +1037,7 @@ export function validateGuild(s: G.State) {
       !D.RECIPES.some((r) => r.id === x.recipe) ||
       !i(x.tier, 1, 6) ||
       !i(x.rarity, 1, 6) ||
+      (x.locked !== undefined && typeof x.locked !== 'boolean') ||
       (x.setId !== undefined &&
         !G.EQUIPMENT_SETS.some((set) => set.id === x.setId)) ||
       !i(x.affix, 0, D.AFFIXES.length - 1) ||

@@ -48,6 +48,16 @@ function person(s, origin = '中性单元夹具', role = 'rhea', level = 4) {
   s.heroes.push(h);
   return h;
 }
+function masteryTown() {
+  const s = town();
+  s.world.tech = ['settlement', 'metallurgy', 'citadel', 'infernalcraft'];
+  s.guild.depths[2] = 3;
+  s.guild.depths[3] = 2;
+  s.cleared = [0, 2];
+  for (const b of G.BUILDINGS) s.buildings[b.id] = G.buildingLimit(s, b.id);
+  for (const id of G.MATERIAL_IDS) s.world.materials[id] = Math.min(200, G.materialCapacity(s, id));
+  return fund(s);
+}
 function gear(s, h, recipe, affix = 2) {
   const item = {
     id: `gear-${++s.guild.serial}`,
@@ -333,8 +343,8 @@ const effects = [
 
 for (const effect of effects)
   test(`${effect.name}: exact equipped stats, training/mastery charges and unchanged investment`, () => {
-    const s = town(),
-      h = person(s, effect.name);
+    const s = masteryTown(),
+      h = person(s, effect.name, 'rhea', 22);
     gear(s, h, 'blade');
     gear(s, h, 'plate');
     gear(s, h, 'vitality');
@@ -363,16 +373,19 @@ for (const effect of effects)
     assert.notEqual(trained, s);
     payment(s, trained, training);
     assert.deepEqual(trained.heroes[0], { ...h, level: h.level + 1,trainingInvestment:training });
-    const m = h.mastery + 1;
     const mastery = {
-      gold: Math.ceil(80 * m * m * effect.mastery),
-      food: Math.ceil(40 * m * effect.mastery),
-      iron: Math.ceil(12 * m * effect.mastery),
+      gold: Math.ceil(4000 * effect.mastery),
+      food: Math.ceil(1800 * effect.mastery),
+      iron: Math.ceil(180 * effect.mastery),
+      crystal: Math.ceil(90 * effect.mastery),
     };
     assert.deepEqual(G.masteryCost(h), mastery);
     const mentored = G.mentorHero(s, h.id);
     assert.notEqual(mentored, s);
     payment(s, mentored, mastery);
+    const materials = { boards: Math.ceil(30 * effect.mastery), steel: Math.ceil(18 * effect.mastery), ember: Math.ceil(8 * effect.mastery) };
+    assert.deepEqual(G.masteryMaterials(s, h), materials);
+    for (const key of G.MATERIAL_IDS) assert.equal(s.world.materials[key] - mentored.world.materials[key], materials[key] || 0, key);
     assert.deepEqual(mentored.heroes[0], { ...h, mastery: h.mastery + 1 });
     assert.deepEqual(trained.guild.inventory, before.guild.inventory);
     assert.deepEqual(mentored.guild.inventory, before.guild.inventory);
@@ -426,8 +439,9 @@ test('origin/talent/flaw compose in the documented order; caps remain personal',
 
 test('all origins retain positive training growth, and discounted actions remain atomic', () => {
   for (const e of effects) {
-    const s = town(),
-      h = person(s, e.name);
+    const s = masteryTown(),
+      h = person(s, e.name, 'rhea', 22);
+    assert.equal(G.masteryReason(s, h), '', 'the atomicity fixture has all progression and material prerequisites');
     gear(s, h, 'blade');
     const base = G.individualStats(s, h),
       next = G.individualStats(s, { ...h, level: h.level + 1 });

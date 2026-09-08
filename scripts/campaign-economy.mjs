@@ -28,7 +28,7 @@ const results = {
   loadoutInvestments: [],
   routePreparation: [],
   seed,
-  combatSources: Object.fromEntries(['guardian-candidates', 'combat-recommendation', 'equipment-growth', 'guild', 'tactics', 'alchemy'].map((id) => [id, createHash('sha256').update(readFileSync(new URL(`../lib/${id}.ts`, import.meta.url))).digest('hex')])),
+  combatSources: Object.fromEntries(['guardian-candidates', 'combat-recommendation', 'equipment-growth', 'guild', 'tactics', 'alchemy', 'mastery'].map((id) => [id, createHash('sha256').update(readFileSync(new URL(`../lib/${id}.ts`, import.meta.url))).digest('hex')])),
   economySignature:G.productionMultiplier.toString()+G.developmentCost.toString(),
   policy:
     'Legal steady growth; four ordinary random recruits, all discovered equipment slots, earned skill points and elemental preparation, public recommended combat policy. No injected resources or progression.',
@@ -371,8 +371,31 @@ function cleanupInventory() {
   const spare = s.guild.inventory
     .filter((g) => !worn.has(g.id))
     .sort((a, b) => a.tier - b.tier || a.rarity - b.rarity);
-  while (s.guild.inventory.length >= 25 && spare.length)
-    act((x) => G.dismantleGear(x, spare.shift().id), 'gear:dismantle');
+  while (s.guild.inventory.length >= 25 && spare.length) {
+    const item = spare.shift(), options = { includeSets: true, includeEnhanced: true, allowOverflow: true };
+    if (G.dismantleQuote(s, [item.id], options).reason) continue;
+    act((x) => G.dismantleGear(x, item.id, options), 'gear:dismantle');
+  }
+}
+function trainMastery(id, target, label, required = false) {
+  while (s.heroes.find((h) => h.id === id).mastery < target) {
+    const h = s.heroes.find((entry) => entry.id === id);
+    const reason = G.masteryUnlockReason(s, h);
+    if (reason) {
+      if (required) throw new NeedProgress('Recommended mastery requires progress: ' + reason);
+      return;
+    }
+    const cost = G.masteryCost(h), materials = G.masteryMaterials(s, h);
+    ensure(cost, label);
+    ensureMaterials(materials);
+    ensure(cost, 'reserved ' + label);
+    assert.equal(G.masteryReason(s, s.heroes.find((entry) => entry.id === id)), '', 'mastery has a complete earned bill');
+    const before = s, tier = h.mastery + 1;
+    act((x) => G.mentorHero(x, id), 'mentor:' + label);
+    for (const key of G.MATERIAL_IDS) assert.equal(before.world.materials[key] - s.world.materials[key], materials[key] || 0, 'mastery payment ' + key);
+    results.masteryInvestments ??= [];
+    results.masteryInvestments.push({ time: before.time, hero: id, tier, cost, materials, rank: G.townRank(before), level: h.level, depths: [...before.guild.depths], cleared: [...before.cleared] });
+  }
 }
 function loadout(r, enhancement = r ? 2 : 0, tier = G.gearTier(s), minimumRarity = 2) {
   if(G.townRank(s)>=1&&!s.buildings.forge)build('forge',1);
@@ -492,11 +515,7 @@ function prepareRecommendedCombat(r, kind = 'guardian') {
   }
   if (q.mastery) {
     build('tavern', 2);
-    for (const id of s.party)
-      while (s.heroes.find((h) => h.id === id).mastery < q.mastery) {
-        ensure(G.masteryCost(s.heroes.find((h) => h.id === id)), 'recommended mastery');
-        act((x) => G.mentorHero(x, id), 'mentor:recommended');
-      }
+    for (const id of s.party) trainMastery(id, q.mastery, 'recommended', true);
   }
   while (s.kit < q.kit) {
     build('forge', s.kit + 1);
@@ -527,7 +546,7 @@ function prepareRoute(r,route){
    loadout(r,Math.min(8,2+pass));
    if(G.buildingLimit(s,'tavern')>=2){
     build('tavern',2);
-    for(const id of s.party){const h=s.heroes.find(h=>h.id===id);if(h.mastery<Math.min(5,pass)){ensure(G.masteryCost(h),'frontier mastery');act(x=>G.mentorHero(x,id),'mentor:frontier');}}
+    for(const id of s.party)trainMastery(id,Math.min(5,pass),'frontier');
    }
   }
   if(!ready()&&G.partyStats(s).power<=previous&&pass>2)throw new NeedProgress('Insufficient prepared route '+r+'/'+route+': '+JSON.stringify({frontier:G.frontierInfo(s,r),levelCap:G.levelCap(s),tier:G.gearTier(s)}));
@@ -551,7 +570,7 @@ function fightGuardian(r){
     const target=G.enemyDefinition(s,r,'guardian').targetLevel;
     train(Math.min(G.levelCap(s),Math.max(target,...s.party.map(id=>s.heroes.find(h=>h.id===id).level+2))));
     loadout(r,Math.min(8,recommendation.upgrade+tries));
-    if(tries>2&&G.buildingLimit(s,'tavern')>=2){build('tavern',2);for(const id of s.party){const h=s.heroes.find(h=>h.id===id);if(h.mastery<Math.min(5,tries-2)){ensure(G.masteryCost(h),'guardian mastery');act(x=>G.mentorHero(x,id),'mentor:guardian');}}}
+    if(tries>2&&G.buildingLimit(s,'tavern')>=2){build('tavern',2);for(const id of s.party)trainMastery(id,Math.min(5,tries-2),'guardian');}
   }
 }
 function autoUntil(r, route, predicate) {
@@ -644,8 +663,7 @@ function resolveChapter(r) {
         const h = s.heroes.find((h) => h.id === id);
         if (h.mastery < Math.min(3, attempts + 1)) {
           build('tavern',2);
-          ensure(G.masteryCost(h), 'mastery');
-          act((x) => G.mentorHero(x, id), 'mentor:mastery');
+          trainMastery(id, Math.min(3, attempts + 1), 'mastery');
         }
       }
     }
@@ -1026,6 +1044,11 @@ try{
  }
  assert.ok(s.ending&&s.cleared.length===6&&s.guild.depths.every(n=>n===5),'complete all legal v6 chapters');
  results.campaignPacing=structuredClone(demandPacing);fixtures.afterVictory=G.clone(s);results.campaign={gameSeconds:s.time,decisions:actions,clockCalls,logistics:{delivered:s.economy.routes.map(r=>r.delivered),production:{...s.economy.production},crafted:{...s.economy.crafted}},waitByPurpose:{...waitByPurpose},fullResourceSeconds:{...fullSeconds},rank:G.townRank(s),buildings:s.buildings,tech:s.world.tech,materials:s.world.materials};
+ // Optional final-stage tiers are paid after victory so they cannot silently
+ // strengthen the shared recommended combat reference or its timing report.
+ trainMastery(s.party[0], 5, 'late-game optional', true);
+ assert.equal(s.heroes.find((h) => h.id === s.party[0]).mastery, 5);
+ results.checks.push({ name: 'all five mastery tiers use earned milestones, produced materials and exact public payments', passed: true });
  for(const hero of G.HEROES)if(G.roleOpen(s,hero.id))role(hero.id);
  people(36);build('shrine',Math.min(5,G.buildingLimit(s,'shrine')));
  for(let r=0;r<6;r++){rest();ensure({food:G.routeInfo(s,r,'supply').cost});act(x=>G.expedition(x,r,'supply'),'expedition:peace');tick(Math.ceil(s.expedition.end-s.time));}

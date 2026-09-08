@@ -132,9 +132,11 @@ export function monsterEquipment(
     throw Error('出战前必须为战利品预留装备空间');
   }
   s.guild.inventory.push(item);
+  const receipt = G.recordLoot(s, item, kind, `${G.REGIONS[region].name} · ${s.battle?.enemyName || (kind === 'boss' ? '首领' : '据点守敌')}`);
   G.log(
     s,
     `${kind === 'boss' ? '首领战利品' : '守敌掉落'}：${G.gearName(item)}。`,
     rarity >= 5 ? 'story' : 'good',
   );
+  return receipt;
 }

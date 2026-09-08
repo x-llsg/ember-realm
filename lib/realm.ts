@@ -1,4 +1,5 @@
 import * as D from './realm-data.ts';
+import { recordLoot } from './loot.ts';
 import { BOSS_ACCESS_DEPTH } from './boss-access.ts';
 import { preparedPotionReason } from './alchemy.ts';
 export * from './boss-access.ts';
@@ -12,6 +13,9 @@ import * as Economy from './economy.ts';
 import * as Civic from './civic.ts';
 export * from './civic.ts';
 export * from './equipment-data.ts';
+export * from './equipment-management.ts';
+export * from './loot.ts';
+export * from './achievements.ts';
 export * from './buildcraft.ts';
 export * from './boss-mechanics.ts';
 import type { EconomyState } from './economy-data.ts';
@@ -167,6 +171,11 @@ export interface State {
     fiveStarMisses: number;
     serial: number;
     inventory: Gear[];
+    salvage?: import('./equipment-management.ts').SalvageStock;
+    lootHistory?: import('./loot.ts').LootReceipt[];
+    lootReadSerial?: number;
+    lootSerial?: number;
+    achievements?: { unlocked: Record<string, number>; read: number; title: string | null };
     potions: Record<import('./guild-data.ts').PotionId, number>;
     crafts: number;
     dust: number;
@@ -1300,7 +1309,10 @@ export function chooseEvent(s0: State, choice: number) {
   if (!c.buff && !c.equipment && !s.flags.includes(c.effect))
     s.flags.push(c.effect);
   if (c.buff) s.civic.buffs[c.buff] = s.time + Civic.BUFFS[c.buff].seconds;
-  if (c.equipment && s.civic.offer) s.guild.inventory.push(s.civic.offer.gear);
+  if (c.equipment && s.civic.offer) {
+    s.guild.inventory.push(s.civic.offer.gear);
+    recordLoot(s, s.civic.offer.gear, 'visitor', '行商来访 · 装备购入');
+  }
   s.civic.offer = null;
   if (!s.eventDone.includes(e.id)) s.eventDone.push(e.id);
   if (c.reward) grant(s, c.reward);
@@ -1661,7 +1673,7 @@ function readinessGoal(s: State, r: number): Objective | null {
         return {
           title: '整理装备库，腾出制作位置',
           detail:
-            '装备库已满；先拆解闲置装备回收灵尘，再制作本次远征需要的装备。已穿戴物品不会被拆解。',
+            '装备库已满；先分解闲置装备回收锻造尘与同品质残片，再制作本次远征需要的装备。已穿戴和已收藏的物品不会被分解。',
           view: 'heroes',
           tab: 'inventory',
         };

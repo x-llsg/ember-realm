@@ -1,0 +1,22 @@
+.loot-notice{display:flex;align-items:center;gap:10px;flex-shrink:0;min-height:32px;padding:4px 10px;border:1px solid var(--border);border-left:2px solid var(--gold);border-radius:4px;background:#262218;font-size:12px}
+.loot-notice>svg{width:16px;color:var(--gold)}
+.loot-notice button{background:transparent;border:0;padding:2px 0;display:flex;align-items:center;gap:8px;white-space:nowrap}
+.loot-notice .loot-summary{flex:1;min-width:0;overflow:hidden;text-align:left}
+.loot-summary>span:first-child{color:var(--soft)}
+.loot-summary .loot-item-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
+.loot-item-name small{font-size:11px;margin-left:8px;opacity:.85}
+.loot-history-button b{font-size:10px;padding:1px 5px;border-radius:3px;background:#51402b;color:#f7ca83}
+.loot-notice button>svg{width:14px;height:14px}
+.loot-history-dialog{width:min(850px,94vw)!important;max-width:850px!important;max-height:85dvh;display:flex!important;flex-direction:column;gap:10px}
+.loot-history-list{min-height:0;overflow:auto;overscroll-behavior:contain}
+.loot-history-list article{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--border);padding:12px 4px}
+.loot-history-list article>div{min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:5px}
+.loot-history-list small,.loot-history-list p{font-size:12px;color:var(--soft)}
+.loot-history-list .loot-item-name{font-size:14px}
+.loot-history-list article button{flex-shrink:0}
+.battle-loot-result{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:10px;border:1px solid var(--border);background:#282317;border-radius:4px;font-size:13px}
+.battle-loot-result>strong{color:var(--gold)}
+.battle-loot-result>span:last-of-type,.battle-loot-empty{font-size:12px;color:var(--soft)}
+.battle-loot-empty{padding:8px 0}
+.loot-history-dialog .rarity-1{color:#d3cfbe}.loot-history-dialog .rarity-2{color:#92bd82}.loot-history-dialog .rarity-3{color:#80aed0}.loot-history-dialog .rarity-4{color:#c09bda}.loot-history-dialog .rarity-5{color:#e2ba65}.loot-history-dialog .rarity-6{color:#e68a7d}
+@media(max-width:800px){.loot-summary>span:first-child,.loot-summary .loot-item-name small{display:none}.loot-notice{gap:8px;font-size:11px}.loot-history-list article{gap:5px}}

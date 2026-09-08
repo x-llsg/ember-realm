@@ -34,6 +34,7 @@ import { EngineeringBoard } from './engineering-board';
 import { BuildingBoard } from './economy-panels';
 import { EconomyDesk } from './economy-desk';
 import { MarketDesk } from './market-desk';
+import { EquipmentWarehouse } from './equipment-warehouse';
 import { optionLabel } from '@/lib/display';
 export type Destination = {
   view: G.View;
@@ -42,6 +43,7 @@ export type Destination = {
   region?: number;
   research?: string;
   hero?: string;
+  gear?: string;
   recipe?: string;
   tier?: number;
   guardian?: number;
@@ -651,7 +653,9 @@ export function TownPanel({ s, act, go, focus }: Props) {
   );
 }
 export function HeroesPanel(props: Props) {
-  return <GuildTeam {...props} />;
+  return props.focus.tab === 'inventory'
+    ? <EquipmentWarehouse {...props} />
+    : <GuildTeam {...props} />;
 }
 export function ExplorePanel(props: Props) {
   return props.s.battle ? (

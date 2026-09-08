@@ -268,7 +268,7 @@ test('all eight paid enhancements succeed without rerolling quality, affix or RN
   assert.deepEqual(reload(s), s);
 });
 
-test('reforging spends dust for the chosen affix without a random roll', () => {
+test('reforging spends dust and matching-quality salvage without a random roll', () => {
   let [s, id] = forge(unitState(), 'blade');
   const item = s.guild.inventory[0];
   const fire = G.AFFIXES.findIndex((a) => a.stat === 'fire');
@@ -276,10 +276,12 @@ test('reforging spends dust for the chosen affix without a random roll', () => {
     item.affix === fire
       ? G.AFFIXES.findIndex((a) => a.stat === 'shadow')
       : fire;
-  s.guild.dust = 100;
+  s.guild.dust = 1000;
+  s.guild.salvage[item.rarity] = 2 * item.tier;
   const next = G.reforgeGear(s, id, target);
   assert.deepEqual(next.guild.inventory[0], { ...item, affix: target });
-  assert.equal(next.guild.dust, 100 - 20 * item.tier);
+  assert.equal(next.guild.dust, 1000 - 40 * item.tier * item.rarity);
+  assert.equal(next.guild.salvage[item.rarity], 0);
   assert.equal(next.rng, s.rng);
   close(
     G.itemStats(next, next.guild.inventory[0])[G.AFFIXES[target].stat],

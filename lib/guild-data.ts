@@ -43,6 +43,7 @@ export interface Gear {
   affix: number;
   upgrade: number;
   setId?: string;
+  locked?: boolean;
 }
 export const AFFIXES = [
   {

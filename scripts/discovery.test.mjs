@@ -290,9 +290,14 @@ for (const [label, old] of migrationCases) test(`actual v5 regression fixture re
   assert.equal(migrated.version, 10);
   for (const key of ['resources', 'legacyStock', 'buildings', 'heroes', 'party', 'cleared', 'projects', 'research', 'kit', 'rebuild', 'world'])
     assert.deepEqual(migrated[key], old[key], key);
-  const {fiveStarMisses,potions,...preservedGuild}=migrated.guild;
+  const {fiveStarMisses,potions,salvage,lootHistory,lootReadSerial,lootSerial,achievements,...preservedGuild}=migrated.guild;
   assert.deepEqual(preservedGuild,old.guild);
   assert.deepEqual(potions,{shadow:0,fire:0,radiant:0},'old saves receive no free consumables');
+  assert.deepEqual(salvage,{1:0,2:0,3:0,4:0,5:0,6:0},'old dust and equipment do not become free quality materials');
+  assert.deepEqual(lootHistory,[],'migration must not invent historical equipment drops');
+  assert.equal(lootReadSerial,0);
+  assert.equal(lootSerial,0);
+  assert.deepEqual(achievements,{unlocked:{},read:0,title:null},'decoding prepares empty achievement storage; normal story settlement verifies present milestones');
   assert.ok(Number.isInteger(fiveStarMisses)&&fiveStarMisses>=0&&fiveStarMisses<=79);
   for (const id of old.research) assert.equal(G.researchDiscovered(migrated, id), true, `${id} disappeared during migration`);
   for (const beat of G.STORY_BEATS.filter(b => b.when(migrated)))

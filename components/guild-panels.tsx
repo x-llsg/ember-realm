@@ -1,5 +1,7 @@
 'use client';
 import { SkillTreePanel } from './skill-tree-panel';
+import { GearLabel, GearStats } from './gear-presentation';
+import { GearWorkshop } from './gear-workshop';
 import { useState, useSyncExternalStore } from 'react';
 import { InfoHint, Term } from './info-hint';
 import { HELP, recruitingOdds, affixHelp } from '@/lib/glossary';
@@ -211,8 +213,7 @@ export function GuildTeam({ s, act, go, focus }: Props) {
       Math.max(1, Math.min(G.gearTier(s), Math.trunc(focus?.tier ?? G.gearTier(s)))),
     ),
     [slotFilter, setSlotFilter] = useState('all'),
-    [picker, setPicker] = useState(focus?.tab === 'inventory'),
-    [affix, setAffix] = useState('0');
+    [picker, setPicker] = useState(false);
   const busy = !!s.battle || !!s.expedition,
     h = s.heroes.find((member) => member.id === selected) || s.heroes[0],
     stats = G.partyStats(s),
@@ -220,7 +221,6 @@ export function GuildTeam({ s, act, go, focus }: Props) {
     personal = h ? G.individualStats(s, h) : null,
     item = s.guild.inventory.find((g) => g.id === detail),
     heroLocked = !!h && G.heroAway(s, h.id),
-    itemLocked = !!item && G.gearAway(s, item.id),
     recipes = G.RECIPES.filter((r) => G.recipeDiscovered(s, r.id)),
     chosen = recipes.find((r) => r.id === recipe) || recipes[0],
     forgeSlots = G.GEAR_SLOTS.filter((slot) =>
@@ -237,7 +237,6 @@ export function GuildTeam({ s, act, go, focus }: Props) {
   const inspect = (g: G.Gear) => {
     setPicker(false);
     setDetail(g.id);
-    setAffix(String(g.affix));
   };
   const openEquipment = (slot: string) => {
     setSlotFilter(slot);
@@ -446,20 +445,15 @@ export function GuildTeam({ s, act, go, focus }: Props) {
                   <>
                     <div className="desk-heading">
                       <span>
-                        <Term name="mastery">专精 {h.mastery}/5</Term>
+                        <Term name="mastery">专精 {h.mastery}/5 · 当前开放 {G.masteryLimit(s)} 阶</Term>
                       </span>
                       <small>每级基础血 / 攻 / 防 +4%</small>
                     </div>
                     <Buy
                       s={s}
                       cost={G.masteryCost(h)}
-                      reason={
-                        heroLocked
-                          ? '该角色正在出征'
-                          : h.mastery >= 5
-                            ? '专精已满'
-                            : ''
-                      }
+                      materials={G.masteryMaterials(s, h)}
+                      reason={G.masteryReason(s, h)}
                       label="培养专精"
                       onClick={() => act((x) => G.mentorHero(x, h.id))}
                     />
@@ -492,9 +486,9 @@ export function GuildTeam({ s, act, go, focus }: Props) {
                   </button>
                   <button
                     className="life-text-button"
-                    onClick={() => openEquipment('all')}
+                    onClick={() => go({ view: 'heroes', tab: 'inventory', hero: h.id })}
                   >
-                    装备库 {s.guild.inventory.length}/{G.INVENTORY_CAP}
+                    整理仓库 {s.guild.inventory.length}/{G.INVENTORY_CAP}
                   </button>
                 </div>
                 <div className="equipment-six-grid">
@@ -792,101 +786,11 @@ export function GuildTeam({ s, act, go, focus }: Props) {
           <DialogTitle>{item ? G.gearName(item) : '安排旅人退役'}</DialogTitle>
           <DialogDescription>
             {item
-              ? '强化必定成功；重铸直接选择词条。只锁定出征角色携带的装备，留守角色与闲置装备可随时整备。'
+              ? '强化与重铸确定生效；定向词条消耗同品质分解材料。出征角色携带的装备归来后可整备。'
               : '这位旅人会离开，穿戴装备全部归还装备库。'}
           </DialogDescription>
           {item ? (
-            <>
-              <GearStats s={s} item={item} />
-              <div className="hero-term-line">
-                <Term name="enhancement">强化规则</Term>
-                <Term name="affix">词条规则</Term>
-                <InfoHint
-                  {...affixHelp(Number(affix), s, {
-                    ...item,
-                    affix: Number(affix),
-                  })}
-                >
-                  待重铸：{G.AFFIXES[Number(affix)].name}
-                </InfoHint>
-              </div>
-              <Buy
-                s={s}
-                cost={G.enhancementCost(item)}
-                materials={G.enhancementMaterials(s, item)}
-                reason={
-                  itemLocked
-                    ? '等待队伍归来'
-                    : item.upgrade >= 8
-                      ? '强化已达+8'
-                      : ''
-                }
-                label={`强化至 +${Math.min(8, item.upgrade + 1)}`}
-                onClick={() => act((x) => G.enhanceGear(x, item.id))}
-              />
-              <Pick
-                id="gear-affix"
-                label="选择重铸词条"
-                value={affix}
-                onChange={setAffix}
-                options={G.AFFIXES.map((a, i) => ({
-                  value: String(i),
-                  label: `${a.name} · ${a.text}`,
-                }))}
-              />
-              <button
-                className="secondary-button"
-                disabled={
-                  itemLocked ||
-                  s.guild.dust < 20 * item.tier ||
-                  Number(affix) === item.affix
-                }
-                onClick={() =>
-                  act((x) => G.reforgeGear(x, item.id, Number(affix)))
-                }
-              >
-                定向重铸 · {20 * item.tier} 锻造尘
-              </button>
-              {s.heroes.some((h) =>
-                Object.values(h.equipment).includes(item.id),
-              ) && (
-                <button
-                  className="secondary-button"
-                  disabled={itemLocked}
-                  onClick={() => {
-                    const owner = s.heroes.find((h) =>
-                      Object.values(h.equipment).includes(item.id),
-                    )!;
-                    act((x) =>
-                      G.unequipGear(
-                        x,
-                        owner.id,
-                        G.RECIPES.find((r) => r.id === item.recipe)!.slot,
-                      ),
-                    );
-                  }}
-                >
-                  卸下并归还装备库
-                </button>
-              )}
-              <button
-                className="secondary-button"
-                disabled={
-                  itemLocked ||
-                  s.heroes.some((h) =>
-                    Object.values(h.equipment).includes(item.id),
-                  )
-                }
-                onClick={() => {
-                  act((x) => G.dismantleGear(x, item.id));
-                  setDetail(null);
-                }}
-              >
-                拆解 · 获得{' '}
-                {Math.min(item.tier * item.rarity * 4, 9999 - s.guild.dust)}{' '}
-                锻造尘（穿戴中不可拆解）
-              </button>
-            </>
+            <GearWorkshop key={item.id} s={s} item={item} act={act} onRemoved={() => setDetail(null)} />
           ) : (
             <button
               className="primary-button"
@@ -904,40 +808,6 @@ export function GuildTeam({ s, act, go, focus }: Props) {
     </div>
   );
 }
-function GearLabel({ s, item }: { s: G.State; item: G.Gear }) {
-  const recipe = G.RECIPES.find((r) => r.id === item.recipe)!;
-  const stats = G.itemStats(s, item);
-  return (
-    <InfoHint
-      className={'gear-name rarity-' + item.rarity}
-      title={G.gearName(item)}
-      body={
-        <>
-          <p>{recipe.text}</p>
-          <p>{G.gearSetHelp(item)}</p>
-          <p>
-            攻击 +{Math.round(stats.attack)} · 生命 +{Math.round(stats.hp)} ·
-            防御 +{Math.round(stats.defense)}
-            <br />
-            穿甲 {Math.round(stats.pierce * 100)}% · 暴击 +
-            {Math.round(stats.crit * 100)}% · 闪避 +
-            {Math.round(stats.dodge * 100)}%<br />火 / 暗 / 神抗{' '}
-            {Math.round(stats.fire * 100)} / {Math.round(stats.shadow * 100)} /{' '}
-            {Math.round(stats.radiant * 100)}%
-          </p>
-          <p>
-            T{item.tier} · {G.QUALITY_NAMES[item.rarity - 1]} · 强化 +
-            {item.upgrade}
-          </p>
-          <p>{HELP.tier.body}</p>
-          <p>{affixHelp(item.affix, s, item).body}</p>
-        </>
-      }
-    >
-      {G.gearName(item)}
-    </InfoHint>
-  );
-}
 function HeroTraits({ h }: { h: G.Hero }) {
   const talent = G.TALENTS.find((t) => t.id === h.talent)!;
   return (
@@ -953,74 +823,6 @@ function HeroTraits({ h }: { h: G.Hero }) {
   );
 }
 
-function GearStats({
-  s,
-  item,
-  base = false,
-}: {
-  s: G.State;
-  item: G.Gear;
-  base?: boolean;
-}) {
-  const a = G.itemStats(s, item, !base);
-  return (
-    <p className="guild-meta">
-      {a.attack > 0 && `攻击 +${Math.round(a.attack)} `}
-      {a.hp > 0 && `生命 +${Math.round(a.hp)} `}
-      {a.defense > 0 && `防御 +${Math.round(a.defense)} `}
-      {a.crit > 0 && (
-        <InfoHint
-          title="暴击率"
-          body="提高单次攻击暴击的概率，个人总暴击率上限60%。"
-        >
-          暴击 +{Math.round(a.crit * 100)}%{' '}
-        </InfoHint>
-      )}
-      {a.dodge > 0 && (
-        <InfoHint
-          title="闪避率"
-          body="躲避敌人单体攻击的概率，个人总闪避率上限40%；不能躲避群体重击。"
-        >
-          闪避 +{Math.round(a.dodge * 100)}%{' '}
-        </InfoHint>
-      )}
-      {a.critDamage > 0 && (
-        <InfoHint
-          title="暴击伤害"
-          body="暴击基础造成150%伤害，此词条向倍率加算，最高300%。"
-        >
-          暴伤 +{Math.round(a.critDamage * 100)}%{' '}
-        </InfoHint>
-      )}
-      {a.pierce > 0 && (
-        <>
-          <Term name="pierce">穿甲</Term> {Math.round(a.pierce * 100)}%{' '}
-        </>
-      )}
-      {a.ranged > 0 && (
-        <>
-          <Term name="ranged">远程贡献</Term> {Math.round(a.ranged * 100)}%{' '}
-        </>
-      )}
-      {a.fire > 0 && (
-        <>
-          <Term name="resistance">火抗</Term> {Math.round(a.fire * 100)}%{' '}
-        </>
-      )}
-      {a.shadow > 0 && (
-        <>
-          <Term name="resistance">暗抗</Term> {Math.round(a.shadow * 100)}%{' '}
-        </>
-      )}
-      {a.radiant > 0 && (
-        <>
-          <Term name="resistance">神抗</Term> {Math.round(a.radiant * 100)}
-          %{' '}
-        </>
-      )}
-    </p>
-  );
-}
 export function DoctrinePanel({ s, act }: { s: G.State; act: Act }) {
   const [page, setPage] = useState(0),
     size = useSize() === 1 ? 1 : 3,

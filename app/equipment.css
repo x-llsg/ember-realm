@@ -1,0 +1,106 @@
+.v9-ui .equipment-warehouse {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  height: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  min-height: 0;
+  gap: 8px;
+  padding: 10px;
+  background: #1c1a16;
+  border: 1px solid #493d2c;
+  border-radius: 4px;
+}
+.warehouse-heading, .warehouse-heading > div, .warehouse-wallet,
+.warehouse-quality, .warehouse-selection, .warehouse-confirm-actions,
+.gear-workshop-state, .salvage-yield, .reforge-cost {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.warehouse-heading { justify-content: space-between; }
+.warehouse-heading strong { font-size: 18px; color: #ead7b4; }
+.warehouse-heading span, .warehouse-quality > span { font-size: 12px; color: #aaa08d; }
+.warehouse-wallet { border-block: 1px solid #3f372b; padding: 7px 0; gap: 5px 16px; font-size: 12px; }
+.warehouse-wallet .realm-hint-trigger { white-space: nowrap; }
+.warehouse-filters { display: grid; grid-template-columns: minmax(180px, 1.3fr) repeat(4, minmax(130px, 1fr)); gap: 6px; }
+.warehouse-filters input { min-width: 0; border: 1px solid #59462f; border-radius: 3px; background: #262118; color: #ecdfc6; padding: 6px 9px; font: inherit; font-size: 13px; }
+.warehouse-filters input::placeholder { color: #948976; }
+.v9-ui .equipment-warehouse .life-select { min-height: 32px; height: 32px; font-size: 12px; padding: 4px 8px; }
+.warehouse-quality { gap: 4px; }
+.warehouse-quality > button { background: transparent; border: 1px solid #4c4130; border-radius: 3px; min-height: 28px; padding: 3px 10px; cursor: pointer; font-size: 12px; color: #c8b694; }
+.warehouse-quality > button[aria-pressed='true'] { background: #3b3020; border-color: #c59c62; box-shadow: inset 0 -2px #c59c62; }
+.warehouse-quality > span { margin-left: auto; }
+.warehouse-body { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(330px, 0.85fr); flex: 1; min-height: 0; gap: 12px; }
+.warehouse-list-area { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+.warehouse-selection { padding: 0 0 6px; gap: 6px 12px; font-size: 12px; color: #c3b496; }
+.warehouse-selection label { display: inline-flex; gap: 4px; align-items: center; cursor: pointer; }
+.warehouse-selection input, .warehouse-row > input { accent-color: #dcad6b; width: 15px; height: 15px; }
+.warehouse-items { overflow: auto; min-height: 0; flex: 1; scrollbar-width: thin; overscroll-behavior: contain; }
+.warehouse-row { display: grid; grid-template-columns: 18px minmax(0, 1fr) 32px; gap: 8px; align-items: center; padding: 4px 7px; border-bottom: 1px solid #3f372b; border-left: 2px solid transparent; background: #211e18; }
+.warehouse-row:nth-child(even) { background: #252018; }
+.warehouse-row.active { border-left-color: #e6b46f; background: #34291b; }
+.warehouse-row > input:disabled { opacity: .35; }
+.warehouse-item-open { display: flex; flex-direction: column; gap: 3px; min-width: 0; text-align: left; background: transparent; border: 0; padding: 6px 2px; cursor: pointer; }
+.warehouse-item-open .gear-name { display: block; font-size: 13px; line-height: 1.35; font-weight: 600; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 100%; }
+.warehouse-item-open > span:last-child { color: #a99c85; font-size: 11px; }
+.warehouse-lock { border: 1px solid #57472f; border-radius: 3px; color: #8e836f; background: transparent; width: 28px; height: 28px; cursor: pointer; }
+.warehouse-lock[aria-pressed='true'] { color: #efc875; background: #44331c; }
+.warehouse-batch-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; background: #2b2319; border-top: 1px solid #7c5d35; padding: 9px; flex-shrink: 0; }
+.warehouse-batch-bar strong { font-size: 13px; color: #efd6ac; }
+.warehouse-batch-bar small { display: block; font-size: 11px; color: #b6a68b; margin-top: 4px; }
+.warehouse-batch-bar > button { flex-shrink: 0; }
+.warehouse-detail { overflow: auto; min-height: 0; min-width: 0; border-left: 1px solid #4d402d; padding-left: 12px; scrollbar-width: thin; overscroll-behavior: contain; }
+.warehouse-detail h3 { margin: 0 0 7px; font-size: 17px; }
+.warehouse-set-help { margin: 0 0 8px; padding: 7px; border: 1px solid #4c452f; background: #29261b; color: #c7bb93; white-space: pre-line; font-size: 12px; line-height: 1.5; }
+.warehouse-equip { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; margin-bottom: 8px; }
+.warehouse-empty { display: flex; min-height: 100px; align-items: center; justify-content: center; flex-direction: column; gap: 7px; padding: 20px; color: #b6a78e; font-size: 13px; }
+.gear-workshop { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.gear-workshop > .guild-meta { margin: 0; color: #c9bb9f; font-size: 13px; line-height: 1.5; }
+.gear-workshop-state { justify-content: space-between; font-size: 12px; color: #b6a78e; }
+.gear-workshop section { display: flex; flex-direction: column; gap: 7px; border-top: 1px solid #4a3e2c; padding-top: 9px; }
+.gear-workshop section > strong { font-size: 13px; color: #e1c99f; }
+.v9-ui .equipment-warehouse .secondary-button, .gear-workshop .secondary-button,
+.salvage-confirm .secondary-button { min-height: 28px; padding: 4px 9px; font-size: 12px; }
+.v9-ui .equipment-warehouse .primary-button, .salvage-confirm .primary-button { min-height: 32px; padding: 6px 12px; font-size: 13px; }
+.gear-workshop .life-buy { display: flex; flex-direction: column; gap: 6px; margin: 0; }
+.gear-workshop .life-buy :is(.life-cost, .material-price, .life-hint) { margin: 0; font-size: 12px !important; line-height: 1.4 !important; }
+.gear-workshop .life-buy .primary-button { min-height: 30px; padding: 5px 10px; font-size: 12px; }
+.gear-workshop .life-select { min-height: 32px; height: 32px; font-size: 12px; }
+.gear-workshop .realm-hint-trigger { font-size: inherit; }
+.gear-action-reason { display: block; font-size: 12px; line-height: 1.45; color: #b7a387; }
+.reforge-cost, .salvage-yield { font-size: 12px; gap: 3px 12px; color: #d4c1a1; }
+.reforge-cost .shortage { color: #dc9690; }
+.salvage-yield > span { white-space: nowrap; }
+.salvage-confirm-list { overflow: auto; max-height: 32dvh; scrollbar-width: thin; display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+.warehouse-confirm-actions { justify-content: flex-end; }
+.warehouse-confirm-actions > button { flex: 1; }
+.salvage-overflow-choice { display: flex; align-items: center; gap: 7px; font-size: 13px; color: #c4b18d; }
+.salvage-overflow-choice input { accent-color: #dca763; }
+.salvage-overflow-warning { padding: 8px; background: #38231c; border: 1px solid #7b4f36; font-size: 12px; color: #e0ad8b; }
+.salvage-confirm .rarity-1, .gear-workshop .rarity-1 { color: #e6e5e1; }
+.salvage-confirm .rarity-2, .gear-workshop .rarity-2 { color: #86d19a; }
+.salvage-confirm .rarity-3, .gear-workshop .rarity-3 { color: #79baff; }
+.salvage-confirm .rarity-4, .gear-workshop .rarity-4 { color: #c79bff; }
+.salvage-confirm .rarity-5, .gear-workshop .rarity-5 { color: #f2c662; }
+.salvage-confirm .rarity-6, .gear-workshop .rarity-6 { color: #ff7b78; }
+.equipment-warehouse button:focus-visible, .equipment-warehouse input:focus-visible { outline: 2px solid #e4b576; outline-offset: 2px; }
+@media (max-width: 1100px) {
+  .warehouse-filters { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .warehouse-body { grid-template-columns: minmax(0, 1fr) minmax(285px, .9fr); }
+  .warehouse-selection { gap: 4px 8px; }
+}
+@media (max-width: 720px) {
+  .v9-ui .equipment-warehouse { padding: 6px; gap: 6px; }
+  .warehouse-heading strong { font-size: 15px; }
+  .warehouse-heading > div { gap: 4px; }
+  .warehouse-wallet { gap: 5px 9px; font-size: 11px; padding: 4px 0; }
+  .warehouse-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .warehouse-filters > input { grid-column: 1/-1; }
+  .warehouse-body { display: flex; flex-direction: column; overflow: auto; }
+  .warehouse-list-area { flex: none; min-height: 220px; max-height: 50dvh; }
+  .warehouse-detail { min-height: 220px; flex: 1 0 auto; overflow: visible; padding: 10px 0 0; border-left: 0; border-top: 1px solid #4d402d; }
+  .warehouse-quality > button { padding: 3px 7px; font-size: 11px; }
+}

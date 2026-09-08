@@ -36,6 +36,8 @@ import {
 } from '@/components/ui/alert-dialog';
 import * as G from '@/lib/realm';
 import { InfoHint } from '@/components/info-hint';
+import { LootNotice } from '@/components/loot-notice';
+import { AchievementButton } from '@/components/achievement-panel';
 import { GrowthChoices } from '@/components/economy-desk';
 import { RecruitmentBoard, ResearchBoard } from '@/components/economy-panels';
 import {
@@ -114,7 +116,7 @@ export default function Home() {
   function go(d: Destination) {
     if (d.view === 'destiny' && d.tab === 'research')
       d = { ...d, view: 'research' };
-    if (d.view === 'heroes' && !ref.current.heroes.length)
+    if (d.view === 'heroes' && !ref.current.heroes.length && d.tab !== 'inventory')
       d = { ...d, view: 'recruit' };
     if (d.view === 'explore' && d.region !== undefined) {
       const next = G.rememberMap(ref.current, d.region);
@@ -406,12 +408,11 @@ export default function Home() {
         </button>
         <span className="life-world">
           <Sun />第 {G.day(s)} 日 <span>· {stage}</span>
+          {G.achievementTitle(s) && <span className="achievement-title">{G.achievementTitle(s)}</span>}
         </span>
         <div className="life-tools">
           <span>{saveStatus}</span>
-          <button aria-label="查看荒野手记" onClick={() => setJournal(true)}>
-            <BookOpen />
-          </button>
+          <AchievementButton s={s} act={act} go={go} />
           <button aria-label="打开游戏设置" onClick={() => setSettings(true)}>
             <Settings />
           </button>
@@ -515,6 +516,7 @@ export default function Home() {
             </button>
           )}
           {!(view === 'explore' && s.battle) && <GrowthChoices s={s} go={go} />}
+          <LootNotice s={s} act={act} go={go} />
           {(e || s.order.enabled) && view !== 'explore' && (
             <div className="life-activity">
               {e && (

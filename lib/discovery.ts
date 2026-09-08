@@ -2,6 +2,7 @@ import type { State, View, BuildingId, Resource } from './realm.ts';
 import * as C from './campaign.ts';
 import * as D from './realm-data.ts';
 import type { MaterialId } from './campaign-data.ts';
+import { settleAchievements } from './achievements.ts';
 
 export const hasReturned = (s: State) =>
   s.explored.some((n) => n > 0) || s.cleared.length > 0;
@@ -250,7 +251,7 @@ export function settleStory(s0: State): State {
   const fresh = STORY_BEATS.filter(
     (b) => b.when(s0) && !s0.chronicle.includes(b.id),
   );
-  if (!fresh.length) return s0;
+  if (!fresh.length) return settleAchievements(s0);
   const s = structuredClone(s0);
   for (const b of fresh) {
     s.chronicle.push(b.id);
@@ -261,5 +262,5 @@ export function settleStory(s0: State): State {
     });
   }
   s.log = s.log.slice(0, 100);
-  return s;
+  return settleAchievements(s);
 }

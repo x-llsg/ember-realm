@@ -1,4 +1,5 @@
 'use client';
+import { BattleLoot } from './loot-notice';
 
 import { InfoHint } from './info-hint';
 import { CombatRecommendation } from './combat-recommendation';
@@ -823,6 +824,7 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
             保留最近 35 条行动
           </DialogDescription>
           <div className="battle-report-history">
+            <BattleLoot receipt={s.lastBattle?.loot} go={(d) => { setDetail(null); go(d); }} />
             {s.lastBattle?.history.map((line, i) => (
               <p key={i}>{line}</p>
             ))}
