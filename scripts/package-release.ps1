@@ -1,6 +1,12 @@
 ﻿$ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
+function Get-ReleaseHash([string]$FilePath) {
+  $stream = [System.IO.File]::OpenRead($FilePath)
+  $algorithm = [System.Security.Cryptography.SHA256]::Create()
+  try { return [BitConverter]::ToString($algorithm.ComputeHash($stream)).Replace('-','') }
+  finally { $stream.Dispose(); $algorithm.Dispose() }
+}
 $projectDir = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $version = (Get-Content -LiteralPath (Join-Path $projectDir 'package.json') -Raw -Encoding UTF8 | ConvertFrom-Json).version
 $releaseDir = Join-Path $projectDir 'release'
@@ -36,9 +42,9 @@ try {
     $inputStream = $entry.Open(); $sha = [Security.Cryptography.SHA256]::Create()
     try { $actual = [BitConverter]::ToString($sha.ComputeHash($inputStream)).Replace('-','') }
     finally { $inputStream.Dispose(); $sha.Dispose() }
-    if ($actual -ne (Get-FileHash -LiteralPath (Join-Path $stageDir $entry.FullName) -Algorithm SHA256).Hash) { throw 'Archive contents differ from source' }
+    if ($actual -ne (Get-ReleaseHash (Join-Path $stageDir $entry.FullName))) { throw 'Archive contents differ from source' }
   }
 } finally { $verify.Dispose() }
-$hash = (Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash.ToLower()
+$hash = (Get-ReleaseHash $archivePath).ToLower()
 [System.IO.File]::WriteAllText((Join-Path $releaseDir 'SHA256SUMS.txt'),($hash + '  ' + [System.IO.Path]::GetFileName($archivePath) + [Environment]::NewLine),[Text.Encoding]::ASCII)
 Write-Output $archivePath
