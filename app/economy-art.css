@@ -1,0 +1,168 @@
+/* Illustrations accompany short names; tooltips never expand to a whole row. */
+.realm-hint-trigger.illustrated-term {
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  align-items: center;
+  gap: 4px;
+  vertical-align: -0.18em;
+  white-space: nowrap;
+}
+.illustrated-term > :first-child {
+  flex: none;
+}
+.v21-ui.v21-ui .dense-building-row > .illustrated-building {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 9px;
+  min-width: 0;
+}
+.v21-ui.v21-ui .illustrated-building > :first-child {
+  flex: none;
+}
+.v21-ui.v21-ui .illustrated-building-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  gap: 1px;
+  line-height: 1.35;
+}
+.v21-ui.v21-ui .illustrated-building-copy > .realm-hint-trigger {
+  display: inline-flex;
+  max-width: 100%;
+  width: fit-content;
+}
+.v21-ui.v21-ui .illustrated-building-copy > small {
+  color: var(--desk-muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.v21-ui.v21-ui .dense-building-list {
+  grid-auto-rows: minmax(38px, 1fr);
+}
+.v21-ui.v21-ui .dense-building-row {
+  min-height: 38px;
+}
+.v21-ui.v21-ui .dense-building-row .econ-price > span,
+.v21-ui.v21-ui .dense-building-row .material-price > span,
+.v21-ui.v21-ui .flow-bill > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+.v21-ui.v21-ui .research-row {
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding-block: 5px;
+}
+.v21-ui.v21-ui .research-row > .research-row-copy {
+  flex: 1;
+  min-width: 0;
+}
+.v21-ui.v21-ui .research-row > :first-child {
+  flex: none;
+}
+.v21-ui.v21-ui .research-row-copy .realm-hint-trigger {
+  width: fit-content;
+}
+.v21-ui.v21-ui .illustrated-research-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+}
+.v21-ui.v21-ui .illustrated-research-heading > :first-child {
+  flex: none;
+}
+.v21-ui.v21-ui .illustrated-research-heading > span {
+  min-width: 0;
+}
+.v21-ui.v21-ui .illustrated-work-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.v21-ui.v21-ui .flow-yield {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  line-height: 1.25;
+}
+.v21-ui.v21-ui .flow-yield > small {
+  padding-left: 20px;
+  font-size: inherit;
+  color: inherit;
+}
+.v21-ui.v21-ui .engineering-project-name {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  gap: 5px;
+}
+.v21-ui.v21-ui .engineering-project-name > :first-child {
+  flex: none;
+}
+.v21-ui.v21-ui .engineering-price {
+  align-items: center;
+  gap: 3px;
+  font-size: 13px;
+}
+.v21-ui.v21-ui .engineering-price > .realm-hint-trigger,
+.v21-ui.v21-ui .engineering-price b,
+.v21-ui.v21-ui .engineering-price em {
+  font-size: inherit;
+}
+.v21-ui.v21-ui .engineering-identity {
+  padding-left: 2px;
+}
+.v21-ui.v21-ui .engineering-row {
+  grid-template-columns: 160px minmax(290px, 1.6fr) repeat(2, minmax(0, 1fr));
+}
+.v21-ui.v21-ui .engineering-completed-summary {
+  grid-template-columns: 160px minmax(0, 1fr) auto;
+}
+@media (max-width: 1280px) {
+  .v21-ui.v21-ui .engineering-row {
+    grid-template-columns: 145px minmax(230px, 1.35fr) repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .v21-ui.v21-ui .engineering-choice,
+  .v21-ui.v21-ui .engineering-choice > strong,
+  .v21-ui.v21-ui .engineering-choice > span {
+    font-size: 12px;
+  }
+}
+@media (max-width: 900px) {
+  .v21-ui.v21-ui .engineering-row {
+    grid-template-columns: minmax(145px, 1fr) repeat(2, minmax(0, 1fr));
+  }
+  .v21-ui.v21-ui .engineering-bill {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
+@media (max-width: 700px) {
+  .v21-ui.v21-ui .engineering-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .v21-ui.v21-ui .illustrated-building-copy > small {
+    font-size: 10px;
+  }
+  .v21-ui.v21-ui .dense-building-row > .illustrated-building {
+    gap: 6px;
+  }
+  .v21-ui.v21-ui .engineering-completed-summary {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .v21-ui.v21-ui .engineering-completed-summary .engineering-saved {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}

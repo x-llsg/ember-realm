@@ -4,6 +4,7 @@ import { GuildRecruitment } from './guild-panels';
 import { useState } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { InfoHint, ResourceName, MaterialName } from './info-hint';
+import { GameIcon } from './game-art';
 import * as G from '@/lib/realm';
 import { type Act, type Destination } from './realm-panels';
 
@@ -207,17 +208,21 @@ export function BuildingBoard({
                 (focus.building === b.id ? ' desk-focused' : '')
               }
             >
-              <InfoHint
-                className="dense-building-name"
-                title={b.name}
-                body={<BuildingExplanation s={s} id={b.id} />}
-                side="right"
-              >
-                <strong>{b.name}</strong>
-                <span>
-                  扩建 {level}/{limit} · 改良 {G.renovationLevel(s, b.id)}
-                </span>
-              </InfoHint>
+              <div className="dense-building-name illustrated-building">
+                <GameIcon kind="building" id={b.id} size={32} />
+                <div className="illustrated-building-copy">
+                  <InfoHint
+                    title={b.name}
+                    body={<BuildingExplanation s={s} id={b.id} />}
+                    side="right"
+                  >
+                    <strong>{b.name}</strong>
+                  </InfoHint>
+                  <small>
+                    扩建 {level}/{limit} · 改良 {G.renovationLevel(s, b.id)}
+                  </small>
+                </div>
+              </div>
               <div className="dense-building-cost">
                 {stageDone ? (
                   <small className="desk-muted">
@@ -241,7 +246,9 @@ export function BuildingBoard({
                 )}
               </div>
               <div className="building-upgrades">
-                {!stageDone && <PinPlan s={s} act={act} kind="building" id={b.id} />}
+                {!stageDone && (
+                  <PinPlan s={s} act={act} kind="building" id={b.id} />
+                )}
                 <button
                   className="econ-action"
                   disabled={!!blocked || stageDone || !G.canPay(s, cost)}

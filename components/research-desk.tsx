@@ -1,6 +1,7 @@
 'use client';
 
 import { InfoHint } from './info-hint';
+import { GameIcon } from './game-art';
 import { PinPlan } from './planning-board';
 import { useId, useState } from 'react';
 import * as G from '@/lib/realm';
@@ -206,6 +207,7 @@ function ResearchDesk({ s, act, focus }: Props) {
         }
         onClick={() => setSelected(entry.key)}
       >
+        <GameIcon kind="research" id={entry.id} size={24} />
         <span className="research-row-copy">
           <strong>
             <InfoHint withinControl title={entry.name} body={entry.description}>
@@ -290,16 +292,19 @@ function ResearchDesk({ s, act, focus }: Props) {
               <span className="life-kicker">
                 {GROUPS.find((g) => g.id === current.group)?.name}
               </span>
-              <h2>
-                {current.name}
-                {current.level !== undefined && (
-                  <small>
-                    {' '}
-                    · {current.level}/
-                    {current.group === 'development' ? G.DEVELOPMENT_MAX : 10}{' '}
-                    级
-                  </small>
-                )}
+              <h2 className="illustrated-research-heading">
+                <GameIcon kind="research" id={current.id} size={36} />
+                <span>
+                  {current.name}
+                  {current.level !== undefined && (
+                    <small>
+                      {' '}
+                      · {current.level}/
+                      {current.group === 'development' ? G.DEVELOPMENT_MAX : 10}{' '}
+                      级
+                    </small>
+                  )}
+                </span>
               </h2>
               <p className="research-description">{current.description}</p>
               {current.done ? (
@@ -309,7 +314,20 @@ function ResearchDesk({ s, act, focus }: Props) {
               ) : (
                 <>
                   <p className="research-note">{current.note}</p>
-                  {current.group !== 'doctrine' && <PinPlan s={s} act={act} kind={current.group === 'technology' ? 'technology' : current.group === 'development' ? 'development' : 'research'} id={current.id} />}
+                  {current.group !== 'doctrine' && (
+                    <PinPlan
+                      s={s}
+                      act={act}
+                      kind={
+                        current.group === 'technology'
+                          ? 'technology'
+                          : current.group === 'development'
+                            ? 'development'
+                            : 'research'
+                      }
+                      id={current.id}
+                    />
+                  )}
                   <output
                     className={`research-status${currentReason ? ' blocked' : ' ready'}`}
                   >

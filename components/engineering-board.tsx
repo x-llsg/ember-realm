@@ -4,6 +4,7 @@ import { useState } from 'react';
 import * as G from '@/lib/realm';
 import { Buy, type Act, type Destination } from '@/components/realm-panels';
 import { InfoHint, ResourceName, MaterialName } from '@/components/info-hint';
+import { GameIcon } from './game-art';
 import {
   Dialog,
   DialogContent,
@@ -143,7 +144,8 @@ function ProjectName({
         </>
       }
     >
-      {project.name}
+      <GameIcon kind="material" id={G.REGION_MATERIALS[region]} size={18} />
+      <span>{project.name}</span>
     </InfoHint>
   );
 }

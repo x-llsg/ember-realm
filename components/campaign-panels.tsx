@@ -1,5 +1,6 @@
 'use client';
 import { InfoHint, MaterialName } from './info-hint';
+import { GameIcon } from './game-art';
 import { useState } from 'react';
 import * as G from '@/lib/realm';
 import { Buy, Pick, type Act, type Destination, number } from './realm-panels';
@@ -39,7 +40,10 @@ export function TechnologyPanel({
         <span className="life-kicker">
           {G.TOWN_RANK_NAMES[G.townRank(s)]} · 探索带来新工艺
         </span>
-        <h2>{t.name}</h2>
+        <h2 className="illustrated-research-heading">
+          <GameIcon kind="research" id={t.id} size={36} />
+          <span>{t.name}</span>
+        </h2>
         <p>{t.desc}</p>
         <div className="campaign-effects">
           <span>
@@ -109,7 +113,10 @@ export function WorkshopPanel({
         }))}
       />
       <article className="campaign-card">
-        <h2>{r.name}</h2>
+        <h2 className="illustrated-research-heading">
+          <GameIcon kind="material" id={r.id} size={32} />
+          <span>{r.name}</span>
+        </h2>
         <InfoHint
           title={quote.name}
           body={<p>{quote.text} 切换配方或生产方式会重新开始当前批次。</p>}
@@ -127,7 +134,7 @@ export function WorkshopPanel({
         <p className="material-price">
           每 {quote.seconds} 秒：{G.costText(quote.cost)}{' '}
           {G.materialCostText(quote.materials)} → {quote.output}{' '}
-          {G.MATERIAL_NAMES[r.id]}
+          <MaterialName s={s} id={r.id} />
         </p>
         <progress
           aria-label="本批加工进度"
@@ -197,7 +204,14 @@ export function WorldMapPanel({
                     ? `已通路 · 据点 ${s.guild.depths[i]}/5`
                     : '尚未通路'}
               </span>
-              <strong>{r.name}</strong>
+              <strong className="illustrated-work-name">
+                <GameIcon
+                  kind="material"
+                  id={G.REGION_MATERIALS[i]}
+                  size={24}
+                />
+                {r.name}
+              </strong>
               <small>
                 {G.regionVisited(s, i) ? rewards[i] : '尚未带回当地样品'}
               </small>

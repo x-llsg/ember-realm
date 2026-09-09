@@ -1,6 +1,7 @@
 'use client';
 import * as G from '@/lib/realm';
-import { InfoHint, MaterialName } from './info-hint';
+import { InfoHint, MaterialName, ResourceName } from './info-hint';
+import { GameIcon } from './game-art';
 import { PotionWorkshop } from './potion-workshop';
 import { Pick, type Act, type Destination, short } from './realm-panels';
 
@@ -21,7 +22,7 @@ function Bill({
           key={id}
           className={s.resources[id as G.Resource] < n! ? 'short' : ''}
         >
-          {G.RESOURCE_NAMES[id as G.Resource]} {short(n!)}
+          <ResourceName s={s} id={id as G.Resource} /> {short(n!)}
         </span>
       ))}
       {Object.entries(materials).map(([id, n]) => (
@@ -29,7 +30,7 @@ function Bill({
           key={id}
           className={s.world.materials[id as G.MaterialId] < n! ? 'short' : ''}
         >
-          {G.MATERIAL_NAMES[id as G.MaterialId]} {n}
+          <MaterialName s={s} id={id as G.MaterialId} /> {n}
         </span>
       ))}
     </span>
@@ -109,7 +110,10 @@ export function EconomyDesk({ s, act, go }: Props) {
                       </>
                     }
                   >
-                    <strong>{w.name}</strong>
+                    <span className="illustrated-work-name">
+                      <GameIcon kind="material" id={w.id} size={24} />
+                      <strong>{w.name}</strong>
+                    </span>
                   </InfoHint>
                   <span>
                     {((output * 60) / seconds).toFixed(1)} 件/分 · {seconds}
@@ -272,8 +276,8 @@ export function EconomyDesk({ s, act, go }: Props) {
                 {route.level > 0 ? (
                   <div className="flow-line">
                     <span className="flow-yield">
-                      {G.MATERIAL_NAMES[G.REGION_MATERIALS[r]]} +
-                      {(plan.yields[r] * 60).toFixed(1)}/分
+                      <MaterialName s={s} id={G.REGION_MATERIALS[r]} />
+                      <small>+{(plan.yields[r] * 60).toFixed(1)}/分</small>
                     </span>
                     <div className="flow-stepper">
                       <button

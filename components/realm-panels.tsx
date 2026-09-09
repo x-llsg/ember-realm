@@ -36,6 +36,7 @@ import { EconomyDesk } from './economy-desk';
 import { MarketDesk } from './market-desk';
 import { EquipmentWarehouse } from './equipment-warehouse';
 import { optionLabel } from '@/lib/display';
+import { GameIcon, RegionScene } from './game-art';
 export type Destination = {
   view: G.View;
   tab?: string;
@@ -301,7 +302,10 @@ export function ResourceStrip({
       }}
     >
       {visible.map((k) => (
-        <div className="resource-cell" key={k}>
+        <div className="resource-cell" key={k} data-resource={k}>
+          <span className="resource-emblem">
+            <GameIcon kind="resource" id={k} size={30} />
+          </span>
           <div className="resource-detail">
             <InfoHint
               className="resource-name"
@@ -347,6 +351,17 @@ export function ResourceStrip({
               <small> / 秒</small>
             </span>
           </div>
+          <span className="resource-fill" aria-hidden="true">
+            <i
+              style={{
+                width:
+                  Math.min(
+                    100,
+                    Math.max(0, (s.resources[k] / G.capacity(s, k)) * 100),
+                  ) + '%',
+              }}
+            />
+          </span>
           <div className="resource-actions">
             <button
               className="resource-gather"
@@ -404,6 +419,7 @@ export function TownPanel({ s, act, go, focus }: Props) {
           className={`camp-scene ${s.resources.wood >= 12 ? 'ready' : ''}`}
           aria-hidden="true"
         >
+          <RegionScene region={0} className="opening-scene-art" />
           <div className="camp-moon" />
           <div className="camp-ground" />
           <i className="camp-log" />
@@ -653,9 +669,11 @@ export function TownPanel({ s, act, go, focus }: Props) {
   );
 }
 export function HeroesPanel(props: Props) {
-  return props.focus.tab === 'inventory'
-    ? <EquipmentWarehouse {...props} />
-    : <GuildTeam {...props} />;
+  return props.focus.tab === 'inventory' ? (
+    <EquipmentWarehouse {...props} />
+  ) : (
+    <GuildTeam {...props} />
+  );
 }
 export function ExplorePanel(props: Props) {
   return props.s.battle ? (
@@ -739,12 +757,23 @@ export function DestinyPanel({
           </div>
           {s.rebuild.length === 3 ? (
             <>
-              <button className="primary-button" onClick={() => go({view:'town',tab:'projects'})}>
-                {G.REGIONS.every((_,r)=>G.chapterProjectCount(s,r)===2)?'六地工程已全部落成':'完善六地工程'}
+              <button
+                className="primary-button"
+                onClick={() => go({ view: 'town', tab: 'projects' })}
+              >
+                {G.REGIONS.every((_, r) => G.chapterProjectCount(s, r) === 2)
+                  ? '六地工程已全部落成'
+                  : '完善六地工程'}
                 <ArrowRight />
               </button>
               <p className="life-hint">
-                六地工程已完成 {G.REGIONS.reduce((n,_,r)=>n+G.chapterProjectCount(s,r),0)}/12 项。城镇、伙伴与装备继续保留，补完另一条道路，让每座城镇都有自己的明天。
+                六地工程已完成{' '}
+                {G.REGIONS.reduce(
+                  (n, _, r) => n + G.chapterProjectCount(s, r),
+                  0,
+                )}
+                /12
+                项。城镇、伙伴与装备继续保留，补完另一条道路，让每座城镇都有自己的明天。
               </p>
             </>
           ) : s.rebuild.includes(p.id) ? (

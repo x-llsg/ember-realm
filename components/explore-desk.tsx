@@ -1,4 +1,6 @@
 'use client';
+import '@/app/expedition-art.css';
+import { EnemyPortrait, RegionScene } from './game-art';
 import { PinPlan } from './planning-board';
 import { BattleLoot } from './loot-notice';
 import { HuntControl } from './hunt-controls';
@@ -147,8 +149,20 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
       ? focus.guardian
       : Math.min(4, frontier.depth);
   const rematch = G.guardianRematch(s, region, guardianNode);
-  const guardianLoot = G.dropProfile(s, region, 'guardian', guardianNode, !rematch);
-  const bossLoot = G.dropProfile(s, region, 'boss', 5, !s.cleared.includes(region));
+  const guardianLoot = G.dropProfile(
+    s,
+    region,
+    'guardian',
+    guardianNode,
+    !rematch,
+  );
+  const bossLoot = G.dropProfile(
+    s,
+    region,
+    'boss',
+    5,
+    !s.cleared.includes(region),
+  );
   const guardian = G.enemyDefinition(s, region, 'guardian', guardianNode),
     boss = G.enemyDefinition(s, region, 'boss'),
     guardReady = rematch || G.guardianReady(s, region);
@@ -339,12 +353,24 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
   function renderBossPanel(prefix = 'explore') {
     return bossRevealed ? (
       <section className="explore-boss">
-        <div className="explore-section-head">
-          <h3>
-            <Swords aria-hidden="true" />
-            {enemy.boss}
-          </h3>
-          <span>{G.ELEMENT_NAMES[G.ENEMIES[region].element]}</span>
+        <div className="explore-boss-identity">
+          <span className="explore-boss-portrait" aria-hidden="true">
+            <EnemyPortrait region={region} node={5} size="md" />
+          </span>
+          <div>
+            <span className="explore-enemy-rank">
+              地区首领 · {G.ELEMENT_NAMES[G.ENEMIES[region].element]}
+            </span>
+            <h3>
+              <InfoHint
+                title={enemy.boss}
+                body={`${enemy.epithet}。${enemy.mechanic}`}
+              >
+                {enemy.boss}
+              </InfoHint>
+            </h3>
+            <small>{enemy.epithet}</small>
+          </div>
         </div>
         <p className="explore-enemy-stats">
           生命 {boss.hp.toLocaleString('zh-CN')} · 攻击 {boss.attack} · 护甲{' '}
@@ -357,7 +383,9 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
           </span>
         </InfoHint>
         <CombatRecommendation s={s} region={region} node={6} />
-        {!s.cleared.includes(region) && <PinPlan s={s} act={act} kind="boss" id={String(region)} />}
+        {!s.cleared.includes(region) && (
+          <PinPlan s={s} act={act} kind="boss" id={String(region)} />
+        )}
         <HuntControl s={s} act={act} region={region} kind="boss" />
         <p className="explore-match">
           敌情仅提供伤害增益，当前 +{(s.guild.intel[region] / 10).toFixed(1)}
@@ -379,9 +407,7 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
           title="首领套装与残响"
           body={`${G.dropHelp(bossLoot).body}\n首胜后每180游戏秒可再次挑战，仍需支付出战补给；不重复发首通物资、经验、解锁和剧情。读档保留战斗随机序列。`}
         >
-          <span className="boss-loot-note">
-            {G.dropSummary(bossLoot)}
-          </span>
+          <span className="boss-loot-note">{G.dropSummary(bossLoot)}</span>
         </InfoHint>
         <div className="explore-boss-actions">
           <button
@@ -497,7 +523,15 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
                     ? `据点 ${s.guild.depths[id]}/5`
                     : '待调查'}
               </span>
-              <strong>{definition.name}</strong>
+              <strong>
+                <InfoHint
+                  withinControl
+                  title={definition.name}
+                  body={definition.desc}
+                >
+                  {definition.name}
+                </InfoHint>
+              </strong>
               <small>
                 {s.expedition?.region === id
                   ? `队伍正在${routeNames[s.expedition.route]}`
@@ -542,11 +576,16 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
           aria-labelledby="explore-region-title"
         >
           <header className="explore-heading">
-            <div>
+            <RegionScene region={region} className="explore-region-scene" />
+            <div className="explore-heading-copy">
               <span className="life-kicker">
-                {returned ? '远征安排' : '第一次走出火光'}
+                {String(region + 1).padStart(2, '0')} / {enemy.biome}
               </span>
-              <h2 id="explore-region-title">{enemy.name}</h2>
+              <h2 id="explore-region-title">
+                <InfoHint title={enemy.name} body={enemy.desc}>
+                  {enemy.name}
+                </InfoHint>
+              </h2>
             </div>
             <button
               type="button"
@@ -581,7 +620,6 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
                       aria-current={
                         index === frontier.depth ? 'step' : undefined
                       }
-                      title={name}
                     >
                       <button
                         type="button"
@@ -665,21 +703,30 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
 
           {returned && (
             <div className={`guardian-preview${guardReady ? ' ready' : ''}`}>
-              <div>
-                <InfoHint
-                  title={guardian.name}
-                  body={`生命 ${guardian.hp} · 攻击 ${guardian.attack} · 护甲 ${guardian.defense}。${G.ELEMENT_NAMES[guardian.element]}伤害。${rematch ? '再战按所选节点掉落当地套装，不重复首占奖励、经验或据点进度。' : '推荐练度包括装备与技能养成；战败保留路线。'}`}
-                >
-                  <strong>{guardian.name}</strong>
-                </InfoHint>
-                <small>
-                  {rematch
-                    ? '再战守敌 · 不重复首占奖励'
-                    : guardReady
-                      ? '守敌已现身'
-                      : '当前节点守敌'}{' '}
-                  · 生命 {guardian.hp.toLocaleString('zh-CN')}
-                </small>
+              <div className="guardian-identity">
+                <span className="guardian-portrait" aria-hidden="true">
+                  <EnemyPortrait
+                    region={region}
+                    node={guardianNode}
+                    size="sm"
+                  />
+                </span>
+                <div className="guardian-identity-copy">
+                  <InfoHint
+                    title={guardian.name}
+                    body={`生命 ${guardian.hp} · 攻击 ${guardian.attack} · 护甲 ${guardian.defense}。${G.ELEMENT_NAMES[guardian.element]}伤害。${rematch ? '再战按所选节点掉落当地套装，不重复首占奖励、经验或据点进度。' : '推荐练度包括装备与技能养成；战败保留路线。'}`}
+                  >
+                    <strong>{guardian.name}</strong>
+                  </InfoHint>
+                  <small>
+                    {rematch
+                      ? '再战守敌 · 不重复首占奖励'
+                      : guardReady
+                        ? '守敌已现身'
+                        : '当前节点守敌'}{' '}
+                    · 生命 {guardian.hp.toLocaleString('zh-CN')}
+                  </small>
+                </div>
               </div>
               <button
                 className="primary-button"
@@ -698,8 +745,17 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
               >
                 {rematch ? '再战守敌' : guardReady ? '挑战守敌' : '推进后挑战'}
               </button>
-              <HuntControl s={s} act={act} region={region} kind="guardian" node={guardianNode} />
-              <InfoHint {...G.dropHelp(guardianLoot)} className="guardian-loot-note">
+              <HuntControl
+                s={s}
+                act={act}
+                region={region}
+                kind="guardian"
+                node={guardianNode}
+              />
+              <InfoHint
+                {...G.dropHelp(guardianLoot)}
+                className="guardian-loot-note"
+              >
                 {G.dropSummary(guardianLoot)}
               </InfoHint>
               {guardReady && guardianBlocker && (
@@ -820,7 +876,7 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
           if (!open) setDetail(null);
         }}
       >
-        <DialogContent className="life-dialog explore-detail-dialog">
+        <DialogContent className="v21-ui life-dialog explore-detail-dialog">
           <DialogTitle>
             {s.lastBattle?.enemy} ·{' '}
             {s.lastBattle?.won
@@ -834,7 +890,13 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
             保留最近 35 条行动
           </DialogDescription>
           <div className="battle-report-history">
-            <BattleLoot receipt={s.lastBattle?.loot} go={(d) => { setDetail(null); go(d); }} />
+            <BattleLoot
+              receipt={s.lastBattle?.loot}
+              go={(d) => {
+                setDetail(null);
+                go(d);
+              }}
+            />
             {s.lastBattle?.history.map((line, i) => (
               <p key={i}>{line}</p>
             ))}
@@ -847,7 +909,7 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
           if (!open) setDetail(null);
         }}
       >
-        <DialogContent className="life-dialog explore-detail-dialog">
+        <DialogContent className="v21-ui life-dialog explore-detail-dialog">
           <DialogTitle>{enemy.name} · 驻地</DialogTitle>
           <DialogDescription>
             夺取第一处据点后，可以在这里建设远征驻地。
@@ -862,7 +924,7 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
           if (!open) setDetail(null);
         }}
       >
-        <DialogContent className="life-dialog explore-detail-dialog">
+        <DialogContent className="v21-ui life-dialog explore-detail-dialog">
           <DialogTitle>{enemy.name} · 战斗准备</DialogTitle>
           <DialogDescription>
             按敌人的伤害类型准备药剂、装备与技能，再决定是否挑战。
@@ -877,7 +939,7 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
           if (!open) setDetail(null);
         }}
       >
-        <DialogContent className="life-dialog explore-detail-dialog">
+        <DialogContent className="v21-ui life-dialog explore-detail-dialog">
           <DialogTitle>{enemy.name} · 见闻与敌情</DialogTitle>
           <DialogDescription>
             调查积累故事线索与敌情，推进抵达守敌，战胜后夺取据点；两种用途可以分别安排。
@@ -958,7 +1020,7 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
           if (!open) setDetail(null);
         }}
       >
-        <DialogContent className="life-dialog explore-detail-dialog">
+        <DialogContent className="v21-ui life-dialog explore-detail-dialog">
           <DialogTitle>小队带回的见闻</DialogTitle>
           <DialogDescription>
             这是打开时选中的回程记录，收益与成功率不会因之后换装而改变。
@@ -1017,7 +1079,7 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
           if (!open) setDetail(null);
         }}
       >
-        <DialogContent className="life-dialog explore-detail-dialog">
+        <DialogContent className="v21-ui life-dialog explore-detail-dialog">
           <DialogTitle>{enemy.boss} · 战前推演</DialogTitle>
           <DialogDescription>
             使用真实战斗规则逐回合计算，不花费物资。预案失败不代表所有操作都无法取胜。

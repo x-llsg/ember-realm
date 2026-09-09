@@ -4,6 +4,8 @@ import { SkillTreePanel } from './skill-tree-panel';
 import { GearLabel, GearStats, GearWearer } from './gear-presentation';
 import { DEFAULT_GEAR_SORT, GearSortControl } from './gear-sort-control';
 import { GearWorkshop } from './gear-workshop';
+import { GameIcon, HeroPortrait } from './game-art';
+import '@/app/character-art.css';
 import { useState, useSyncExternalStore } from 'react';
 import { InfoHint, Term } from './info-hint';
 import { HELP, recruitingOdds, affixHelp } from '@/lib/glossary';
@@ -67,11 +69,17 @@ function Person({ s, h }: { s: G.State; h: G.Hero }) {
     t = G.TALENTS.find((t) => t.id === h.talent)!;
   return (
     <>
-      <div className="guild-person">
-        <strong className={'potential-' + h.quality}>{h.name}</strong>
-        <span>
-          {d.role} · Lv.{h.level}
-        </span>
+      <div className="guild-recruit-identity">
+        <HeroPortrait hero={h} size="md" />
+        <div className="guild-person">
+          <strong className={'potential-' + h.quality}>{h.name}</strong>
+          <span>
+            {d.role} · 等级 {h.level}
+          </span>
+          <small className={'potential-' + h.quality}>
+            {'★'.repeat(h.quality)}
+          </small>
+        </div>
       </div>
       <p className="guild-meta">
         <InfoHint {...G.originHelp(h)}>{h.origin}</InfoHint> ·{' '}
@@ -164,7 +172,10 @@ export function GuildRecruitment({ s, act, go }: Props) {
             (current + 1) * (size === 1 ? 1 : 3),
           )
           .map((h) => (
-            <article className="guild-card" key={h.id}>
+            <article
+              className={'guild-card recruit-card recruit-quality-' + h.quality}
+              key={h.id}
+            >
               <div className="guild-card-body">
                 <Person s={s} h={h} />
                 <div className="hero-term-line">
@@ -212,7 +223,10 @@ export function GuildTeam({ s, act, go, focus }: Props) {
     [recipe, setRecipe] = useState(focus?.recipe || 'blade'),
     // Navigation remounts this panel; ordinary ticks preserve the player's choice.
     [craftTier, setCraftTier] = useState(() =>
-      Math.max(1, Math.min(G.gearTier(s), Math.trunc(focus?.tier ?? G.gearTier(s)))),
+      Math.max(
+        1,
+        Math.min(G.gearTier(s), Math.trunc(focus?.tier ?? G.gearTier(s))),
+      ),
     ),
     [slotFilter, setSlotFilter] = useState('all'),
     [gearSort, setGearSort] = useState(DEFAULT_GEAR_SORT),
@@ -230,7 +244,10 @@ export function GuildTeam({ s, act, go, focus }: Props) {
       recipes.some((r) => r.slot === slot),
     ),
     slotRecipes = recipes.filter((r) => r.slot === chosen?.slot),
-    gearList = G.filterGear(s, { slot: slotFilter as G.GearSlot | 'all', ...gearSort });
+    gearList = G.filterGear(s, {
+      slot: slotFilter as G.GearSlot | 'all',
+      ...gearSort,
+    });
   const inspect = (g: G.Gear) => {
     setPicker(false);
     setDetail(g.id);
@@ -261,20 +278,23 @@ export function GuildTeam({ s, act, go, focus }: Props) {
               aria-pressed={h?.id === member.id}
               onClick={() => setSelected(member.id)}
             >
-              <span
-                className={
-                  s.party.includes(member.id)
-                    ? 'roster-state active'
-                    : 'roster-state'
-                }
-              >
-                {s.party.includes(member.id) ? '战' : '备'}
+              <span className="roster-face">
+                <HeroPortrait hero={member} size="sm" />
+                <span
+                  className={
+                    s.party.includes(member.id)
+                      ? 'roster-state active'
+                      : 'roster-state'
+                  }
+                >
+                  {s.party.includes(member.id) ? '战' : '备'}
+                </span>
               </span>
               <span className={'roster-name potential-' + member.quality}>
                 {member.name}
                 <small>{'★'.repeat(member.quality)}</small>
               </span>
-              <small>Lv.{member.level}</small>
+              <small className="roster-level">{member.level}级</small>
             </button>
           ))}
         </div>
@@ -305,24 +325,28 @@ export function GuildTeam({ s, act, go, focus }: Props) {
         {h && personal ? (
           <>
             <div className="team-overview">
-              <div>
-                <h3>
-                  <span className={'potential-' + h.quality}>{h.name}</span>{' '}
-                  <small>
-                    {G.heroDefinition(s, h.id).role} · Lv.{h.level}
-                  </small>
-                </h3>
-                <p>
-                  生命 <b>{Math.round(personal.hp)}</b> · 攻击{' '}
-                  <b>{Math.round(personal.attack)}</b> · 防御{' '}
-                  <b>{Math.round(personal.defense)}</b>
-                  <InfoHint
-                    title={G.heroDefinition(s, h.id).skill}
-                    body={G.heroDefinition(s, h.id).skillText}
-                  >
-                    {G.heroDefinition(s, h.id).skill}
-                  </InfoHint>
-                </p>
+              <div className="team-identity-art">
+                <HeroPortrait hero={h} size="lg" />
+                <div className="team-identity-copy">
+                  <h3>
+                    <span className={'potential-' + h.quality}>{h.name}</span>{' '}
+                    <small>
+                      {G.heroDefinition(s, h.id).role} · 等级 {h.level}
+                    </small>
+                  </h3>
+                  <p>
+                    生命 <b>{Math.round(personal.hp)}</b> · 攻击{' '}
+                    <b>{Math.round(personal.attack)}</b> · 防御{' '}
+                    <b>{Math.round(personal.defense)}</b>
+                    <InfoHint
+                      title={G.heroDefinition(s, h.id).skill}
+                      body={G.heroDefinition(s, h.id).skillText}
+                    >
+                      {G.heroDefinition(s, h.id).skill}
+                    </InfoHint>
+                  </p>
+                  <HeroTraits h={h} />
+                </div>
               </div>
               <div className="team-assignment">
                 <button
@@ -337,7 +361,6 @@ export function GuildTeam({ s, act, go, focus }: Props) {
                 )}
               </div>
             </div>
-            <HeroTraits h={h} />
             <div className="team-columns">
               <section
                 className={
@@ -442,7 +465,9 @@ export function GuildTeam({ s, act, go, focus }: Props) {
                   <>
                     <div className="desk-heading">
                       <span>
-                        <Term name="mastery">专精 {h.mastery}/5 · 当前开放 {G.masteryLimit(s)} 阶</Term>
+                        <Term name="mastery">
+                          专精 {h.mastery}/5 · 当前开放 {G.masteryLimit(s)} 阶
+                        </Term>
                       </span>
                       <small>每级基础血 / 攻 / 防 +4%</small>
                     </div>
@@ -483,7 +508,9 @@ export function GuildTeam({ s, act, go, focus }: Props) {
                   </button>
                   <button
                     className="life-text-button"
-                    onClick={() => go({ view: 'heroes', tab: 'inventory', hero: h.id })}
+                    onClick={() =>
+                      go({ view: 'heroes', tab: 'inventory', hero: h.id })
+                    }
                   >
                     装备仓库 {s.guild.inventory.length}/{G.INVENTORY_CAP}
                   </button>
@@ -528,7 +555,17 @@ export function GuildTeam({ s, act, go, focus }: Props) {
                             </div>
                           </>
                         ) : (
-                          <p className="desk-muted">尚未装备</p>
+                          <p className="empty-gear-slot desk-muted">
+                            <GameIcon
+                              kind="equipment"
+                              id={
+                                G.RECIPES.find((r) => r.slot === slot)?.id ||
+                                slot
+                              }
+                              size={26}
+                            />
+                            尚未装备
+                          </p>
                         )}
                       </article>
                     );
@@ -617,10 +654,23 @@ export function GuildTeam({ s, act, go, focus }: Props) {
                             'T' +
                             (i + 1) +
                             ' · 相对T1 ×' +
-                            (G.gearTierScale(i + 1) / G.gearTierScale(1)).toFixed(2),
+                            (
+                              G.gearTierScale(i + 1) / G.gearTierScale(1)
+                            ).toFixed(2),
                         }),
                       )}
                     />
+                    <div className="forge-item-preview">
+                      <GameIcon kind="equipment" id={chosen.id} size={44} />
+                      <div>
+                        <InfoHint title={chosen.name} body={chosen.text}>
+                          {chosen.name}
+                        </InfoHint>
+                        <small>
+                          {G.SLOT_NAMES[chosen.slot]} · {craftTier}阶 · 基础属性
+                        </small>
+                      </div>
+                    </div>
                     <GearStats
                       s={s}
                       item={{
@@ -643,7 +693,13 @@ export function GuildTeam({ s, act, go, focus }: Props) {
                         act((x) => G.craftGear(x, chosen.id, craftTier))
                       }
                     />
-                    <PinPlan s={s} act={act} kind="gear" id={chosen.id} tier={craftTier} />
+                    <PinPlan
+                      s={s}
+                      act={act}
+                      kind="gear"
+                      id={chosen.id}
+                      tier={craftTier}
+                    />
                     <div className="hero-term-line">
                       <Term name="rarity">品质概率</Term>
                       <Term name="craftPity">
@@ -715,7 +771,11 @@ export function GuildTeam({ s, act, go, focus }: Props) {
                 ...G.GEAR_SLOT_OPTIONS,
               ]}
             />
-            <GearSortControl label="可选装备" {...gearSort} onChange={setGearSort} />
+            <GearSortControl
+              label="可选装备"
+              {...gearSort}
+              onChange={setGearSort}
+            />
           </div>
           <div className="gear-picker-list">
             {gearList.map((g) => {
@@ -726,8 +786,7 @@ export function GuildTeam({ s, act, go, focus }: Props) {
                     <GearLabel s={s} item={g} />
                     <GearStats s={s} item={g} />
                     <small className="desk-muted">
-                      <GearWearer s={s} item={g} />{' '}
-                      ·{' '}
+                      <GearWearer s={s} item={g} /> ·{' '}
                       <InfoHint {...affixHelp(g.affix, s, g)}>
                         {G.AFFIXES[g.affix].text}
                       </InfoHint>
@@ -779,14 +838,22 @@ export function GuildTeam({ s, act, go, focus }: Props) {
         }}
       >
         <DialogContent className="life-dialog">
-          <DialogTitle>{item ? <GearLabel s={s} item={item} /> : '安排旅人退役'}</DialogTitle>
+          <DialogTitle>
+            {item ? <GearLabel s={s} item={item} /> : '安排旅人退役'}
+          </DialogTitle>
           <DialogDescription>
             {item
               ? '强化与重铸确定生效；定向词条消耗同品质分解材料。出征角色携带的装备归来后可整备。'
               : '这位旅人会离开，穿戴装备全部归还装备库。'}
           </DialogDescription>
           {item ? (
-            <GearWorkshop key={item.id} s={s} item={item} act={act} onRemoved={() => setDetail(null)} />
+            <GearWorkshop
+              key={item.id}
+              s={s}
+              item={item}
+              act={act}
+              onRemoved={() => setDetail(null)}
+            />
           ) : (
             <button
               className="primary-button"

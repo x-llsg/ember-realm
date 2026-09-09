@@ -2,7 +2,9 @@
 import * as G from '@/lib/realm';
 import { InfoHint, Term } from './info-hint';
 import { HELP, affixHelp } from '@/lib/glossary';
+import { GameIcon } from './game-art';
 import '@/app/gear-presentation.css';
+import '@/app/character-art.css';
 
 export function GearWearer({ s, item }: { s: G.State; item: G.Gear }) {
   const owner = G.gearOwner(s, item.id);
@@ -37,6 +39,9 @@ export function GearLabel({
   const stats = G.itemStats(s, item);
   return (
     <span className={'gear-name rarity-' + item.rarity}>
+      <span className="gear-label-art" aria-hidden="true">
+        <GameIcon kind="equipment" id={item.recipe} size={22} />
+      </span>
       <InfoHint
         withinControl={withinControl}
         className="gear-name-text"

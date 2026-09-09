@@ -1,5 +1,6 @@
 'use client';
 import './planning.css';
+import './visual-theme.css';
 import { PlanningBoard } from '@/components/planning-board';
 import { HuntActivity } from '@/components/hunt-controls';
 import { useEffect, useRef, useState } from 'react';
@@ -410,7 +411,7 @@ export default function Home() {
         go(v === 'equipment' ? { view: 'heroes', tab: 'inventory' } : { view: v as G.View });
       }}
       orientation="vertical"
-      className="life-shell v7-ui v8-ui v9-ui"
+      className="life-shell v7-ui v8-ui v9-ui v21-ui"
     >
       <header className="life-topbar">
         <button className="life-brand" onClick={() => go({ view: 'town' })}>

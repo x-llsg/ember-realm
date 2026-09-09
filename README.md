@@ -1,6 +1,6 @@
 # 余烬之境 · The Ember Realm
 
-**V0.2.0** · 中文西幻增量文字游戏 · MIT
+**V0.2.1** · 中文西幻增量文字游戏 · MIT
 
 ### [⬇ 下载游戏 · Windows 免安装版](https://github.com/x-llsg/ember-realm/releases/latest/download/ember-realm-windows-portable.zip)
 
@@ -24,6 +24,7 @@ GitHub 的绿色 Code → Download ZIP 按钮下载的是源代码；直接游�
 
 ## 已有内容
 
+- 手绘职业头像、六章守敌与首领图鉴，资源、建筑、装备图标；全部配图支持离线游玩。
 - 从手动采集开始，随着发展逐步开放资源、建筑、研究和城镇经营。
 - 居民分工、材料加工、地区运输、订单、留守任职与临时来访。
 - 随机冒险者、五档潜力、出身与利弊统一的分级天赋，自由组合职业。

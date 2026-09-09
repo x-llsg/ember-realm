@@ -1,0 +1,401 @@
+/* Portraits and item illustrations enrich the existing working space without
+   enlarging tooltip hit areas or turning character management into a long page. */
+.v21-ui.v21-ui .guild-recruit-identity {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-width: 0;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #c1a27024;
+}
+.v21-ui.v21-ui .guild-recruit-identity .guild-person {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  min-width: 0;
+}
+.v21-ui.v21-ui .guild-recruit-identity .guild-person strong {
+  font-size: 19px;
+  font-weight: 650;
+  line-height: 1.35;
+}
+.v21-ui.v21-ui .guild-recruit-identity .guild-person > small {
+  font-size: 11px;
+  letter-spacing: 2px;
+  opacity: 0.9;
+}
+.v21-ui.v21-ui .guild-candidates:has(.recruit-card) {
+  align-content: start;
+  align-items: start;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.v21-ui.v21-ui .recruit-card {
+  --recruit-accent: #b5bbb5;
+  position: relative;
+  min-height: 0;
+  height: auto;
+  border: 1px solid #c1a27035;
+  border-top: 2px solid var(--recruit-accent);
+  border-radius: 10px;
+  background: linear-gradient(145deg, #c1a2700d, transparent 48%), #1d211f;
+  padding: 16px;
+  box-shadow: 0 8px 22px #00000012;
+  gap: 15px;
+}
+.v21-ui.v21-ui .recruit-card.recruit-quality-2 {
+  --recruit-accent: #86d19a;
+}
+.v21-ui.v21-ui .recruit-card.recruit-quality-3 {
+  --recruit-accent: #79baff;
+}
+.v21-ui.v21-ui .recruit-card.recruit-quality-4 {
+  --recruit-accent: #c79bff;
+}
+.v21-ui.v21-ui .recruit-card.recruit-quality-5 {
+  --recruit-accent: #f2c662;
+}
+.v21-ui.v21-ui .recruit-card .guild-card-body {
+  flex: none;
+  overflow: visible;
+  gap: 11px;
+}
+.v21-ui.v21-ui .recruit-card .guild-meta,
+.v21-ui.v21-ui .recruit-card p {
+  font-size: 13px !important;
+  line-height: 1.65 !important;
+}
+.v21-ui.v21-ui .recruit-card > .life-buy {
+  margin-top: 0;
+  border-top: 1px solid #c1a27024;
+  padding-top: 12px;
+}
+.v21-ui.v21-ui.v9-ui .team-roster-row {
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  min-height: 53px;
+  padding: 7px 6px;
+  gap: 9px;
+  border-radius: 6px;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+.v21-ui.v21-ui .team-roster-row:hover {
+  background: #cab2870a;
+}
+.v21-ui.v21-ui.v9-ui .team-roster-row[aria-pressed='true'] {
+  background: linear-gradient(90deg, #ccad7125, #ccad7109);
+  border-color: #c1a27065;
+}
+.v21-ui.v21-ui .roster-face {
+  position: relative;
+  display: block;
+  width: 34px;
+  height: 38px;
+}
+.v21-ui.v21-ui.v9-ui .roster-face .roster-state {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  width: 17px;
+  height: 17px;
+  min-width: 0;
+  border: 1px solid #736044;
+  border-radius: 4px;
+  line-height: 15px;
+  font-size: 10px;
+  box-shadow: 0 1px 5px #0008;
+}
+.v21-ui.v21-ui.v9-ui .team-roster-row .roster-name {
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.5;
+}
+.v21-ui.v21-ui.v9-ui .team-roster-row .roster-name > small {
+  display: block;
+  color: inherit;
+  opacity: 0.65;
+  font-size: 9px;
+  letter-spacing: 1px;
+}
+.v21-ui.v21-ui .team-roster-row > .roster-level {
+  font-size: 11px;
+  white-space: nowrap;
+}
+.v21-ui.v21-ui.v9-ui .team-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-height: 0;
+  overflow: hidden;
+}
+.v21-ui.v21-ui.v9-ui .team-overview {
+  flex: none;
+  min-height: 88px;
+  padding: 3px 0 10px;
+  gap: 12px;
+  align-items: center;
+  border-bottom: 1px solid #c1a2702d;
+}
+.v21-ui.v21-ui.v9-ui .team-overview > .team-identity-art {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  min-width: 0;
+  flex: 1;
+}
+.v21-ui.v21-ui .team-identity-copy {
+  min-width: 0;
+}
+.v21-ui.v21-ui.v9-ui .team-overview h3 {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 3px 12px;
+  margin-bottom: 4px;
+  font-size: 24px;
+  line-height: 1.3;
+}
+.v21-ui.v21-ui.v9-ui .team-overview h3 small {
+  font-size: 12px;
+}
+.v21-ui.v21-ui.v9-ui .team-overview p {
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0;
+}
+.v21-ui.v21-ui .team-identity-copy .hero-term-line {
+  gap: 5px 13px;
+  margin-top: 5px;
+  font-size: 12px;
+}
+.v21-ui.v21-ui.v9-ui .team-columns {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  align-items: stretch;
+  gap: 12px;
+}
+.v21-ui.v21-ui.v9-ui
+  .team-columns
+  > :is(.training-actions, .gear-slots, .forge-mini) {
+  align-self: stretch;
+  max-height: 100%;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  border: 1px solid #c1a27025;
+  border-radius: 7px;
+  padding: 11px;
+  background: #161b1950;
+}
+.v21-ui.v21-ui.v9-ui .team-columns .desk-heading {
+  border-color: #c1a27024;
+  padding-bottom: 7px;
+  margin-bottom: 2px;
+  font-size: 13px;
+}
+.v21-ui.v21-ui.v9-ui
+  .team-columns
+  :is(.desk-muted, .guild-meta, .life-hint, .material-price),
+.v21-ui.v21-ui.v9-ui
+  .team-columns
+  .life-buy
+  > :is(.life-cost, .material-price, .life-hint) {
+  font-size: 12px !important;
+  line-height: 1.5 !important;
+}
+.v21-ui.v21-ui.v9-ui .equipment-six-grid {
+  gap: 7px;
+}
+.v21-ui.v21-ui.v9-ui .equipment-six-grid .team-gear-slot {
+  background: linear-gradient(130deg, #ccac7210, transparent), #20251f80;
+  border-color: #c1a2702c;
+  border-radius: 5px;
+  padding: 8px;
+}
+.v21-ui.v21-ui.v9-ui .equipment-six-grid .team-gear-slot > .desk-heading {
+  padding-bottom: 3px;
+}
+.v21-ui.v21-ui.v9-ui .empty-gear-slot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  min-height: 39px;
+  opacity: 0.45;
+  font-size: 12px;
+}
+.v21-ui.v21-ui .forge-item-preview,
+.workshop-item-preview {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+  padding: 10px;
+  background: #b99b6510;
+  border: 1px solid #c1a27029;
+  border-radius: 6px;
+}
+.v21-ui.v21-ui .forge-item-preview > div,
+.workshop-item-preview > div {
+  min-width: 0;
+}
+.v21-ui.v21-ui .forge-item-preview .realm-hint-trigger {
+  font-size: 14px;
+  font-weight: 650;
+}
+.v21-ui.v21-ui .forge-item-preview small {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  color: #aaad9c;
+}
+.workshop-item-preview strong {
+  font-size: 12px;
+}
+.workshop-item-preview .guild-meta {
+  margin-top: 4px;
+  font-size: 12px !important;
+  line-height: 1.5 !important;
+  color: #c9c7b4;
+}
+/* The illustration is a sibling of the inline name trigger: no row-sized tooltip. */
+.gear-name > .gear-label-art {
+  display: inline-flex;
+  vertical-align: middle;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-right: 6px;
+  pointer-events: none;
+}
+.gear-name > .gear-name-text.realm-hint-trigger {
+  display: inline;
+}
+.v21-ui.v21-ui .warehouse-row {
+  border-bottom-color: #c1a27023;
+  border-radius: 4px;
+  margin-bottom: 3px;
+  background: #1c221e;
+}
+.v21-ui.v21-ui .warehouse-row:nth-child(even) {
+  background: #202720;
+}
+.v21-ui.v21-ui .warehouse-row.active {
+  background: #b89a6520;
+  border-left-color: #cca66b;
+}
+.v21-ui.v21-ui .warehouse-item-open {
+  gap: 2px;
+  padding-block: 4px;
+}
+.v21-ui.v21-ui .warehouse-item-open > span:last-child {
+  padding-left: 30px;
+}
+.v21-ui.v21-ui .warehouse-detail {
+  border-color: #c1a27030;
+}
+.v21-ui.v21-ui .warehouse-wallet {
+  gap: 6px 18px;
+  border-color: #c1a27025;
+}
+@media (min-width: 1001px) and (max-height: 820px) {
+  .v21-ui.v21-ui.v9-ui .team-detail {
+    gap: 6px;
+  }
+  .v21-ui.v21-ui.v9-ui .team-overview {
+    min-height: 77px;
+    padding-bottom: 6px;
+  }
+  .v21-ui.v21-ui.v9-ui .team-overview h3 {
+    font-size: 21px;
+    margin-bottom: 2px;
+  }
+  .v21-ui.v21-ui.v9-ui .team-columns {
+    gap: 8px;
+  }
+  .v21-ui.v21-ui.v9-ui
+    .team-columns
+    > :is(.training-actions, .gear-slots, .forge-mini) {
+    padding: 8px;
+    gap: 5px;
+  }
+  .v21-ui.v21-ui .forge-item-preview {
+    padding: 7px;
+  }
+  .v21-ui.v21-ui .recruit-card {
+    padding: 12px;
+    gap: 10px;
+  }
+}
+@media (max-width: 1100px) and (min-width: 701px) {
+  .v21-ui.v21-ui.v9-ui .team-roster-row {
+    grid-template-columns: 34px minmax(0, 1fr);
+    gap: 7px;
+  }
+  .v21-ui.v21-ui .team-roster-row > .roster-level {
+    display: none;
+  }
+  .v21-ui.v21-ui.v9-ui .team-overview h3 {
+    font-size: 20px;
+  }
+  .v21-ui.v21-ui.v9-ui .team-overview p {
+    font-size: 12px;
+  }
+}
+@media (max-width: 1000px) {
+  .v21-ui.v21-ui.v9-ui .team-columns {
+    overflow: auto;
+  }
+  .v21-ui.v21-ui.v9-ui
+    .team-columns
+    > :is(.training-actions, .gear-slots, .forge-mini) {
+    max-height: none;
+    overflow: visible;
+  }
+}
+@media (max-width: 700px) {
+  .v21-ui.v21-ui.v9-ui .team-roster-row {
+    grid-template-columns: 34px minmax(0, 1fr);
+    min-height: 46px;
+    padding: 5px;
+  }
+  .v21-ui.v21-ui.v9-ui .team-roster-row .roster-name {
+    font-size: 11px;
+  }
+  .v21-ui.v21-ui .team-roster-row > .roster-level {
+    display: none;
+  }
+  .v21-ui.v21-ui.v9-ui .team-overview {
+    flex-wrap: wrap;
+    min-height: 0;
+  }
+  .v21-ui.v21-ui.v9-ui .team-overview > .team-identity-art {
+    gap: 9px;
+  }
+  .v21-ui.v21-ui.v9-ui .team-overview h3 {
+    font-size: 18px;
+  }
+  .v21-ui.v21-ui .team-assignment {
+    flex-direction: row;
+    width: 100%;
+    align-items: center;
+    justify-content: flex-end;
+  }
+  .v21-ui.v21-ui .team-identity-copy .hero-term-line {
+    gap: 4px 8px;
+    margin-top: 3px;
+    font-size: 11px;
+  }
+  .v21-ui.v21-ui .recruit-card {
+    padding: 13px;
+  }
+  .v21-ui.v21-ui .guild-recruit-identity .guild-person strong {
+    font-size: 17px;
+  }
+}

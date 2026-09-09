@@ -1,0 +1,283 @@
+{
+  "generator": "OpenAI built-in imagegen",
+  "style": "西幻手绘图鉴：墨绿、炭黑、象牙与旧金",
+  "note": "职业画像表现职业原型，随机旅人共享对应职业画像。图集由CSS定位；SVG物品图由代码绘制。",
+  "assets": [
+    {
+      "id": "portraits",
+      "prompt": "Use case: stylized-concept. Create ONE production-ready RPG character portrait SPRITE ATLAS, a single square image, exactly 3 columns by 3 rows of equal square cells, no gaps, no outer margins, no borders, no text or lettering. Nine distinct front-facing bust portraits, each centered completely inside its own cell, consistent framing from top of head to mid chest, cropped chest at bottom. Original hand-painted western fantasy, refined oil and ink, realistic expressive faces, elegant painterly brushwork, muted charcoal/umber backgrounds, warm ivory skin highlights, antique brass and restrained jewel accents, beautifully detailed and readable small. Not anime, not glossy 3D. Row1 left to right: a resolute female wandering swordswoman with dark auburn hair and weathered leather/steel armor; a male half-elf ranger with pointed ears and forest green hood and bow; a compassionate female fallen nun/healer with silver hair, ivory veil and a small warm lantern. Row2 left to right: a male star mage with midnight robes, short dark hair and faint violet constellation light; an older male oath knight in worn plate armor with silver beard and shield; an androgynous dragon-blood hunter with subtle horn ridges, copper eyes and red leather cloak. Row3 left to right: a female shadow assassin with black hood, dark hair and twin daggers; a male woodland druid with antler branches, braided hair, moss and green cloak; a female travelling alchemist with curly brown hair, goggles, amber potion vials and leather apron. Every square cell has its own subdued near-black background. Absolutely uniform 3x3 layout so CSS can select each portrait, all faces centered in their own tile and no elements crossing into another cell. High quality game asset, no UI, no watermark.",
+      "columns": 3,
+      "rows": 3,
+      "file": "portraits.webp",
+      "entries": [
+        {
+          "id": "rhea",
+          "name": "流浪剑士"
+        },
+        {
+          "id": "finn",
+          "name": "半精灵游侠"
+        },
+        {
+          "id": "luna",
+          "name": "失誓修女"
+        },
+        {
+          "id": "kael",
+          "name": "逐星法师"
+        },
+        {
+          "id": "orin",
+          "name": "灰誓骑士"
+        },
+        {
+          "id": "ash",
+          "name": "龙裔猎人"
+        },
+        {
+          "id": "nyx",
+          "name": "夜行刺客"
+        },
+        {
+          "id": "sylva",
+          "name": "荒林德鲁伊"
+        },
+        {
+          "id": "vera",
+          "name": "行旅炼金师"
+        }
+      ]
+    },
+    {
+      "id": "enemies-forest",
+      "prompt": "Use case: stylized-concept. Create ONE fantasy RPG bestiary sprite atlas for 森林, exactly 3 columns by 2 rows, six equal SQUARE panels, total canvas landscape 3:2 aspect ratio. No gaps, margins, borders, lettering or watermark. Each panel contains one different isolated creature head/upper-body portrait, fully centered in its own cell, background very dark charcoal with subtle atmospheric ink texture. Read order left to right then next row, precisely these six enemies: A hungry grey wolf; a rough hooded bridge bandit carrying a broken sword; a wild boar with thorny tusks; a sinister hooded old-tower huntsman with bow; a massive dark wolf with silver spiked collar; the boss THORN WOLF KING, huge black wolf with twisted thorn antlers and amber eyes. Original premium western fantasy hand-painted oil and ink concept art, striking readable silhouettes, expressive creature faces, fine material detail, selective warm rim lighting, muted dark palette with controlled jewel/magical highlights. Each subject completely contained within its own square, no crossing between cells. Bust compositions that read at 80px and also look good at 180px. First five are increasingly imposing guardians, the sixth bottom-right clearly the grand final boss. No UI, no typography, no gore. Match an elegant dark parchment and antique brass RPG interface.",
+      "columns": 3,
+      "rows": 2,
+      "file": "enemies-forest.webp",
+      "entries": [
+        {
+          "id": "0-0",
+          "name": "林缘饥狼"
+        },
+        {
+          "id": "0-1",
+          "name": "断桥劫掠者"
+        },
+        {
+          "id": "0-2",
+          "name": "荆棘獠牙兽"
+        },
+        {
+          "id": "0-3",
+          "name": "旧塔追猎者"
+        },
+        {
+          "id": "0-4",
+          "name": "狼王近卫"
+        },
+        {
+          "id": "0-5",
+          "name": "荆棘狼王"
+        }
+      ]
+    },
+    {
+      "id": "enemies-ruins",
+      "prompt": "Use case: stylized-concept. Create ONE fantasy RPG bestiary sprite atlas for 废墟, exactly 3 columns by 2 rows, six equal SQUARE panels, total canvas landscape 3:2 aspect ratio. No gaps, margins, borders, lettering or watermark. Each panel contains one different isolated creature head/upper-body portrait, fully centered in its own cell, background very dark charcoal with subtle atmospheric ink texture. Read order left to right then next row, precisely these six enemies: A skeletal stairway lantern bearer; a silent pale hooded worshipper; a chained blue revenant; a furious bell spirit whose face is partly a cracked bronze bell; an armored crypt oath ghost; the boss FACELESS GRAVEKEEPER, imposing robed figure with blank porcelain face and an ancient bell staff. Original premium western fantasy hand-painted oil and ink concept art, striking readable silhouettes, expressive creature faces, fine material detail, selective warm rim lighting, muted dark palette with controlled jewel/magical highlights. Each subject completely contained within its own square, no crossing between cells. Bust compositions that read at 80px and also look good at 180px. First five are increasingly imposing guardians, the sixth bottom-right clearly the grand final boss. No UI, no typography, no gore. Match an elegant dark parchment and antique brass RPG interface.",
+      "columns": 3,
+      "rows": 2,
+      "file": "enemies-ruins.webp",
+      "entries": [
+        {
+          "id": "1-0",
+          "name": "墓阶执灯人"
+        },
+        {
+          "id": "1-1",
+          "name": "失声祷者"
+        },
+        {
+          "id": "1-2",
+          "name": "回廊缚魂者"
+        },
+        {
+          "id": "1-3",
+          "name": "铸钟怨灵"
+        },
+        {
+          "id": "1-4",
+          "name": "墓室守誓灵"
+        },
+        {
+          "id": "1-5",
+          "name": "无面守墓人"
+        }
+      ]
+    },
+    {
+      "id": "enemies-desert",
+      "prompt": "Use case: stylized-concept. Create ONE fantasy RPG bestiary sprite atlas for 赤砂, exactly 3 columns by 2 rows, six equal SQUARE panels, total canvas landscape 3:2 aspect ratio. No gaps, margins, borders, lettering or watermark. Each panel contains one different isolated creature head/upper-body portrait, fully centered in its own cell, background very dark charcoal with subtle atmospheric ink texture. Read order left to right then next row, precisely these six enemies: An oppressive desert tax soldier with worn helmet and spear; a black-iron well guard with large shield; a burly quartermaster with hammer and weapon racks; an armored banner officer carrying tattered black standard; a heavily armored supply convoy captain; the boss BLACK IRON WARLORD, huge scarred warrior in blackened armor and crown-like angular helmet, broken standard and battleaxe. Original premium western fantasy hand-painted oil and ink concept art, striking readable silhouettes, expressive creature faces, fine material detail, selective warm rim lighting, muted dark palette with controlled jewel/magical highlights. Each subject completely contained within its own square, no crossing between cells. Bust compositions that read at 80px and also look good at 180px. First five are increasingly imposing guardians, the sixth bottom-right clearly the grand final boss. No UI, no typography, no gore. Match an elegant dark parchment and antique brass RPG interface.",
+      "columns": 3,
+      "rows": 2,
+      "file": "enemies-desert.webp",
+      "entries": [
+        {
+          "id": "2-0",
+          "name": "沙路收税兵"
+        },
+        {
+          "id": "2-1",
+          "name": "井口黑铁卫"
+        },
+        {
+          "id": "2-2",
+          "name": "货站军械长"
+        },
+        {
+          "id": "2-3",
+          "name": "黑铁旗官"
+        },
+        {
+          "id": "2-4",
+          "name": "军粮护送长"
+        },
+        {
+          "id": "2-5",
+          "name": "黑铁督军"
+        }
+      ]
+    },
+    {
+      "id": "enemies-abyss",
+      "prompt": "Use case: stylized-concept. Create ONE fantasy RPG bestiary sprite atlas for 永夜, exactly 3 columns by 2 rows, six equal SQUARE panels, total canvas landscape 3:2 aspect ratio. No gaps, margins, borders, lettering or watermark. Each panel contains one different isolated creature head/upper-body portrait, fully centered in its own cell, background very dark charcoal with subtle atmospheric ink texture. Read order left to right then next row, precisely these six enemies: An eyeless imperial collector holding a ledger and hooked blade; an oath jailor in black armor and chains; a demonic name-sacrifice priest with burning scroll; an obsidian royal sentinel with broad jagged shield; a masked throne silencer holding a long black glaive; the boss MORLGAS DEMON KING, majestic horned dark king in volcanic armor, crown of embers and dark scarlet cloak. Original premium western fantasy hand-painted oil and ink concept art, striking readable silhouettes, expressive creature faces, fine material detail, selective warm rim lighting, muted dark palette with controlled jewel/magical highlights. Each subject completely contained within its own square, no crossing between cells. Bust compositions that read at 80px and also look good at 180px. First five are increasingly imposing guardians, the sixth bottom-right clearly the grand final boss. No UI, no typography, no gore. Match an elegant dark parchment and antique brass RPG interface.",
+      "columns": 3,
+      "rows": 2,
+      "file": "enemies-abyss.webp",
+      "entries": [
+        {
+          "id": "3-0",
+          "name": "无名征收官"
+        },
+        {
+          "id": "3-1",
+          "name": "永夜监誓者"
+        },
+        {
+          "id": "3-2",
+          "name": "献名祭司"
+        },
+        {
+          "id": "3-3",
+          "name": "王庭黑曜卫"
+        },
+        {
+          "id": "3-4",
+          "name": "王座缄言者"
+        },
+        {
+          "id": "3-5",
+          "name": "魔王·莫尔迦斯"
+        }
+      ]
+    },
+    {
+      "id": "enemies-dragon",
+      "prompt": "Use case: stylized-concept. Create ONE fantasy RPG bestiary sprite atlas for 雪山, exactly 3 columns by 2 rows, six equal SQUARE panels, total canvas landscape 3:2 aspect ratio. No gaps, margins, borders, lettering or watermark. Each panel contains one different isolated creature head/upper-body portrait, fully centered in its own cell, background very dark charcoal with subtle atmospheric ink texture. Read order left to right then next row, precisely these six enemies: A huge frost-covered cave bear; a small sharp-jawed blue drake; a broad silver molting nest dragon; a sleek icy winged hunting wyvern; a dragon-heart flame sentinel armored in crimson scales; the boss AZRAK ANCIENT DRAGON, enormous ice-black dragon head with regal sweeping horns, silver snow-dusted scales, bright molten amber eyes. Original premium western fantasy hand-painted oil and ink concept art, striking readable silhouettes, expressive creature faces, fine material detail, selective warm rim lighting, muted dark palette with controlled jewel/magical highlights. Each subject completely contained within its own square, no crossing between cells. Bust compositions that read at 80px and also look good at 180px. First five are increasingly imposing guardians, the sixth bottom-right clearly the grand final boss. No UI, no typography, no gore. Match an elegant dark parchment and antique brass RPG interface.",
+      "columns": 3,
+      "rows": 2,
+      "file": "enemies-dragon.webp",
+      "entries": [
+        {
+          "id": "4-0",
+          "name": "冻土穴熊"
+        },
+        {
+          "id": "4-1",
+          "name": "隘口幼龙"
+        },
+        {
+          "id": "4-2",
+          "name": "换鳞守巢龙"
+        },
+        {
+          "id": "4-3",
+          "name": "高空巡猎龙"
+        },
+        {
+          "id": "4-4",
+          "name": "龙心焰卫"
+        },
+        {
+          "id": "4-5",
+          "name": "古龙·阿兹拉克"
+        }
+      ]
+    },
+    {
+      "id": "enemies-heaven",
+      "prompt": "Use case: stylized-concept. Create ONE fantasy RPG bestiary sprite atlas for 天穹, exactly 3 columns by 2 rows, six equal SQUARE panels, total canvas landscape 3:2 aspect ratio. No gaps, margins, borders, lettering or watermark. Each panel contains one different isolated creature head/upper-body portrait, fully centered in its own cell, background very dark charcoal with subtle atmospheric ink texture. Read order left to right then next row, precisely these six enemies: A celestial halberd sentinel in ivory armor; a starbridge bronze automaton with glowing geometric eye; a faceless law scribe with cosmic scroll; a many-armed fate weaver holding luminous threads; an imposing throne judge angel in cracked white and gold armor; the boss ITHER GOD OF ORDER, terrible beautiful androgynous ivory divinity with geometrical golden halo, six subtle wing shapes, dark star void behind. Original premium western fantasy hand-painted oil and ink concept art, striking readable silhouettes, expressive creature faces, fine material detail, selective warm rim lighting, muted dark palette with controlled jewel/magical highlights. Each subject completely contained within its own square, no crossing between cells. Bust compositions that read at 80px and also look good at 180px. First five are increasingly imposing guardians, the sixth bottom-right clearly the grand final boss. No UI, no typography, no gore. Match an elegant dark parchment and antique brass RPG interface.",
+      "columns": 3,
+      "rows": 2,
+      "file": "enemies-heaven.webp",
+      "entries": [
+        {
+          "id": "5-0",
+          "name": "天阶执戟者"
+        },
+        {
+          "id": "5-1",
+          "name": "星桥校准者"
+        },
+        {
+          "id": "5-2",
+          "name": "天律抄录官"
+        },
+        {
+          "id": "5-3",
+          "name": "命运纺织者"
+        },
+        {
+          "id": "5-4",
+          "name": "神座裁决使"
+        },
+        {
+          "id": "5-5",
+          "name": "秩序之神·伊瑟"
+        }
+      ]
+    },
+    {
+      "id": "regions",
+      "prompt": "Create one polished hand-painted dark western fantasy environment atlas for an incremental roleplaying game. Exactly 3 columns and 2 rows, six equally sized landscape paintings, edge-to-edge cells, no gutters or text or labels or frames. Overall canvas 3:1 panoramic so each cell is 2:1 landscape. Oil painting, softly weathered brushwork, muted forest greens, charcoal, ivory and antique brass accents, evocative cinematic light, readable distant shapes. Top row left: misty deep green whispering forest, old timber trail and amber fireflies. Top row middle: ruined gothic bell abbey, ash colored stone, lonely warm lanterns, broken bell tower. Top row right: red sandstone desert caravan road with rusted fortress and black iron watchtower. Bottom row left: towering obsidian demon court, volcanic rift and glowing scarlet throne citadel. Bottom row middle: jagged snowy dragonspine mountains, blue glacier, distant dark ancient dragon silhouette flying, faint orange crater. Bottom row right: broken celestial stairways and floating white gold temple in the night stars. Atmospheric, detailed, premium illustrated fantasy book, no people close-up, no interface, no typography. Keep all six views distinct. Every cell horizontally composed.",
+      "columns": 3,
+      "rows": 2,
+      "file": "regions.webp",
+      "entries": [
+        {
+          "id": "region-0",
+          "name": "低语森林"
+        },
+        {
+          "id": "region-1",
+          "name": "灰钟废墟"
+        },
+        {
+          "id": "region-2",
+          "name": "赤砂古道"
+        },
+        {
+          "id": "region-3",
+          "name": "永夜王庭"
+        },
+        {
+          "id": "region-4",
+          "name": "龙脊雪山"
+        },
+        {
+          "id": "region-5",
+          "name": "破碎天穹"
+        }
+      ]
+    }
+  ]
+}

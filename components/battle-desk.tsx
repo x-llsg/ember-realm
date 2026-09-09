@@ -1,5 +1,7 @@
 'use client';
 
+import '@/app/expedition-art.css';
+import { EnemyPortrait, HeroPortrait, RegionScene } from './game-art';
 import { useState } from 'react';
 import * as G from '@/lib/realm';
 import { InfoHint } from './info-hint';
@@ -85,78 +87,92 @@ export function BattleDesk({ s, act }: { s: G.State; act: Act }) {
 
       <div className="battle-content">
         <div className="battle-stage">
-          <section className="battle-enemy" aria-label="敌方生命">
-            {b.boss && (
-              <div className="boss-phase-line">
+          <section
+            className={`battle-enemy${b.boss ? ' battle-enemy-boss' : ''}`}
+            aria-label="敌方生命"
+          >
+            <RegionScene region={b.region} className="battle-region-scene" />
+            <span className="battle-enemy-portrait" aria-hidden="true">
+              <EnemyPortrait
+                region={b.region}
+                node={b.kind === 'guardian' ? b.node : 5}
+                size={b.boss ? 'lg' : 'md'}
+              />
+            </span>
+            <div className="battle-enemy-detail">
+              {b.boss && (
+                <div className="boss-phase-line">
+                  <InfoHint
+                    title={G.bossDefinition(b.region).name}
+                    body={G.bossDefinition(b.region).lesson}
+                  >
+                    <strong>
+                      阶段 {b.boss.phase} ·{' '}
+                      {G.bossDefinition(b.region).phaseNames[b.boss.phase - 1]}
+                    </strong>
+                  </InfoHint>
+                  <span>
+                    {b.boss.phase === 1 ? '半血后于下回合变招' : '终阶段'}
+                  </span>
+                </div>
+              )}
+              <div className="battle-enemy-line">
                 <InfoHint
-                  title={G.bossDefinition(b.region).name}
-                  body={G.bossDefinition(b.region).lesson}
+                  title={b.enemyName}
+                  body={`${G.ELEMENT_NAMES[b.enemyElement]}伤害 · 基础攻击 ${number(b.enemyAttack)} · 本轮护甲 ${currentArmor.toFixed(1)}\n单体暴击 ${Math.round(b.enemyCrit * 100)}% · 闪避 ${Math.round(b.enemyDodge * 100)}%。群体重击不暴击、不能闪避；31回合起逐步狂怒。`}
                 >
-                  <strong>
-                    阶段 {b.boss.phase} ·{' '}
-                    {G.bossDefinition(b.region).phaseNames[b.boss.phase - 1]}
-                  </strong>
+                  <strong>{b.enemyName}</strong>
                 </InfoHint>
                 <span>
-                  {b.boss.phase === 1 ? '半血后于下回合变招' : '终阶段'}
+                  {number(b.enemyHp)} / {number(b.enemyMaxHp)}
                 </span>
               </div>
-            )}
-            <div className="battle-enemy-line">
-              <InfoHint
-                title={b.enemyName}
-                body={`${G.ELEMENT_NAMES[b.enemyElement]}伤害 · 基础攻击 ${number(b.enemyAttack)} · 本轮护甲 ${currentArmor.toFixed(1)}\n单体暴击 ${Math.round(b.enemyCrit * 100)}% · 闪避 ${Math.round(b.enemyDodge * 100)}%。群体重击不暴击、不能闪避；31回合起逐步狂怒。`}
+              <progress
+                className="battle-hp-track enemy"
+                aria-label={`${b.enemyName}生命`}
+                max={b.enemyMaxHp}
+                value={Math.max(0, b.enemyHp)}
+              />
+              <div
+                className={`battle-intent${intent.heavy ? ' dangerous' : ''}`}
               >
-                <strong>{b.enemyName}</strong>
-              </InfoHint>
-              <span>
-                {number(b.enemyHp)} / {number(b.enemyMaxHp)}
-              </span>
-            </div>
-            <progress
-              className="battle-hp-track enemy"
-              aria-label={`${b.enemyName}生命`}
-              max={b.enemyMaxHp}
-              value={Math.max(0, b.enemyHp)}
-            />
-            {b.enemyShield > 0 && (
-              <div className="boss-barrier">
-                <span>结界 {number(b.enemyShield)} · 破盾可拆除</span>
-                <progress
-                  aria-label="首领结界"
-                  max={b.enemyMaxHp * 0.08}
-                  value={b.enemyShield}
-                />
+                <InfoHint title={`敌方意图：${intent.name}`} body={intent.hint}>
+                  <strong>{intent.name}</strong>
+                </InfoHint>
+                <span>
+                  {intent.heavy
+                    ? '攻击全体'
+                    : target
+                      ? `盯住 ${target.name}`
+                      : '敌方准备行动'}
+                </span>
               </div>
-            )}
-            {!!b.dots?.length && (
-              <small className="boss-dots">
-                {b.dots
-                  .map(
-                    (e) =>
-                      `${b.units.find((u) => u.id === e.source)?.name} · ${e.kind === 'fire' ? '燃烧' : '毒伤'} ${e.damage}×${e.turns}轮`,
-                  )
-                  .join(' / ')}
-              </small>
-            )}
+              {b.enemyShield > 0 && (
+                <div className="boss-barrier">
+                  <span>结界 {number(b.enemyShield)} · 破盾可拆除</span>
+                  <progress
+                    aria-label="首领结界"
+                    max={b.enemyMaxHp * 0.08}
+                    value={b.enemyShield}
+                  />
+                </div>
+              )}
+              {!!b.dots?.length && (
+                <small className="boss-dots">
+                  {b.dots
+                    .map(
+                      (e) =>
+                        `${b.units.find((u) => u.id === e.source)?.name} · ${e.kind === 'fire' ? '燃烧' : '毒伤'} ${e.damage}×${e.turns}轮`,
+                    )
+                    .join(' / ')}
+                </small>
+              )}
+            </div>
           </section>
-
-          <div className={`battle-intent${intent.heavy ? ' dangerous' : ''}`}>
-            <InfoHint title={`敌方意图：${intent.name}`} body={intent.hint}>
-              <strong>{intent.name}</strong>
-            </InfoHint>
-            <span>
-              {intent.heavy
-                ? '攻击全体'
-                : target
-                  ? `盯住 ${target.name}`
-                  : '敌方准备行动'}
-            </span>
-          </div>
-          {b.boss && <p className="boss-strategy">{intent.hint}</p>}
 
           <div className="battle-units" aria-label="参战伙伴，选择行动者">
             {b.units.map((unit) => {
+              const hero = s.heroes.find((h) => h.id === unit.id);
               const unitSkills = G.combatSkills(s, unit.id);
               const acted = b.acted.includes(unit.id);
               const down = unit.hp <= 0;
@@ -200,22 +216,32 @@ export function BattleDesk({ s, act }: { s: G.State; act: Act }) {
                       );
                   }}
                 >
-                  <span className="battle-unit-name">
-                    <InfoHint
-                      withinControl
-                      title={`${unit.name} · ${roleName(unit.role)}`}
-                      body={`${status}。${statuses || '没有额外状态'}。\n攻击 ${number(unit.attack)} · 防御 ${number(unit.defense)} · 暴击 ${Math.round(unit.crit * 100)}% · 闪避 ${Math.round(unit.dodge * 100)}%\n${G.setEffectHelp(unit)}`}
-                    >
-                      <strong
-                        className={
-                          'potential-' +
-                          (s.heroes.find((h) => h.id === unit.id)?.quality || 1)
+                  <span className="battle-unit-identity">
+                    <span className="battle-hero-portrait" aria-hidden="true">
+                      <HeroPortrait
+                        hero={
+                          hero || {
+                            id: unit.id,
+                            name: unit.name,
+                            role: unit.role,
+                            quality: 1,
+                          }
                         }
+                        size="sm"
+                      />
+                    </span>
+                    <span className="battle-unit-name">
+                      <InfoHint
+                        withinControl
+                        title={`${unit.name} · ${roleName(unit.role)}`}
+                        body={`${status}。${statuses || '没有额外状态'}。\n攻击 ${number(unit.attack)} · 防御 ${number(unit.defense)} · 暴击 ${Math.round(unit.crit * 100)}% · 闪避 ${Math.round(unit.dodge * 100)}%\n${G.setEffectHelp(unit)}`}
                       >
-                        {unit.name}
-                      </strong>
-                    </InfoHint>
-                    <small>{status}</small>
+                        <strong className={'potential-' + (hero?.quality || 1)}>
+                          {unit.name}
+                        </strong>
+                      </InfoHint>
+                      <small>{status}</small>
+                    </span>
                   </span>
                   <span className="battle-unit-health">
                     {number(unit.hp)} <small>/ {number(unit.maxHp)}</small>
@@ -403,7 +429,7 @@ export function BattleDesk({ s, act }: { s: G.State; act: Act }) {
       </footer>
 
       <Dialog open={showHistory} onOpenChange={setShowHistory}>
-        <DialogContent className="life-dialog battle-history-dialog">
+        <DialogContent className="v21-ui life-dialog battle-history-dialog">
           <DialogTitle>{b.enemyName} · 战报</DialogTitle>
           <DialogDescription>
             查看战报不会执行手动行动。自动开启时战斗仍会继续，可先暂停自动。

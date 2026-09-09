@@ -3,6 +3,8 @@
 import { useState, type ReactNode } from 'react';
 import { HELP, type HelpKey } from '@/lib/glossary';
 import * as G from '@/lib/realm';
+import { GameIcon } from './game-art';
+import '@/app/economy-art.css';
 import {
   Tooltip,
   TooltipTrigger,
@@ -73,20 +75,24 @@ export function Term({
 export function ResourceName({ s, id }: { s: G.State; id: G.Resource }) {
   return (
     <InfoHint
+      className="illustrated-term"
       title={G.RESOURCE_NAMES[id]}
       body={`库存 ${Math.floor(s.resources[id])} / ${G.capacity(s, id)}。\n${G.productionFormula(s, id)}`}
     >
-      {G.RESOURCE_NAMES[id]}
+      <GameIcon kind="resource" id={id} size={16} />
+      <span>{G.RESOURCE_NAMES[id]}</span>
     </InfoHint>
   );
 }
 export function MaterialName({ s, id }: { s: G.State; id: G.MaterialId }) {
   return (
     <InfoHint
+      className="illustrated-term"
       title={G.MATERIAL_NAMES[id]}
       body={`库存 ${Math.floor(s.world.materials[id])} / ${G.materialCapacity(s, id)}。\n来源：${G.MATERIAL_SOURCES[id]}`}
     >
-      {G.MATERIAL_NAMES[id]}
+      <GameIcon kind="material" id={id} size={16} />
+      <span>{G.MATERIAL_NAMES[id]}</span>
     </InfoHint>
   );
 }
