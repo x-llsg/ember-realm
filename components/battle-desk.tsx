@@ -31,7 +31,12 @@ export function BattleDesk({ s, act }: { s: G.State; act: Act }) {
   const skills = selected ? G.combatSkills(s, selected.id) : [];
   // Manual input pauses automatic execution before issuing exactly one action.
   const execute = (command: G.Command) =>
-    act((current) => G.combat(command === 'retreat' ? current : G.setCombatAuto(current, false), command));
+    act((current) =>
+      G.combat(
+        command === 'retreat' ? current : G.setCombatAuto(current, false),
+        command,
+      ),
+    );
   const commands = selected
     ? [
         {
@@ -42,17 +47,17 @@ export function BattleDesk({ s, act }: { s: G.State; act: Act }) {
         {
           id: 'guard',
           label: '防守',
-          help: '本人当轮承伤降低75%，恢复1士气；坚守护盾阵再多恢复1点。只消耗本人的本轮行动。',
+          help: '本人当轮承伤降低75%，恢复1士气；众盾成阵再多恢复1点，受击后以40%攻击反击，每敌方阶段1次。林间守望与铁壁军阵四件能进一步利用防守。',
         },
         {
           id: 'break',
           label: '破势',
-          help: '消耗2士气，造成85%个人攻击倍率伤害；打断本轮咏唱或恢复，并拆除结界。',
+          help: '消耗2士气，造成85%个人攻击倍率伤害；打断本轮咏唱或恢复，并拆除结界。深渊四件可引爆本人燃烧，龙痕四件为队友留下猎痕。',
         },
         {
           id: 'heal',
           label: '补给',
-          help: '向所选援护目标使用携行补给；自动目标为生命比例最低的存活伙伴。',
+          help: '向所选援护目标使用携行补给；自动目标为生命比例最低的存活伙伴。本人穿戴沉钟四件时，溢出治疗可变为护盾，因此也可在满血时提前准备。',
         },
       ]
     : [];
@@ -161,6 +166,12 @@ export function BattleDesk({ s, act }: { s: G.State; act: Act }) {
                 unit.burn > 0 ? '灼烧' : '',
                 unit.regenTurns > 0 ? '持续恢复' : '',
                 unit.guard < 1 ? '防守中' : '',
+                unit.setEffect?.stored
+                  ? `蓄力 ${number(unit.setEffect.stored)}`
+                  : '',
+                unit.setEffect?.weakness
+                  ? `猎痕 ${unit.setEffect.weakness}`
+                  : '',
               ]
                 .filter(Boolean)
                 .join(' · ');
@@ -193,7 +204,7 @@ export function BattleDesk({ s, act }: { s: G.State; act: Act }) {
                     <InfoHint
                       withinControl
                       title={`${unit.name} · ${roleName(unit.role)}`}
-                      body={`${status}。${statuses || '没有额外状态'}。\n攻击 ${number(unit.attack)} · 防御 ${number(unit.defense)} · 暴击 ${Math.round(unit.crit * 100)}% · 闪避 ${Math.round(unit.dodge * 100)}%`}
+                      body={`${status}。${statuses || '没有额外状态'}。\n攻击 ${number(unit.attack)} · 防御 ${number(unit.defense)} · 暴击 ${Math.round(unit.crit * 100)}% · 闪避 ${Math.round(unit.dodge * 100)}%\n${G.setEffectHelp(unit)}`}
                     >
                       <strong
                         className={
@@ -337,7 +348,9 @@ export function BattleDesk({ s, act }: { s: G.State; act: Act }) {
             {b.auto
               ? s.paused
                 ? '游戏已暂停 · 底栏继续后自动出招'
-                : s.hunt?.enabled ? '连续刷怪中 · 手动出招会结束连刷' : '自动中 · 手动出招会暂停自动'
+                : s.hunt?.enabled
+                  ? '连续刷怪中 · 手动出招会结束连刷'
+                  : '自动中 · 手动出招会暂停自动'
               : '选择伙伴与查看说明不会推进回合'}
           </p>
         </div>
@@ -360,7 +373,7 @@ export function BattleDesk({ s, act }: { s: G.State; act: Act }) {
             act((current) => G.setCombatAuto(current, !current.battle?.auto))
           }
         >
-          {b.auto ? s.hunt?.enabled ? '手动接管' : '暂停自动' : '开启自动'}
+          {b.auto ? (s.hunt?.enabled ? '手动接管' : '暂停自动') : '开启自动'}
         </button>
         <button
           type="button"

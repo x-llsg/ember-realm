@@ -12,6 +12,10 @@ import * as Tactics from './tactics.ts';
 import * as Economy from './economy.ts';
 import * as Civic from './civic.ts';
 import * as Hunt from './auto-hunt.ts';
+import * as Planning from './planning.ts';
+import * as ChapterProjects from './chapter-projects.ts';
+export * from './planning.ts';
+export * from './chapter-projects.ts';
 export * from './auto-hunt.ts';
 export * from './civic.ts';
 export * from './equipment-data.ts';
@@ -148,6 +152,8 @@ export interface Battle {
 }
 export interface State {
   version: 10;
+  plans?: Planning.PlanTarget[];
+  projectExtensions?: Record<string, string>;
   hunt?: Hunt.HuntState;
   civic: Civic.CivicState;
   lastMap: number;
@@ -239,6 +245,7 @@ export const freshState = (
   journeys = 0,
 ): State => ({
   version: 10,
+  plans: [],
   hunt: Hunt.freshHunt(),
   civic: Civic.freshCivic(),
   lastMap: 0,
@@ -402,7 +409,7 @@ export function log(s: State, text: string, kind = 'normal') {
   s.log = s.log.slice(0, 100);
 }
 export const chosen = (s: State, project: string, choice: string) =>
-  s.projects[project] === choice;
+  ChapterProjects.hasProjectChoice(s, project, choice);
 export const resourceVisible = Discovery.resourceDiscovered;
 export const buildingVisible = Discovery.buildingDiscovered;
 export function buildingReason(s: State, id: BuildingId) {
@@ -553,6 +560,13 @@ export function netProduction(s: State): Record<Resource, number> {
       next[k as Resource] - s.resources[k as Resource],
     ]),
   ) as Record<Resource, number>;
+}
+/** Planning advances only town systems on a disposable copy, never random encounters. */
+export function advancePlanningTown(s: State): void {
+  s.time = Math.floor(s.time) + 1;
+  s.resources = productionStep(s);
+  Economy.economyTick(s);
+  Campaign.worldTick(s);
 }
 export function productionFormula(s: State, k: Resource) {
   const unavailable = jobReason(s, k);
@@ -896,28 +910,10 @@ export function upgradeKit(s0: State) {
 export const discoveryCount = (s: State, r: number) =>
   D.REGIONS[r].thresholds.filter((n) => s.survey[r] >= n).length;
 export function projectReady(s: State, r: number) {
-  return discoveryCount(s, r) === 2 && !s.projects[D.PROJECTS[r].id];
+  return ChapterProjects.chapterProjectReady(s, r);
 }
 export function completeProject(s0: State, r: number, choice: string) {
-  const p = D.PROJECTS[r];
-  if (
-    !p ||
-    !projectReady(s0, r) ||
-    !p.choices.some((x) => x.id === choice) ||
-    !canPay(s0, p.cost) ||
-    !Campaign.canAffordMaterials(s0, Campaign.projectMaterialCost(s0, r))
-  )
-    return s0;
-  const s = clone(s0);
-  pay(s, p.cost);
-  Campaign.spendMaterials(s, Campaign.projectMaterialCost(s, r));
-  s.projects[p.id] = choice;
-  log(
-    s,
-    `${p.name}完成：${p.choices.find((x) => x.id === choice)!.label}。${p.choices.find((x) => x.id === choice)!.effect}。`,
-    'story',
-  );
-  return s;
+  return ChapterProjects.completeChapterProject(s0, r, choice);
 }
 export function researchReason(s: State, id: string) {
   const r = D.RESEARCH.find((r) => r.id === id);
@@ -1542,14 +1538,16 @@ function fundingGoal(
             research: work.tech,
           });
         }
-        if (Campaign.workReason(s, work.id))
-          return fundingGoal(s, work.cost, work.materials, {
-            title: `准备${work.name}的第一批原料`,
+        if (Campaign.workReason(s, work.id)) {
+          const bill = Economy.processingBill(s, work.id);
+          return fundingGoal(s, bill.cost, bill.materials, {
+            title: `准备${Economy.processingRecipe(s, work.id).name}的第一批原料`,
             detail: Campaign.workReason(s, work.id),
             view: 'town',
             tab: 'workshop',
             work: work.id,
           });
+        }
         return {
           title: `为「${destination.title}」加工${Campaign.MATERIAL_NAMES[id]}`,
           detail: `还缺 ${missing}；当前每 ${Campaign.workDuration(s, work.id)} 秒制成 ${Economy.processingOutput(s, work.id)} 件。原料充足后可并行安排其他工作。`,
@@ -2040,6 +2038,13 @@ export function objective(s: State): Objective {
       },
     );
   }
+  if (s.ending && s.rebuild.length === 3 && D.REGIONS.reduce((n, _, r) => n + ChapterProjects.chapterProjectCount(s, r), 0) < 12)
+    return {
+      title: '为六地补完另一条道路',
+      detail: '补建尚未完成的地区工程，让沿途的城镇恢复生活，也为当地工坊接通联合供货。',
+      view: 'town',
+      tab: 'projects',
+    };
   if (s.ending)
     return {
       title: s.rebuild.length === 3 ? '终于不再是异乡人' : '把明天还给人间',
@@ -2196,7 +2201,7 @@ export function migrateLegacy(raw: string): State {
   }
   log(
     s,
-    `旧手记已迁入新旅程，保留城镇、伙伴和已完成章节。${old.battle ? '旧战斗安全退出，请按新规则重新准备。' : ''}`,
+    `旧手记已迁入当前版本，保留城镇、伙伴和已完成章节。${old.battle ? '旧战斗安全退出，请按新规则重新准备。' : ''}`,
     'story',
   );
   for (const r of s.cleared) {
@@ -2487,6 +2492,8 @@ export function decodeSave(raw: string): State {
     Tactics.validateBattle(s);
   }
   Hunt.validateHunt(s);
+  Planning.validatePlans(s);
+  ChapterProjects.validateChapterProjects(s);
   if (s.expedition && !i(s.expedition.outcome, 0, 3))
     throw Error('远征结果记录无效');
   if (s.lastExpedition !== null) {

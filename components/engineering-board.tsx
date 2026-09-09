@@ -23,38 +23,46 @@ type Pending = { region: number; choice: string };
 // Keep completed projects visible for migrated saves, even if their old clues differ.
 export function discoveredProjects(s: G.State) {
   return G.PROJECTS.map((project, region) => ({ project, region })).filter(
-    ({ project, region }) =>
-      G.discoveryCount(s, region) > 0 || !!s.projects[project.id],
+    ({ region }) => G.chapterProjectDiscovered(s, region),
   );
 }
 
-function projectGate(s: G.State, region: number) {
-  const project = G.PROJECTS[region];
-  if (!project) return '尚未发现这项工程';
-  if (s.projects[project.id]) return '这项工程已经完成';
-  if (!G.projectReady(s, region)) return '需集齐当地两条线索';
-  return '';
-}
-
-function projectBlocked(s: G.State, region: number) {
+function nextChoice(s: G.State, region: number) {
   const project = G.PROJECTS[region];
   return (
-    !project ||
-    !!projectGate(s, region) ||
-    !G.canPay(s, project.cost) ||
-    !G.canAffordMaterials(s, G.projectMaterialCost(s, region))
+    project?.choices.find((c) => !G.hasProjectChoice(s, project.id, c.id))
+      ?.id || ''
   );
+}
+
+function projectGate(
+  s: G.State,
+  region: number,
+  choice = nextChoice(s, region),
+) {
+  return G.chapterProjectGate(s, region, choice);
+}
+
+function projectBlocked(
+  s: G.State,
+  region: number,
+  choice = nextChoice(s, region),
+) {
+  return !!G.chapterProjectReason(s, region, choice);
 }
 
 function ProjectBill({ s, region }: { s: G.State; region: number }) {
-  const project = G.PROJECTS[region],
-    materials = G.projectMaterialCost(s, region);
+  const { cost, materials } = G.chapterProjectCost(
+    s,
+    region,
+    nextChoice(s, region),
+  );
   return (
     <div
       className="engineering-bill"
-      aria-label="两种方案支付相同费用；不足处直接显示缺口"
+      aria-label="下一项工程的实际费用；不足处直接显示缺口"
     >
-      {Object.entries(project.cost).map(([key, amount]) => {
+      {Object.entries(cost).map(([key, amount]) => {
         const id = key as G.Resource,
           need = amount!,
           short = Math.max(0, Math.ceil(need - s.resources[id] - 1e-8));
@@ -115,7 +123,7 @@ function ProjectName({
         <>
           <p>
             {place.name}
-            的发现带回了这项工程。两种方案花费相同，只能选择其中一种。
+            的发现带回了这项工程。先选择当前更需要的一项；占领第四据点或击败首领后，可另付物资补建另一项。已有方案始终保留。
           </p>
           {found.map((text) => (
             <p key={text}>{text}</p>
@@ -125,6 +133,13 @@ function ProjectName({
               <strong>{choice.label}</strong>：{choice.text}
             </p>
           ))}
+          <p>
+            <strong>工坊线索 · {G.CHAPTER_WORKS[region].recipe}</strong>：
+            {G.CHAPTER_WORKS[region].clue}
+          </p>
+          <p>
+            两项都完成后，本地区替代配方获得联合供货：普通资源费用减少10%，专用原料不变。默认配方不受影响。
+          </p>
         </>
       }
     >
@@ -148,19 +163,22 @@ export function EngineeringBoard({ s, act, go, focus }: Props) {
   const target = pending ? G.PROJECTS[pending.region] : undefined;
   const choice = target?.choices.find((item) => item.id === pending?.choice);
   const completed = rows.filter(
-    ({ project }) => !!s.projects[project.id],
+    ({ region }) => G.chapterProjectCount(s, region) === 2,
   ).length;
+  const pendingBill = pending
+    ? G.chapterProjectCost(s, pending.region, pending.choice)
+    : undefined;
 
   return (
     <section className="engineering-board" aria-label="已发现城镇工程">
       <header className="engineering-heading">
         <strong>城镇工程</strong>
         <span>
-          已发现 {rows.length} · 已完成 {completed}
+          已发现 {rows.length} · 两项竣工 {completed}
         </span>
         <InfoHint
-          title="工程费用与永久选择"
-          body="每行是一项已经发现的工程。费用只支付一次，两种方案相同；数字后的“缺”表示尚缺数量。先集齐当地两条线索，再备齐物资。点击方案会打开确认，不会立即施工。"
+          title="工程先后与补建"
+          body="每行是一项已经发现的工程，两种方案可以先后完成。首项沿用原施工费；占领当地第四据点或击败首领后，可以支付更高费用补建另一项，两项效果共同生效。每项只支付一次，不重复发放旧奖励。两项竣工还会降低本地替代配方的普通资源费用10%。数字后的“缺”是尚缺数量。点击方案先比较并确认。"
         >
           费用与选择 ⓘ
         </InfoHint>
@@ -170,11 +188,12 @@ export function EngineeringBoard({ s, act, go, focus }: Props) {
           const saved = project.choices.find(
             (item) => item.id === s.projects[project.id],
           );
+          const count = G.chapterProjectCount(s, region);
           const clues = G.discoveryCount(s, region),
             gate = projectGate(s, region),
             blocked = projectBlocked(s, region);
           const rowClass = `engineering-row${focus?.region === region ? ' focused' : ''}`;
-          if (saved)
+          if (count === 2)
             return (
               <details
                 key={project.id}
@@ -193,13 +212,22 @@ export function EngineeringBoard({ s, act, go, focus }: Props) {
               >
                 <summary className="engineering-completed-summary">
                   <ProjectName s={s} region={region} withinControl />
-                  <span className="engineering-saved">✓ {saved.label}</span>
+                  <span className="engineering-saved">
+                    ✓ 两项竣工 · 联合供货
+                  </span>
                   <span className="engineering-expand">查看效果</span>
                 </summary>
                 <div className="engineering-completed-detail">
-                  <strong>{saved.effect}</strong>
-                  <p>{saved.text}</p>
-                  <small>此方案已经永久生效。</small>
+                  {project.choices.map((item) => (
+                    <p key={item.id}>
+                      <strong>{item.label}</strong>：{item.effect}
+                    </p>
+                  ))}
+                  <p>{G.CHAPTER_WORKS[region].complete}</p>
+                  <small>
+                    {G.CHAPTER_WORKS[region].recipe}普通资源费用
+                    −10%；专用原料不变。
+                  </small>
                 </div>
               </details>
             );
@@ -208,7 +236,7 @@ export function EngineeringBoard({ s, act, go, focus }: Props) {
               <div className="engineering-identity">
                 <ProjectName s={s} region={region} />
                 <span className="engineering-meta">
-                  第 {region + 1} 章 · 线索 {clues}/2
+                  第 {region + 1} 章 · 线索 {clues}/2 · 工程 {count}/2
                 </span>
                 {clues < 2 ? (
                   <button
@@ -224,27 +252,37 @@ export function EngineeringBoard({ s, act, go, focus }: Props) {
                   <span className="engineering-gate">{gate}</span>
                 ) : (
                   <span className="engineering-meta">
-                    {blocked ? '物资缺口见右侧' : '材料备齐 · 可以施工'}
+                    {blocked
+                      ? '物资缺口见右侧'
+                      : saved
+                        ? '可以补建 · 原效果保留'
+                        : '材料备齐 · 可以施工'}
                   </span>
                 )}
               </div>
               <ProjectBill s={s} region={region} />
-              {project.choices.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  className="engineering-choice"
-                  disabled={blocked}
-                  aria-label={`${project.name}：${item.label}。${item.effect}。选择后进入确认。`}
-                  onClick={() => setPending({ region, choice: item.id })}
-                >
-                  <strong>
-                    {item.label}
-                    <span aria-hidden="true"> →</span>
-                  </strong>
-                  <span>{item.effect}</span>
-                </button>
-              ))}
+              {project.choices.map((item) => {
+                const done = G.hasProjectChoice(s, project.id, item.id);
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className="engineering-choice"
+                    disabled={done || blocked}
+                    aria-label={`${project.name}：${item.label}。${item.effect}。选择后进入确认。`}
+                    onClick={() => setPending({ region, choice: item.id })}
+                  >
+                    <strong>
+                      {done ? '✓ ' : ''}
+                      {item.label}
+                      <span aria-hidden="true">
+                        {done ? ' · 已生效' : saved ? ' · 补建 →' : ' →'}
+                      </span>
+                    </strong>
+                    <span>{item.effect}</span>
+                  </button>
+                );
+              })}
             </article>
           );
         })}
@@ -272,7 +310,9 @@ export function EngineeringBoard({ s, act, go, focus }: Props) {
             {target?.name} · {choice?.label}
           </DialogTitle>
           <DialogDescription>
-            这项选择完成后永久生效，同一工程不能改选另一方案。
+            {pending && G.chapterProjectCount(s, pending.region) > 0
+              ? '补建需要重新支付下面的物资，原有方案保留，两项效果共同生效。'
+              : '选择先完成哪一项；占领当地第四据点或击败首领后，可以另付物资补建另一项。'}
           </DialogDescription>
           {pending && target && choice && (
             <>
@@ -280,12 +320,12 @@ export function EngineeringBoard({ s, act, go, focus }: Props) {
               <p className="engineering-confirm-effect">{choice.effect}</p>
               <Buy
                 s={s}
-                cost={target.cost}
-                materials={G.projectMaterialCost(s, pending.region)}
-                reason={projectGate(s, pending.region)}
+                cost={pendingBill!.cost}
+                materials={pendingBill!.materials}
+                reason={projectGate(s, pending.region, pending.choice)}
                 label={`确认施工 · ${choice.label}`}
                 onClick={() => {
-                  if (projectBlocked(s, pending.region)) return;
+                  if (projectBlocked(s, pending.region, pending.choice)) return;
                   const selected = pending;
                   act((current) =>
                     G.completeProject(

@@ -18,6 +18,93 @@ export const DEVELOPMENT_IDS = [
 export type DevelopmentId = (typeof DEVELOPMENT_IDS)[number];
 export type WorkMode = 'steady' | 'efficient' | 'rush';
 export type Duty = 'transport' | 'workshop' | 'academy';
+export interface ProcessingVariant {
+  id: string;
+  work: WorkId;
+  name: string;
+  text: string;
+  region: number;
+  tech: string;
+  cost: Cost;
+  materials: MaterialCost;
+  seconds: number;
+  output: number;
+}
+/** Each chapter changes an input dependency; these never manufacture regional samples. */
+export const PROCESSING_VARIANTS: ProcessingVariant[] = [
+  {
+    id: 'joinery',
+    work: 'boards',
+    region: 0,
+    tech: 'settlement',
+    name: '拼接工艺',
+    text: '森林锯坊教会木匠用石榫拼合普通木料。免用古木，改为消耗更多木材、石料和工时；古木充足时，原工艺更省本地物资。',
+    cost: { wood: 160, stone: 45, food: 30 },
+    materials: {},
+    seconds: 80,
+    output: 1,
+  },
+  {
+    id: 'resonance',
+    work: 'runes',
+    region: 1,
+    tech: 'runecraft',
+    name: '晶砂刻印',
+    text: '灰钟匠人用魔晶共鸣，在石板上重现灵砂纹路。免用灵砂，增加魔晶、金币、石料和加工时间；适合暂停遗迹搬运时备符文。',
+    cost: { crystal: 20, stone: 100, gold: 140, food: 55 },
+    materials: {},
+    seconds: 165,
+    output: 1,
+  },
+  {
+    id: 'crucible',
+    work: 'steel',
+    region: 2,
+    tech: 'metallurgy',
+    name: '坩埚精炼',
+    text: '赤砂炉师以石坩埚反复除杂，普通铁锭也能成钢。免用黑铁矿，增加铁锭、燃料与石料并延长加工；保留矿路则可节约城内炉料。',
+    cost: { iron: 30, stone: 120, wood: 100, food: 45 },
+    materials: {},
+    seconds: 135,
+    output: 1,
+  },
+  {
+    id: 'infernal',
+    work: 'boards',
+    region: 3,
+    tech: 'infernalcraft',
+    name: '魔焰熟化',
+    text: '王庭余烬在封闭窑中熟化木料，一批得到多件木板。免用古木，节约木材；会占用锻造高阶装备所需的深渊余烬与金币。',
+    cost: { wood: 40, stone: 80, gold: 120, food: 35 },
+    materials: { ember: 1 },
+    seconds: 90,
+    output: 3,
+  },
+  {
+    id: 'dragon',
+    work: 'steel',
+    region: 4,
+    tech: 'dragoncraft',
+    name: '龙鳞淬钢',
+    text: '雪山淬火槽用龙鳞维持高温，一批得到多件精钢。免用黑铁矿，节约铁锭与木材；龙鳞和金币同时也是装备备战的投入。',
+    cost: { iron: 8, gold: 220, food: 60 },
+    materials: { scale: 2 },
+    seconds: 140,
+    output: 3,
+  },
+  {
+    id: 'stellar',
+    work: 'runes',
+    region: 5,
+    tech: 'mythic',
+    name: '星髓刻印',
+    text: '天穹观测台把星髓纹路复制到符文中，一批得到多件成品。免用灵砂，节约魔晶；需要保留用于最终装备与世界修复的星髓。',
+    cost: { crystal: 4, gold: 400, food: 80 },
+    materials: { star: 2 },
+    seconds: 180,
+    output: 3,
+  },
+];
 export interface EconomyState {
   development: Record<DevelopmentId, number>;
   routes: {
@@ -27,6 +114,8 @@ export interface EconomyState {
     delivered: number;
   }[];
   modes: Record<WorkId, WorkMode>;
+  /** Older saves omit this field and keep every original recipe. */
+  variants?: Record<WorkId, string>;
   targets: Record<WorkId, number>;
   reserve: number;
   duties: Partial<Record<Duty, string>>;

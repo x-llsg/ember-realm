@@ -1,4 +1,5 @@
 'use client';
+import { PinPlan } from './planning-board';
 import { GuildRecruitment } from './guild-panels';
 import { useState } from 'react';
 import { ArrowRight } from 'lucide-react';
@@ -240,6 +241,7 @@ export function BuildingBoard({
                 )}
               </div>
               <div className="building-upgrades">
+                {!stageDone && <PinPlan s={s} act={act} kind="building" id={b.id} />}
                 <button
                   className="econ-action"
                   disabled={!!blocked || stageDone || !G.canPay(s, cost)}

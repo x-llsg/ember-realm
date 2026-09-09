@@ -12,11 +12,13 @@ import {
 } from './campaign-data.ts';
 import { originEffect } from './origins.ts';
 import * as C from './campaign.ts';
+import { chapterProjectCount } from './chapter-projects.ts';
 import {
   DEVELOPMENT_IDS,
   DEVELOPMENTS,
   DEVELOPMENT_MAX,
   ORDER_RECIPES,
+  PROCESSING_VARIANTS,
   type DevelopmentId,
   type EconomyState,
   type WorkMode,
@@ -36,6 +38,7 @@ export function freshEconomy(): EconomyState {
       delivered: 0,
     })),
     modes: { boards: 'steady', steel: 'steady', runes: 'steady' },
+    variants: { boards: 'original', steel: 'original', runes: 'original' },
     targets: { boards: 1, steel: 1, runes: 1 },
     reserve: 0,
     duties: {},
@@ -306,8 +309,7 @@ export const transportSlots = (s: State) =>
   2 + Math.floor(developmentLevel(s, 'logistics') / 4);
 export const transportLines = (s: State) =>
   economy(s).routes.filter((r) => r.enabled && r.crew > 0).length;
-export const regionalDepth = (s: State, r: number) =>
-  s.guild.depths[r] || 0;
+export const regionalDepth = (s: State, r: number) => s.guild.depths[r] || 0;
 export const routeDiscovered = (s: State, r: number) =>
   Number.isInteger(r) &&
   r >= 0 &&
@@ -533,22 +535,136 @@ export function processingMultiplier(s: State, id: WorkId): number {
   );
 }
 export function processingOutput(s: State, id: WorkId): number {
-  return 1 + Math.floor(processingLevel(s, id) / 4);
+  return (
+    processingRecipe(s, id).output *
+    (1 + Math.floor(processingLevel(s, id) / 4))
+  );
+}
+export function processingVariantReason(
+  s: State,
+  id: WorkId,
+  variant: string,
+): string {
+  const original = WORK_RECIPES.find((r) => r.id === id);
+  if (!original) return '未知加工线';
+  const recipe = PROCESSING_VARIANTS.find(
+    (r) => r.id === variant && r.work === id,
+  );
+  if (variant !== 'original' && !recipe) return '未知加工配方';
+  const tech = recipe?.tech || original.tech;
+  if (!s.world.tech.includes(original.tech))
+    return `先研究${C.TECHNOLOGIES.find((t) => t.id === original.tech)!.name}`;
+  if (!s.world.tech.includes(tech))
+    return `先研究${C.TECHNOLOGIES.find((t) => t.id === tech)!.name}`;
+  if (recipe && regionalDepth(s, recipe.region) < 2)
+    return `守住${C.CAMPAIGN_REGION_NAMES[recipe.region]}第二据点，取得当地工艺`;
+  return '';
+}
+/** Canonical recipe data before work mode and project discounts; always returns a copy. */
+export function processingRecipe(
+  s: State,
+  id: WorkId,
+  variant = economy(s).variants?.[id] || 'original',
+) {
+  const original = WORK_RECIPES.find((r) => r.id === id)!;
+  const alternate = PROCESSING_VARIANTS.find(
+    (r) => r.id === variant && r.work === id,
+  );
+  return alternate
+    ? {
+        ...alternate,
+        variant: alternate.id,
+        cost: { ...alternate.cost },
+        materials: { ...alternate.materials },
+      }
+    : {
+        ...original,
+        name: { boards: '古木加工', steel: '黑铁精炼', runes: '灵砂刻印' }[id],
+        variant: 'original',
+        work: id,
+        region: -1,
+        cost: { ...original.cost },
+        materials: { ...original.materials },
+      };
+}
+export function processingVariants(s: State, id: WorkId) {
+  return [
+    'original',
+    ...PROCESSING_VARIANTS.filter((r) => r.work === id).map((r) => r.id),
+  ]
+    .filter((variant) => !processingVariantReason(s, id, variant))
+    .map((variant) => processingRecipe(s, id, variant));
+}
+export function setWorkVariant(s0: State, id: WorkId, variant: string): State {
+  if (
+    processingVariantReason(s0, id, variant) ||
+    (s0.economy.variants?.[id] || 'original') === variant
+  )
+    return s0;
+  const s = structuredClone(s0);
+  s.economy.variants ||= {
+    boards: 'original',
+    steel: 'original',
+    runes: 'original',
+  };
+  s.economy.variants[id] = variant;
+  // Inputs are paid on completion, so unfinished time cannot be transferred to a new bill.
+  s.world.workProgress[id] = 0;
+  say(
+    s,
+    `${C.MATERIAL_NAMES[id]}改用「${processingRecipe(s, id).name}」。本批重新开始；之后按新配方支付原料。`,
+  );
+  return s;
 }
 export function processingBill(
   s: State,
   id: WorkId,
 ): { cost: Cost; materials: MaterialCost } {
-  const recipe = WORK_RECIPES.find((r) => r.id === id)!;
+  const recipe = processingRecipe(s, id);
   const mode = economy(s).modes[id],
-    factor = mode === 'efficient' ? 0.75 : mode === 'rush' ? 1.5 : 1;
+    factor = mode === 'efficient' ? 0.75 : mode === 'rush' ? 1.5 : 1,
+    projectFactor =
+      recipe.region >= 0 && chapterProjectCount(s, recipe.region) === 2
+        ? 0.9
+        : 1;
   return {
     cost: Object.fromEntries(
-      Object.entries(recipe.cost).map(([k, n]) => [k, Math.ceil(n! * factor)]),
+      Object.entries(recipe.cost).map(([k, n]) => [
+        k,
+        Math.ceil(n! * factor * projectFactor),
+      ]),
     ),
     materials: Object.fromEntries(
       Object.entries(recipe.materials).map(([k, n]) => [k, n! * factor]),
     ),
+  };
+}
+/** Comparable current-mode quote; no state changes and no speculative production. */
+export function processingQuote(s0: State, id: WorkId, variant?: string) {
+  const s = structuredClone(s0);
+  if (variant !== undefined) {
+    s.economy.variants ||= {
+      boards: 'original',
+      steel: 'original',
+      runes: 'original',
+    };
+    s.economy.variants[id] = variant;
+  }
+  const recipe = processingRecipe(s, id),
+    bill = processingBill(s, id),
+    output = processingOutput(s, id),
+    seconds = C.workDuration(s, id);
+  return {
+    ...recipe,
+    ...bill,
+    output,
+    seconds,
+    perMinute: (output * 60) / seconds,
+    reason:
+      processingVariantReason(s, id, variant || recipe.variant) ||
+      C.workReason(s, id),
+    projectDiscount:
+      recipe.region >= 0 && chapterProjectCount(s, recipe.region) === 2,
   };
 }
 export function setWorkMode(s0: State, id: WorkId, mode: WorkMode): State {
@@ -559,7 +675,9 @@ export function setWorkMode(s0: State, id: WorkId, mode: WorkMode): State {
   )
     return s0;
   const s = structuredClone(s0);
+  if (s.economy.modes[id] === mode) return s;
   s.economy.modes[id] = mode;
+  s.world.workProgress[id] = 0;
   return s;
 }
 export function setWorkTarget(s0: State, id: WorkId, target: number): State {
@@ -738,13 +856,10 @@ export function validateEconomy(s: State): void {
     'orderActive',
     'legacy',
   ];
-  if (
-    !exact(
-      e,
-      Object.hasOwn(e || {}, 'orderBatch') ? [...keys, 'orderBatch'] : keys,
-    )
-  )
-    return fail();
+  const optional = ['orderBatch', 'variants'].filter((k) =>
+    Object.hasOwn(e || {}, k),
+  );
+  if (!exact(e, [...keys, ...optional])) return fail();
   if (e.orderBatch !== undefined && !orderBatches(s).includes(e.orderBatch))
     return fail();
   if (
@@ -779,6 +894,19 @@ export function validateEconomy(s: State): void {
     ![0, 0.1, 0.25, 0.5].includes(e.reserve)
   )
     return fail();
+  if (
+    Object.hasOwn(e, 'variants') &&
+    (!exact(e.variants, WORK_IDS) ||
+      WORK_IDS.some(
+        (id) =>
+          typeof e.variants![id] !== 'string' ||
+          (e.variants![id] !== 'original' &&
+            !!processingVariantReason(s, id, e.variants![id])),
+      ))
+  )
+    return fail();
+  // Missing is the old schema, whereas malformed present values must be rejected.
+  e.variants ||= { boards: 'original', steel: 'original', runes: 'original' };
   if (
     !e.duties ||
     typeof e.duties !== 'object' ||

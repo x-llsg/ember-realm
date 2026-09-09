@@ -1,4 +1,5 @@
 'use client';
+import { PinPlan } from './planning-board';
 import { SkillTreePanel } from './skill-tree-panel';
 import { GearLabel, GearStats, GearWearer } from './gear-presentation';
 import { DEFAULT_GEAR_SORT, GearSortControl } from './gear-sort-control';
@@ -642,6 +643,7 @@ export function GuildTeam({ s, act, go, focus }: Props) {
                         act((x) => G.craftGear(x, chosen.id, craftTier))
                       }
                     />
+                    <PinPlan s={s} act={act} kind="gear" id={chosen.id} tier={craftTier} />
                     <div className="hero-term-line">
                       <Term name="rarity">品质概率</Term>
                       <Term name="craftPity">

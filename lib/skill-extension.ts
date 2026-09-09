@@ -566,11 +566,12 @@ export const V14_ACTIVE_SKILLS = [
     role: 'vera',
     name: '解构爆剂',
     description:
-      '造成200%本人投射伤害并击碎护盾，本次额外穿甲25%；不打断补给或咏唱。',
+      '造成200%本人投射伤害并击碎护盾，本次额外穿甲25%；引爆队伍全部燃烧，结算剩余伤害的80%，最多120%本人攻击；不打断。引爆消耗余火，不暴击。',
     target: 'enemy',
     energy: 4,
     cooldown: 5,
     damage: 2,
+    detonateFire: true,
     projectile: true,
     shatter: true,
     pierceBonus: 0.25,

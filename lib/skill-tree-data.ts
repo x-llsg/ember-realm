@@ -56,6 +56,7 @@ export type TreeSkill = {
   evasion?: number;
   critBonus?: number;
   pierceBonus?: number;
+  detonateFire?: boolean;
 };
 export type SkillTreeNode = {
   id: string;
@@ -473,8 +474,7 @@ export const TREE_SKILLS = [
     id: 'piercing_volley',
     role: 'finn',
     name: '贯甲连射',
-    description:
-      '造成145%本人投射伤害，本次攻击额外穿甲30%；不清除魔法护盾。',
+    description: '造成145%本人投射伤害，本次攻击额外穿甲30%；不清除魔法护盾。',
     target: 'enemy',
     energy: 3,
     cooldown: 3,
@@ -504,11 +504,12 @@ export const TREE_SKILLS = [
     role: 'kael',
     name: '星陨咒',
     description:
-      '造成240%本人投射伤害，本次暴击率额外10%；不破盾，不打断。',
+      '造成240%本人投射伤害，本次暴击率额外10%；引爆队伍全部燃烧，结算剩余伤害的80%，最多120%本人攻击；不破盾，不打断。引爆消耗余火，不暴击。',
     target: 'enemy',
     energy: 4,
     cooldown: 4,
     damage: 2.4,
+    detonateFire: true,
     projectile: true,
     critBonus: 0.1,
   },
@@ -643,8 +644,7 @@ export const TREE_SKILLS = [
     id: 'acid_flask',
     role: 'vera',
     name: '蚀甲药瓶',
-    description:
-      '造成110%本人投射伤害，本次攻击额外穿甲25%；不清除魔法护盾。',
+    description: '造成110%本人投射伤害，本次攻击额外穿甲25%；不清除魔法护盾。',
     target: 'enemy',
     energy: 2,
     cooldown: 2,

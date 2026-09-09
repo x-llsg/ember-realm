@@ -1,4 +1,5 @@
 'use client';
+import { PinPlan } from './planning-board';
 import { BattleLoot } from './loot-notice';
 import { HuntControl } from './hunt-controls';
 
@@ -356,6 +357,7 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
           </span>
         </InfoHint>
         <CombatRecommendation s={s} region={region} node={6} />
+        {!s.cleared.includes(region) && <PinPlan s={s} act={act} kind="boss" id={String(region)} />}
         <HuntControl s={s} act={act} region={region} kind="boss" />
         <p className="explore-match">
           敌情仅提供伤害增益，当前 +{(s.guild.intel[region] / 10).toFixed(1)}

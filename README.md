@@ -1,6 +1,6 @@
 # 余烬之境 · The Ember Realm
 
-**V0.1.6** · 中文西幻增量文字游戏 · MIT
+**V0.2.0** · 中文西幻增量文字游戏 · MIT
 
 ### [⬇ 下载游戏 · Windows 免安装版](https://github.com/x-llsg/ember-realm/releases/latest/download/ember-realm-windows-portable.zip)
 
@@ -32,6 +32,7 @@ GitHub 的绿色 Code → Download ZIP 按钮下载的是源代码；直接游�
 - 六个地区、三十个据点守敌、六位有阶段机制的首领。
 - 独立生命与技能冷却的回合战斗，支持手动、自动、随时撤退。
 - 同一个世界持续经营、配装与战后重建。
+- 发展目标合计物资需求；六章替代配方、可补建的地区工程及套装战斗联动。
 
 游戏仍在持续开发，后续版本会继续调整内容、体验和数值。
 

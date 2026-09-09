@@ -1,6 +1,8 @@
 import * as G from './realm.ts';
 import { GUARDIANS, BOSS_COMBAT } from './guardian-data.ts';
 import * as Boss from './boss-mechanics.ts';
+import * as Sets from './set-combat.ts';
+export { setEffectHelp } from './set-combat.ts';
 
 export interface CombatUnit {
   id: string;
@@ -30,6 +32,8 @@ export interface CombatUnit {
   healing: number;
   shieldPower: number;
   cooldownReduction: number;
+  setEffect?: Sets.SetEffect;
+  projectChoices?: string[];
 }
 export interface BattleReport {
   region: number;
@@ -48,6 +52,17 @@ export interface BattleReport {
 }
 
 const alive = (b: G.Battle) => b.units.filter((u) => u.hp > 0);
+/** Projects finished at home cannot rewrite an encounter that already departed. */
+function battleChosen(s: G.State, project: string, choice: string) {
+  const snapshot = s.battle?.units[0]?.projectChoices;
+  return snapshot
+    ? snapshot.includes(`${project}:${choice}`)
+    : G.chosen(s, project, choice);
+}
+const projectChoiceIds = () =>
+  G.PROJECTS.flatMap((project) =>
+    project.choices.map((choice) => `${project.id}:${choice.id}`),
+  );
 const rand = (b: G.Battle) => {
   let x = b.rng;
   x ^= x << 13;
@@ -75,13 +90,20 @@ export function guardianReady(s: G.State, region: number) {
 export const GUARDIAN_REMATCH_SECONDS = 30;
 export function guardianRematch(s: G.State, region: number, node: number) {
   return (
-    Number.isInteger(region) && region >= 0 && region < 6 &&
-    Number.isInteger(node) && node >= 0 && node < 5 &&
+    Number.isInteger(region) &&
+    region >= 0 &&
+    region < 6 &&
+    Number.isInteger(node) &&
+    node >= 0 &&
+    node < 5 &&
     node < s.guild.depths[region]
   );
 }
 export function guardianRematchWait(s: G.State, region: number) {
-  return Math.max(0, Math.ceil((s.guild.guardianHunts?.readyAt[region] || 0) - s.time));
+  return Math.max(
+    0,
+    Math.ceil((s.guild.guardianHunts?.readyAt[region] || 0) - s.time),
+  );
 }
 export function guardianReason(
   s: G.State,
@@ -94,7 +116,10 @@ export function guardianReason(
     return '装备库已满，先为守敌掉落留出1格';
   if (!G.regionOpen(s, region)) return '尚未发现通往这里的道路';
   const rematch = guardianRematch(s, region, node);
-  if (!rematch && (node !== s.guild.depths[region] || !guardianReady(s, region)))
+  if (
+    !rematch &&
+    (node !== s.guild.depths[region] || !guardianReady(s, region))
+  )
     return s.guild.depths[region] >= 5
       ? '五处守敌已击败，可选择已占据点再次挑战'
       : '先将当前路线推进至守敌所在处';
@@ -193,6 +218,18 @@ function makeUnits(
         Math.min(3, 1 + tree.shield + (build.shield || 0)),
       ),
       cooldownReduction: Math.min(0.3, tree.cooldown + (build.cooldown || 0)),
+      projectChoices: G.PROJECTS.flatMap((project) =>
+        project.choices
+          .filter((choice) => G.chosen(s, project.id, choice.id))
+          .map((choice) => `${project.id}:${choice.id}`),
+      ),
+      ...(G.equippedSets(s, h).some((set) => set.count >= 4)
+        ? {
+            setEffect: Sets.createSetEffect(
+              G.equippedSets(s, h).find((set) => set.count >= 4)!.id,
+            ),
+          }
+        : {}),
     };
   });
 }
@@ -247,8 +284,7 @@ export function createCombat(
     enemyHp: enemy.hp,
     enemyAttack: enemy.attack,
     enemyDefense:
-      enemy.defense *
-      (kind === 'boss' ? G.bossArmorScale(s, region) : 1),
+      enemy.defense * (kind === 'boss' ? G.bossArmorScale(s, region) : 1),
     enemyCrit: enemy.crit,
     enemyDodge: enemy.dodge,
     enemyElement: enemy.element,
@@ -320,15 +356,23 @@ export function beginBattle(
     region < 0 ||
     region > 5 ||
     !['boss', 'guardian'].includes(kind) ||
-    (kind === 'boss' ? G.bossReason(s0, region) : guardianReason(s0, region, node))
+    (kind === 'boss'
+      ? G.bossReason(s0, region)
+      : guardianReason(s0, region, node))
   )
     return s0;
   const s = G.clone(s0);
   if (origin !== 'hunt') G.haltHunt(s, '已开始手动挑战');
   spend(s, G.battlePreparationCost(s));
-  s.battle = createCombat(s, region, kind, kind === 'boss' ? s.guild.depths[region] : node);
+  s.battle = createCombat(
+    s,
+    region,
+    kind,
+    kind === 'boss' ? s.guild.depths[region] : node,
+  );
   G.consumePreparedPotion(s);
-  if (kind === 'boss' || guardianRematch(s, region, node)) s.order.enabled = false;
+  if (kind === 'boss' || guardianRematch(s, region, node))
+    s.order.enabled = false;
   G.log(
     s,
     `${kind === 'boss' ? '首领战' : guardianRematch(s, region, node) ? '守敌再战' : '据点守敌战'}开始：${s.battle.enemyName}。`,
@@ -451,7 +495,9 @@ export function tacticalReason(s: G.State, command: G.Command) {
   if (
     (action === 'heal' || skill?.heal || skill?.healing) &&
     (b.sealed > 0 || enemyIntent(b).kind === 'seal') &&
-    !G.chosen(s, 'key', 'cut')
+    !battleChosen(s, 'key', 'cut') &&
+    !Sets.sealPurified(b) &&
+    !(skill?.cleanseBurn && Sets.hasSet(unit, 'dawnbreak'))
   )
     return '治疗已被封禁';
   const patient =
@@ -468,7 +514,8 @@ export function tacticalReason(s: G.State, command: G.Command) {
         !skill.regen &&
         skill.target !== 'party')) &&
     patient.hp === patient.maxHp &&
-    !patient.burn
+    !patient.burn &&
+    !Sets.canPrepareOverflow(unit, patient)
   )
     return '所选治疗目标生命已满';
   if (
@@ -477,7 +524,7 @@ export function tacticalReason(s: G.State, command: G.Command) {
     !skill.shield &&
     !skill.regen &&
     skill.target === 'party' &&
-    alive(b).every((u) => u.hp === u.maxHp)
+    alive(b).every((u) => u.hp === u.maxHp && !Sets.canPrepareOverflow(unit, u))
   )
     return '全员生命已满';
   return '';
@@ -513,15 +560,22 @@ export function setCombatAuto(s0: G.State, enabled: boolean) {
   if (s.battle) s.battle.auto = enabled;
   return s;
 }
-function healUnit(b: G.Battle, u: CombatUnit, amount: number) {
+function healUnit(
+  b: G.Battle,
+  u: CombatUnit,
+  amount: number,
+  source?: CombatUnit,
+) {
   const restored = Math.min(u.maxHp - u.hp, Math.max(0, Math.round(amount)));
   u.hp += restored;
   if (restored) note(b, `${u.name}恢复 ${restored} 生命。`);
+  Sets.overflowShield(b, source, u, Math.max(0, Math.round(amount) - restored));
   return restored;
 }
 function finish(s: G.State, won: boolean, retreat = false) {
   const b = s.battle!;
-  const firstGuardian = b.kind === 'guardian' && s.guild.depths[b.region] === b.node;
+  const firstGuardian =
+    b.kind === 'guardian' && s.guild.depths[b.region] === b.node;
   s.lastBattle = {
     region: b.region,
     kind: b.kind,
@@ -551,7 +605,8 @@ function finish(s: G.State, won: boolean, retreat = false) {
         );
       }
       s.guild.guardianHunts ||= { readyAt: [0, 0, 0, 0, 0, 0] };
-      s.guild.guardianHunts.readyAt[b.region] = s.time + GUARDIAN_REMATCH_SECONDS;
+      s.guild.guardianHunts.readyAt[b.region] =
+        s.time + GUARDIAN_REMATCH_SECONDS;
     } else if (!s.cleared.includes(b.region)) {
       s.cleared.push(b.region);
       G.grant(s, G.REGIONS[b.region].first);
@@ -566,7 +621,8 @@ function finish(s: G.State, won: boolean, retreat = false) {
         );
       }
     }
-    s.lastBattle.loot = G.monsterEquipment(s, b.region, b.kind, firstGuardian) || null;
+    s.lastBattle.loot =
+      G.monsterEquipment(s, b.region, b.kind, firstGuardian) || null;
     if (b.kind === 'boss') {
       s.guild.bossHunts ||= {
         wins: [0, 0, 0, 0, 0, 0],
@@ -615,8 +671,8 @@ export function incomingDamage(s: G.State, unit: CombatUnit, critical = false) {
     (critical ? 1.5 : 1);
   damage *= 1 + Math.max(0, b.round - 30) * 0.16;
   if (!boss && b.interrupted && w.kind === 'channel') damage *= 0.2;
-  if (w.heavy && G.chosen(s, 'bell', 'alarm')) damage *= 0.85;
-  if (G.chosen(s, 'key', 'chorus')) damage *= 0.9;
+  if (w.heavy && battleChosen(s, 'bell', 'alarm')) damage *= 0.85;
+  if (battleChosen(s, 'key', 'chorus')) damage *= 0.9;
   damage *= 1 - s.guild.outposts[b.region] * 0.05;
   damage *=
     s.guild.preparation.stance === 'cautious'
@@ -664,7 +720,11 @@ function enemyTurn(s: G.State) {
     b.enemyHp = Math.min(b.enemyMaxHp, b.enemyHp + amount);
     note(b, `敌人恢复 ${amount} 生命。`);
   }
-  if (warning.kind === 'seal' && !G.chosen(s, 'key', 'cut'))
+  if (
+    warning.kind === 'seal' &&
+    !battleChosen(s, 'key', 'cut') &&
+    !Sets.sealPurified(b)
+  )
     b.sealed = boss ? boss.sealRounds : 2;
   if (!b.boss && warning.kind === 'channel' && b.interrupted) {
     b.marked = 2;
@@ -675,6 +735,7 @@ function enemyTurn(s: G.State) {
     : [
         alive(b).find((u) => u.id === (b.taunt || b.target)) || alive(b)[0],
       ].filter(Boolean);
+  const projectCounters = new Set<string>();
   for (const unit of targets)
     for (let hit = 0; hit < (boss?.hits || 1); hit++) {
       if (unit.hp <= 0) break;
@@ -685,10 +746,14 @@ function enemyTurn(s: G.State) {
         dodgeRoll < Math.min(0.4, unit.dodge + unit.evasion)
       ) {
         note(b, `${unit.name}闪避了${warning.name}。`);
+        Sets.afterSetHit(b, unit, true, false, 0);
+        if (b.enemyHp <= 0) return finish(s, true);
         continue;
       }
       const critical = !warning.heavy && critRoll < b.enemyCrit;
       let damage = incomingDamage(s, unit, critical);
+      const protectedHit = unit.guard < 1 || unit.ward > 0 || unit.shield > 0;
+      const guardedDamage = damage;
       const absorbed = Math.min(unit.shield, damage);
       unit.shield -= absorbed;
       damage -= absorbed;
@@ -697,6 +762,17 @@ function enemyTurn(s: G.State) {
         b,
         `${warning.name} → ${unit.name}${critical ? ' · 暴击' : ''}，${damage} 伤害${absorbed ? `，护盾吸收 ${absorbed}` : ''}${unit.hp === 0 ? '，倒下' : ''}。`,
       );
+      Sets.afterSetHit(b, unit, false, protectedHit, guardedDamage);
+      if (
+        unit.hp > 0 &&
+        unit.guard <= 0.25 &&
+        battleChosen(s, 'array', 'shields') &&
+        !projectCounters.has(unit.id)
+      ) {
+        projectCounters.add(unit.id);
+        Sets.responseDamage(b, unit, unit.attack * 0.4, '坚守护盾阵反击');
+      }
+      if (b.enemyHp <= 0) return finish(s, true);
       if (
         unit.hp > 0 &&
         (boss
@@ -710,9 +786,11 @@ function enemyTurn(s: G.State) {
         unit.hp > 0 &&
         unit.guard <= 0.3 &&
         warning.heavy &&
-        G.chosen(s, 'dragon', 'blood')
-      )
+        battleChosen(s, 'dragon', 'blood')
+      ) {
         healUnit(b, unit, unit.maxHp * 0.08);
+        unit.burn = 0;
+      }
     }
   for (const unit of b.units) {
     if (unit.hp > 0 && unit.burn > 0) {
@@ -722,7 +800,8 @@ function enemyTurn(s: G.State) {
       note(b, `${unit.name}灼烧 ${damage}${!unit.hp ? '，倒下' : ''}。`);
     }
     if (unit.hp > 0 && unit.regenTurns > 0) {
-      if (!b.sealed || G.chosen(s, 'key', 'cut')) healUnit(b, unit, unit.regen);
+      if (!b.sealed || battleChosen(s, 'key', 'cut'))
+        healUnit(b, unit, unit.regen);
       unit.regenTurns--;
     }
     for (const key of Object.keys(unit.cooldowns))
@@ -750,7 +829,11 @@ function enemyTurn(s: G.State) {
   else b.target = chooseTarget(b);
   return s;
 }
-export function tacticalCombat(s0: G.State, command: G.Command, automatic = false): G.State {
+export function tacticalCombat(
+  s0: G.State,
+  command: G.Command,
+  automatic = false,
+): G.State {
   if (!s0.battle || tacticalReason(s0, command)) return s0;
   const s = G.clone(s0),
     b = s.battle!;
@@ -777,16 +860,21 @@ export function tacticalCombat(s0: G.State, command: G.Command, automatic = fals
     u.guard = 0.25;
     b.energy = Math.min(
       10,
-      b.energy + 1 + (G.chosen(s, 'array', 'shields') ? 1 : 0),
+      b.energy + 1 + (battleChosen(s, 'array', 'shields') ? 1 : 0),
     );
     note(b, `${u.name}坚守，本轮承伤降低75%。`);
   }
   if (action === 'break') {
-    multiplier = 0.85;
+    multiplier = 0.85 * (battleChosen(s, 'key', 'cut') ? 1.1 : 1);
     b.energy -= 2;
     b.interrupted = true;
     b.shattered = true;
     note(b, `${u.name}破势，打断本轮咏唱与恢复、拆除结界。`);
+    if (warning.heavy && battleChosen(s, 'array', 'chant')) {
+      for (const friend of alive(b))
+        friend.guard = Math.min(friend.guard, 0.35);
+      note(b, '破咒战歌回应破势，本轮全队来袭伤害降低65%。');
+    }
   }
   if (action === 'heal') {
     const target = healTarget(b);
@@ -797,7 +885,8 @@ export function tacticalCombat(s0: G.State, command: G.Command, automatic = fals
         (0.38 +
           (G.hasRole(s, 'luna') ? 0.05 : 0) +
           (G.hasTalent(s, 'healer') ? 0.05 : 0) +
-          (G.chosen(s, 'bell', 'home') ? 0.05 : 0)),
+          (battleChosen(s, 'bell', 'home') ? 0.05 : 0)),
+      u,
     );
     target.burn = 0;
     b.supplies--;
@@ -826,7 +915,12 @@ export function tacticalCombat(s0: G.State, command: G.Command, automatic = fals
     if (skill.wardHits)
       for (const friend of targets)
         friend.ward = Math.max(friend.ward, skill.wardHits);
-    if (skill.cleanseBurn) for (const friend of targets) friend.burn = 0;
+    if (skill.cleanseBurn) {
+      const cleansed = targets.some((friend) => friend.burn > 0);
+      const seal = b.sealed > 0 || warning.kind === 'seal';
+      for (const friend of targets) friend.burn = 0;
+      if (cleansed || seal) Sets.dawnResponse(b, u, seal);
+    }
     if (skill.preventBurn)
       for (const friend of targets) friend.preventBurn = true;
     if (skill.healing)
@@ -838,6 +932,7 @@ export function tacticalCombat(s0: G.State, command: G.Command, automatic = fals
             u.maxHp * skill.healing.actorHp +
             target.maxHp * skill.healing.targetHp) *
             u.healing,
+          u,
         );
     if (skill.shield)
       for (const target of targets) {
@@ -899,6 +994,19 @@ export function tacticalCombat(s0: G.State, command: G.Command, automatic = fals
       note(b, `反制成功，留下${expose}次攻击破绽。`);
     }
   }
+  if (
+    (warning.kind === 'ward' &&
+      b.shattered &&
+      (action === 'break' || skill?.shatter)) ||
+    (['channel', 'restore'].includes(warning.kind) &&
+      b.interrupted &&
+      (action === 'break' || skill?.interrupt))
+  )
+    Sets.dawnResponse(b, u, false);
+  const detonate =
+    !!skill?.detonateFire ||
+    (action === 'break' && Sets.hasSet(u, 'abysswalk'));
+  if (detonate) Sets.detonateFire(b, u, !!skill?.detonateFire);
   if (multiplier > 0) {
     const marked = b.marked > 0;
     if (marked) b.marked--;
@@ -907,9 +1015,10 @@ export function tacticalCombat(s0: G.State, command: G.Command, automatic = fals
     const dodged = dodgeRoll < b.enemyDodge,
       critical =
         !dodged && critRoll < Math.min(0.6, u.crit + (skill?.critBonus || 0));
+    const storedPower = Sets.takeStoredPower(u);
+    const weakPierce = Sets.consumeWeakness(b, u);
     let damage =
-      u.attack *
-      multiplier *
+      (u.attack * multiplier + storedPower) *
       b.bonus *
       (marked ? 1.2 : 1) *
       (critical ? u.critDamage : 1);
@@ -918,8 +1027,9 @@ export function tacticalCombat(s0: G.State, command: G.Command, automatic = fals
       (100 +
         b.enemyDefense *
           (b.boss ? Boss.bossResolution(b).armorScale : 1) *
-          (1 - Math.min(0.75, u.pierce + (skill?.pierceBonus || 0))) *
-          (G.chosen(s, 'dragon', 'spear') ? 0.5 : 1));
+          (1 -
+            Math.min(0.75, u.pierce + (skill?.pierceBonus || 0) + weakPierce)) *
+          (battleChosen(s, 'dragon', 'spear') ? 0.5 : 1));
     if (b.boss) damage *= Boss.bossPlayerDamageScale(b, projectile, u.ranged);
     if (!b.boss && warning.kind === 'flight' && !projectile)
       damage *= 0.25 + 0.75 * u.ranged;
@@ -935,6 +1045,11 @@ export function tacticalCombat(s0: G.State, command: G.Command, automatic = fals
       b,
       `${u.name}${critical ? ' · 暴击' : ''}${dodged ? '的攻击被闪避' : `造成 ${damage} 伤害`}。`,
     );
+    if (!dodged) {
+      if (action === 'break' || skill?.shatter || skill?.pierceBonus)
+        Sets.leaveWeakness(b, u);
+      if (skill && !detonate) Sets.igniteSet(b, u);
+    }
   }
   if (skill?.markHits) b.marked = skill.markHits;
   b.acted.push(id);
@@ -964,6 +1079,12 @@ export function autoCommand(s: G.State): G.Command {
       })),
     )
     .filter((x) => !tacticalReason(s, x.command));
+  if ((w.kind === 'seal' || b.sealed > 0) && !Sets.sealPurified(b)) {
+    const cleanser = options.find(
+      (x) => x.skill.cleanseBurn && Sets.hasSet(x.u, 'dawnbreak'),
+    );
+    if (cleanser) return cleanser.command;
+  }
   if (
     ['channel', 'restore', 'ward', ...(b.boss ? ['flight'] : [])].includes(
       w.kind,
@@ -1001,6 +1122,17 @@ export function autoCommand(s: G.State): G.Command {
     if (supplier) return commandFor(supplier.id, 'heal', lowest.id);
   }
   if (w.heavy && !b.interrupted) {
+    const shieldHealer = options.find(
+      (x) =>
+        x.skill.healing &&
+        Sets.hasSet(x.u, 'nightbell') &&
+        alive(b).some(
+          (friend) =>
+            friend.hp / friend.maxHp > 0.8 &&
+            Sets.canPrepareOverflow(x.u, friend),
+        ),
+    );
+    if (shieldHealer) return shieldHealer.command;
     const protector = options.find(
       (x) =>
         (!!x.skill.wardHits && b.ward === 0) ||
@@ -1049,6 +1181,19 @@ export function autoCommand(s: G.State): G.Command {
   );
   if (renewal && b.energy >= 3 && !b.sealed && w.kind !== 'seal')
     return renewal.command;
+  const detonator = options.find(
+    (x) =>
+      x.skill.detonateFire &&
+      Sets.firePotential(b, x.u, true) >= x.u.attack * 0.7,
+  );
+  if (detonator) return detonator.command;
+  const setDetonator = units.find(
+    (u) =>
+      Sets.hasSet(u, 'abysswalk') &&
+      Sets.firePotential(b, u) >= u.attack * 0.6 &&
+      !tacticalReason(s, commandFor(u.id, 'break')),
+  );
+  if (setDetonator) return commandFor(setDetonator.id, 'break');
   const attacks = options
     .filter((x) => x.skill.damage > 1 || x.skill.dot || x.skill.markHits)
     .sort(
@@ -1074,6 +1219,8 @@ export function migrateBattle(s: G.State) {
   battle.supplies = old.supplies;
   battle.enemyHp = Math.max(1, Math.round(battle.enemyMaxHp * enemyRatio));
   for (const unit of battle.units) {
+    delete unit.setEffect;
+    delete unit.projectChoices;
     unit.hp = Math.max(1, Math.round(unit.maxHp * hpRatio));
     for (const key of Object.keys(unit.cooldowns))
       unit.cooldowns[key] = old.cooldowns[unit.id] || 0;
@@ -1131,8 +1278,12 @@ export function validateBattleReport(s: G.State) {
     !Array.isArray(r.history) ||
     r.history.length > 35 ||
     r.history.some((l) => typeof l !== 'string' || l.length > 300) ||
-    (r.loot !== undefined && r.loot !== null &&
-      (!G.validLootReceipt(s, r.loot) || !r.won || r.loot.source !== r.kind || r.loot.time !== r.time))
+    (r.loot !== undefined &&
+      r.loot !== null &&
+      (!G.validLootReceipt(s, r.loot) ||
+        !r.won ||
+        r.loot.source !== r.kind ||
+        r.loot.time !== r.time))
   )
     throw Error('战斗回顾无效');
 }
@@ -1242,6 +1393,14 @@ export function validateBattle(s: G.State) {
       !n(u.healing, 0.1, 3) ||
       !n(u.shieldPower, 0.1, 3) ||
       !n(u.cooldownReduction, 0, 0.3) ||
+      !Sets.validSetEffect(u.setEffect, b.round, u.attack) ||
+      ((u.projectChoices !== undefined ||
+        b.units[0].projectChoices !== undefined) &&
+        (!Array.isArray(u.projectChoices) ||
+          new Set(u.projectChoices).size !== u.projectChoices.length ||
+          u.projectChoices.some((id) => !projectChoiceIds().includes(id)) ||
+          JSON.stringify(u.projectChoices) !==
+            JSON.stringify(b.units[0].projectChoices))) ||
       !n(u.evasion, 0, 0.4) ||
       !i(u.shieldTurns, 0, 3) ||
       typeof u.castThisRound !== 'string' ||

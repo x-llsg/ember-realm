@@ -1,4 +1,6 @@
 'use client';
+import './planning.css';
+import { PlanningBoard } from '@/components/planning-board';
 import { HuntActivity } from '@/components/hunt-controls';
 import { useEffect, useRef, useState } from 'react';
 import { GAME_VERSION } from '@/lib/version';
@@ -40,7 +42,6 @@ import * as G from '@/lib/realm';
 import { InfoHint } from '@/components/info-hint';
 import { LootNotice } from '@/components/loot-notice';
 import { AchievementButton } from '@/components/achievement-panel';
-import { GrowthChoices } from '@/components/economy-desk';
 import { RecruitmentBoard, ResearchBoard } from '@/components/economy-panels';
 import {
   TownPanel,
@@ -86,7 +87,7 @@ export default function Home() {
   const [journal, setJournal] = useState(false),
     [settings, setSettings] = useState(false),
     [help, setHelp] = useState(false),
-    [reset, setReset] = useState<'reset' | 'journey' | null>(null),
+    [reset, setReset] = useState<'reset' | null>(null),
     [welcome, setWelcome] = useState<Welcome | null>(null),
     [loadError, setLoadError] = useState(''),
     [badRaw, setBadRaw] = useState(''),
@@ -174,9 +175,9 @@ export default function Home() {
       if (current) localStorage.setItem('ember-realm-before-restart', current);
     } catch {}
   }
-  function beginFresh(journey = false) {
+  function beginFresh() {
     backup();
-    const next = journey ? G.newJourney(ref.current) : G.freshState();
+    const next = G.freshState();
     writable.current = true;
     commit(next);
     setReady(true);
@@ -186,11 +187,7 @@ export default function Home() {
     setReset(null);
     setSettings(false);
     go({ view: 'town' });
-    setNotice(
-      journey
-        ? '旧日的手艺留下来，新的故事开始了。'
-        : '新的星空下，第一簇火还在等待你。',
-    );
+    setNotice('新的星空下，第一簇火还在等待你。');
   }
   async function importSave(file?: File) {
     if (!file) return;
@@ -532,7 +529,7 @@ export default function Home() {
               <ArrowRight />
             </button>
           )}
-          {!(view === 'explore' && s.battle) && <GrowthChoices s={s} go={go} />}
+          {!(view === 'explore' && s.battle) && <PlanningBoard s={s} act={act} go={go} />}
           <LootNotice s={s} act={act} go={go} />
           <HuntActivity s={s} act={act} go={go} />
           {(e || s.order.enabled) && view !== 'explore' && (
@@ -628,7 +625,6 @@ export default function Home() {
               act={act}
               go={go}
               focus={focus}
-              onJourney={() => setReset('journey')}
             />
           </TabsContent>
           <button className="life-notice" onClick={() => setJournal(true)}>
@@ -803,17 +799,13 @@ export default function Home() {
       >
         <AlertDialogContent className="life-dialog">
           <AlertDialogTitle>
-            {reset === 'journey' ? '带着手艺，再走一程？' : '让故事从头开始？'}
+            让故事从头开始？
           </AlertDialogTitle>
-          <AlertDialogDescription>
-            {reset === 'journey'
-              ? `新旅程重新展开六章，保留额外10%基础生产加成（最高50%），并按本次经营积累传承。下一轮工业传承 ${G.inheritancePreview(s).industry}/10、教范传承 ${G.inheritancePreview(s).scholarship}/10、拓荒传承 ${G.inheritancePreview(s).exploration}/10，分别提高生产、经验与后勤。有工业传承时保留生产方式和库存控制的操作权限及设置；设施和物资仍需重建。这是有限的重玩加速，也可继续经营当前城镇。`
-              : '当前城镇和伙伴会被新旅程替换。浏览器会尝试保留一份恢复副本；你也可以先导出手记。'}
-          </AlertDialogDescription>
+          <AlertDialogDescription>当前城镇和伙伴会被全新存档替换。浏览器会尝试保留一份恢复副本；你也可以先导出手记。</AlertDialogDescription>
           <div className="life-inline-actions">
             <AlertDialogCancel>留在这里</AlertDialogCancel>
-            <AlertDialogAction onClick={() => beginFresh(reset === 'journey')}>
-              确认开始新旅程
+            <AlertDialogAction onClick={() => beginFresh()}>
+              确认重新开始
             </AlertDialogAction>
           </div>
         </AlertDialogContent>

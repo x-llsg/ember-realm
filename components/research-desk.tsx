@@ -1,6 +1,7 @@
 'use client';
 
 import { InfoHint } from './info-hint';
+import { PinPlan } from './planning-board';
 import { useId, useState } from 'react';
 import * as G from '@/lib/realm';
 import { Buy, type Act, type Destination } from './realm-panels';
@@ -308,6 +309,7 @@ function ResearchDesk({ s, act, focus }: Props) {
               ) : (
                 <>
                   <p className="research-note">{current.note}</p>
+                  {current.group !== 'doctrine' && <PinPlan s={s} act={act} kind={current.group === 'technology' ? 'technology' : current.group === 'development' ? 'development' : 'research'} id={current.id} />}
                   <output
                     className={`research-status${currentReason ? ' blocked' : ' ready'}`}
                   >

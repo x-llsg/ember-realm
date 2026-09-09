@@ -1,12 +1,12 @@
 import * as G from '../lib/realm.ts';
 import { combatRecommendation } from '../lib/combat-recommendation.ts';
 import assert from 'node:assert/strict';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 
 // Every campaign mutation goes through a public action. Forecasts only inspect clones.
 const routeOrder = process.env.V12_ROUTE_ORDER || 'standard';
-const outputDir = new URL(`../.test-results/v16-${routeOrder}-balanced/`, import.meta.url);
+const outputDir = new URL(`../.test-results/v020-${routeOrder}-balanced/`, import.meta.url);
 mkdirSync(outputDir, { recursive: true });
 const seed = Number(process.env.REALM_TEST_SEED || 123456789);
 assert.ok(
@@ -18,9 +18,15 @@ let s = G.freshState(seed),
   clockCalls = 0;
 const keys = Object.keys(G.RESOURCE_NAMES);
 const blank = () => Object.fromEntries(keys.map((k) => [k, 0]));
+const coreHashes = () => Object.fromEntries(readdirSync(new URL('../lib/', import.meta.url)).filter((file) => file.endsWith('.ts')).sort().map((file) => [file, createHash('sha256').update(readFileSync(new URL(`../lib/${file}`, import.meta.url))).digest('hex')]));
+const processingSnapshot = () => G.WORK_IDS.map((id) => ({
+  id, active: s.world.work[id], selected: s.economy.variants?.[id] || 'original',
+  mode: s.economy.modes[id], quote: G.processingQuote(s, id),
+  available: G.processingVariants(s, id).map((recipe) => recipe.variant),
+}));
 const results = {
   version: 10,
-  rulesRevision: 'v16-continuous-hunting',
+  rulesRevision: 'v020-six-chapter-development',
   visitorDeferred: [],
   visitorChoices: [],
   researchInvestments: [],
@@ -29,6 +35,7 @@ const results = {
   routePreparation: [],
   seed,
   combatSources: Object.fromEntries(['guardian-candidates', 'combat-recommendation', 'equipment-growth', 'guild', 'tactics', 'alchemy', 'mastery', 'auto-hunt','drop-progression', 'buildcraft', 'equipment-data'].map((id) => [id, createHash('sha256').update(readFileSync(new URL(`../lib/${id}.ts`, import.meta.url))).digest('hex')])),
+  coreSources: coreHashes(),
   economySignature:G.productionMultiplier.toString()+G.developmentCost.toString(),
   policy:
     'Legal steady growth; four ordinary random recruits, all discovered equipment slots, earned skill points and elemental preparation, public recommended combat policy. No injected resources or progression.',
@@ -683,6 +690,7 @@ function resolveChapter(r) {
     naive = G.forecastBattle(s, r, 'attack');
   const stage = results.stages[r];
   Object.assign(stage, {
+    processing: processingSnapshot(),
     gameSecondsBeforeBattle: s.time,
     heroLevels: s.party.map((id) => s.heroes.find((h) => h.id === id).level),
     stats: G.partyStats(s),
@@ -1034,7 +1042,7 @@ try{
     const target=s.guild.depths[r]+1;
     autoUntil(r,'frontier',()=>s.guild.depths[r]>=target);
     if(s.guild.outposts[r]<Math.min(3,target)){try{outpost(r,Math.min(3,target));}catch(e){if(!(e instanceof NeedProgress))throw e;}}
-    results.milestones.push({region:r,depth:s.guild.depths[r],start,gameSeconds:s.time-start.time,actions:actions-start.actions,rank:G.townRank(s),power:G.partyStats(s).power,materials:G.clone(s.world.materials)});
+    results.milestones.push({region:r,depth:s.guild.depths[r],start,gameSeconds:s.time-start.time,actions:actions-start.actions,rank:G.townRank(s),power:G.partyStats(s).power,materials:G.clone(s.world.materials),processing:processingSnapshot()});
     waitPurpose='town';technologies();opportunisticCity();productiveStudies();developEconomy();economyOpportunity({},'stage development');break;
   }
   for(const r of order)combatReady(r);
@@ -1062,5 +1070,5 @@ try{
  results.rebuild={gameSeconds:s.time,decisions:actions,projects:s.rebuild};results.fullResourceSeconds={sampling:'At the start of each waiting segment of at most 5 seconds; an estimate, not exact overflow accounting.',values:fullSeconds};results.investments=investment.map(i=>{const weights=Object.fromEntries(keys.map(k=>[k,i.productionBefore[k]>0?i.jobs[k]/i.productionBefore[k]:null]));const costKnown=Object.keys(i.cost).every(k=>weights[k]!==null);const benefit=keys.reduce((n,k)=>n+Math.max(0,i.gain[k])*(weights[k]||0),0);return {...i,baseLaborPaybackLowerBoundSeconds:costKnown&&benefit>0?Object.entries(i.cost).reduce((n,[k,v])=>n+v*weights[k],0)/benefit:null,paybackNote:'Local labor-equivalent lower bound, excludes map materials and refinery upstream inputs.'};});results.waitByPurpose=waitByPurpose;results.phaseInvestmentSeconds=phaseInvestmentSeconds;results.materialAudit=materialAudit;
  for(const k of processed){const consumed=Object.values(materialAudit.spentByAction).reduce((n,bill)=>n+(bill[k]||0),0);assert.ok(Math.abs(materialAudit.produced[k]-consumed-s.world.materials[k])<1e-6,'processed material conservation '+k);}
  assert.equal(Object.values(results.campaign.waitByPurpose).reduce((n,v)=>n+v,0),results.campaign.gameSeconds,'exclusive wait categories sum to game clock');
- results.pacing=demandPacing;results.economyPurchases=economyPurchases;results.logistics={delivered:s.economy.routes.map(r=>r.delivered),routes:s.economy.routes,development:s.economy.development,production:s.economy.production,crafted:s.economy.crafted};save();console.log('V12_RULES_CAMPAIGN_COMPLETE '+JSON.stringify({order,gameSeconds:results.campaign.gameSeconds,decisions:results.campaign.decisions,rounds:results.stages.map(x=>x?.rounds)}));
+ assert.deepEqual(coreHashes(),results.coreSources,'all V020 core sources unchanged during campaign');results.checks.push({name:'all V020 core source hashes match before and after campaign',passed:true});results.processing=processingSnapshot();results.pacing=demandPacing;results.economyPurchases=economyPurchases;results.logistics={delivered:s.economy.routes.map(r=>r.delivered),routes:s.economy.routes,development:s.economy.development,production:s.economy.production,crafted:s.economy.crafted};save();console.log('V020_RULES_CAMPAIGN_COMPLETE '+JSON.stringify({order,gameSeconds:results.campaign.gameSeconds,decisions:results.campaign.decisions,rounds:results.stages.map(x=>x?.rounds)}));
 }catch(error){results.error=String(error);results.atFailure={time:s.time,actions,rank:s.world&&G.townRank?.(s)};writeFileSync(new URL('blocked-state.json',outputDir),JSON.stringify(s,null,2));save();throw error;}

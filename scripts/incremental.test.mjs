@@ -183,13 +183,14 @@ test('resource reserve blocks workshop and logistics at the same visible capacit
   const before=inputs(s),after=ticking(s,100);assert.deepEqual(inputs(after),before);
 });
 
-test('lower output target and mode switch retain existing stock and completed partial progress',()=>{
+test('lower output target preserves partial time; switching mode resets unpaid progress but keeps stock',()=>{
   let s=town();s.economy.development.carpentry=2;s.economy.development.storage=2;s=G.toggleWork(s,'boards',true);
   s=ticking(s,3);const progress=s.world.workProgress.boards;
   s.world.materials.boards=G.materialCapacity(s,'boards')*.75;
-  const stock=inputs(s);s=action(s,x=>G.setWorkTarget(x,'boards',.25));s=action(s,x=>G.setWorkMode(x,'boards','efficient'));
-  assert.deepEqual(inputs(s),stock);assert.equal(s.world.workProgress.boards,progress);
-  const after=ticking(s,20);assert.deepEqual(inputs(after),stock);assert.equal(after.world.workProgress.boards,progress);
+  const stock=inputs(s);s=action(s,x=>G.setWorkTarget(x,'boards',.25));assert.equal(s.world.workProgress.boards,progress);
+  s=action(s,x=>G.setWorkMode(x,'boards','efficient'));
+  assert.deepEqual(inputs(s),stock);assert.equal(s.world.workProgress.boards,0);
+  const after=ticking(s,20);assert.deepEqual(inputs(after),stock);assert.equal(after.world.workProgress.boards,0);
 });
 
 test('development unlocks modes and stock controls; none is freely usable before its threshold',()=>{

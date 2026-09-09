@@ -112,8 +112,45 @@ export function skillNodeHelp(h: G.Hero, node: SkillTreeNode) {
     title: node.name,
     body:
       detail +
+      (node.skillId ? skillBuildLinks(node.skillId) : '') +
       `\n${node.branch === 'root' ? '初始掌握' : `Lv.${node.minLevel} · ${node.pointCost} 技能点`}。`,
   };
+}
+/** Explain mechanical connections next to the learned node, without prescribing a mandatory party. */
+export function skillBuildLinks(skillId: string) {
+  const skill = G.SKILLS.find((s) => s.id === skillId);
+  if (!skill) return '';
+  const links: string[] = [];
+  if (skill.healing)
+    links.push(
+      '沉钟四件：直接治疗的溢出量可变为预备护盾，治疗分支因此也能提前应对重击。',
+    );
+  if (
+    skill.incomingMultiplier ||
+    skill.wardHits ||
+    skill.evasion ||
+    skill.shield
+  )
+    links.push(
+      '林守/铁壁四件：掩护承伤可触发反击或蓄力；选择被敌人盯住的受益者更有效。',
+    );
+  if (skill.dot?.kind === 'fire')
+    links.push(
+      '燃烧联动：可留待每轮结算，或让携带星陨咒/解构爆剂的队友消耗余火提前爆发。',
+    );
+  if (skill.detonateFire)
+    links.push(
+      '引爆时机：先由另一名队友点燃；剩余伤害80%立即结算，上限120%本人攻击。过早引爆会牺牲持续伤害。',
+    );
+  if (skill.shatter || skill.pierceBonus)
+    links.push(
+      '龙痕四件：命中后为其他队友留下猎痕；先开弱点，再让主攻手行动。',
+    );
+  if (skill.cleanseBurn)
+    links.push(
+      '破晓四件：这项净化还可解除治疗封印，同时给全队短盾；封禁回合也能施放。',
+    );
+  return links.length ? '\n\n搭配方向：' + links.join('\n') : '';
 }
 export function setSecondarySkill(s0: G.State, id: string, skillId: string) {
   const h = s0.heroes.find((h) => h.id === id);

@@ -3,6 +3,12 @@ import * as C from './campaign.ts';
 import * as D from './realm-data.ts';
 import type { MaterialId } from './campaign-data.ts';
 import { settleAchievements } from './achievements.ts';
+import {
+  CHAPTER_WORKS,
+  CHAPTER_RECIPE_VARIANTS,
+  chapterProjectCount,
+} from './chapter-projects.ts';
+import { processingVariantReason } from './economy.ts';
 
 export const hasReturned = (s: State) =>
   s.explored.some((n) => n > 0) || s.cleared.length > 0;
@@ -157,7 +163,7 @@ export const STORY_BEATS: StoryBeat[] = [
     id: 'sample',
     title: '木头里藏着年轮',
     text: '小队带回一段沉重的古木。木匠削去焦黑树皮，发现它能支撑更大的屋架。“守住林中的落脚处，我们就能在这里定居。”',
-    unlocks: '定居线索、手札与侦察研究',
+    unlocks: '定居线索、地区工程与侦察研究',
     when: (s) => regionVisited(s, 0),
   },
   {
@@ -242,6 +248,29 @@ export const STORY_BEATS: StoryBeat[] = [
     unlocks: '战后重建',
     when: (s) => s.ending,
   },
+  ...CHAPTER_WORKS.map(
+    (chapter, region): StoryBeat => ({
+      id: `chapter-work-${region}`,
+      title: `${D.REGIONS[region].name} · ${chapter.recipe}`,
+      text: chapter.clue,
+      unlocks: '工坊中可选择另一种原料组合；原有配方仍可使用',
+      when: (s) =>
+        !processingVariantReason(
+          s,
+          CHAPTER_RECIPE_VARIANTS[region].work,
+          CHAPTER_RECIPE_VARIANTS[region].variant,
+        ),
+    }),
+  ),
+  ...CHAPTER_WORKS.map(
+    (chapter, region): StoryBeat => ({
+      id: `chapter-home-${region}`,
+      title: chapter.name,
+      text: chapter.complete,
+      unlocks: '两项工程效果共同生效；本地替代配方获得联合供货',
+      when: (s) => chapterProjectCount(s, region) === 2,
+    }),
+  ),
 ];
 export function storyBeat(s: State): StoryBeat | undefined {
   return STORY_BEATS.filter((b) => b.when(s)).at(-1);

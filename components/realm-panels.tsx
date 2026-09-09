@@ -669,13 +669,11 @@ export function DestinyPanel({
   act,
   go,
   focus,
-  onJourney,
 }: {
   s: G.State;
   act: Act;
   go: Props['go'];
   focus: Destination;
-  onJourney: () => void;
 }) {
   const [tab, setTab] = useState(
       focus.tab && focus.tab !== 'research'
@@ -741,12 +739,12 @@ export function DestinyPanel({
           </div>
           {s.rebuild.length === 3 ? (
             <>
-              <button className="primary-button" onClick={onJourney}>
-                带着手艺，再走一程
+              <button className="primary-button" onClick={() => go({view:'town',tab:'projects'})}>
+                {G.REGIONS.every((_,r)=>G.chapterProjectCount(s,r)===2)?'六地工程已全部落成':'完善六地工程'}
                 <ArrowRight />
               </button>
               <p className="life-hint">
-                也可以继续生活在这里。新旅程永久生产加成 +10%，最高 50%。
+                六地工程已完成 {G.REGIONS.reduce((n,_,r)=>n+G.chapterProjectCount(s,r),0)}/12 项。城镇、伙伴与装备继续保留，补完另一条道路，让每座城镇都有自己的明天。
               </p>
             </>
           ) : s.rebuild.includes(p.id) ? (

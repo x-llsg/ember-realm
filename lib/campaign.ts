@@ -354,7 +354,7 @@ export function workStations(s: State, id: WorkId): number {
   return Math.min(4, 1 + Math.floor(Math.max(0, building - 1) / 3));
 }
 export function workDuration(s: State, id: WorkId): number {
-  const recipe = WORK_RECIPES.find((r) => r.id === id)!;
+  const recipe = E.processingRecipe(s, id);
   const building =
     id === 'boards'
       ? s.buildings.lumber
@@ -541,7 +541,8 @@ export function validateWorld(s: State): void {
       fail(`${MATERIAL_NAMES[id]}数量超出容量或不是非负数`);
   for (const recipe of WORK_RECIPES) {
     const n = w.workProgress[recipe.id];
-    if (!Number.isFinite(n) || n < 0 || n > recipe.seconds * 1.5)
+    const maxSeconds = E.processingRecipe(s, recipe.id).seconds;
+    if (!Number.isFinite(n) || n < 0 || n > maxSeconds * 1.5)
       fail(`${recipe.name}进度无效`);
     if (!w.tech.includes(recipe.tech) && (w.work[recipe.id] || n !== 0))
       fail(`${recipe.name}尚未解锁`);

@@ -1,5 +1,5 @@
 'use client';
-import { MaterialName } from './info-hint';
+import { InfoHint, MaterialName } from './info-hint';
 import { useState } from 'react';
 import * as G from '@/lib/realm';
 import { Buy, Pick, type Act, type Destination, number } from './realm-panels';
@@ -77,6 +77,8 @@ export function WorkshopPanel({
 }: Props & { initial?: G.WorkId }) {
   const [selected, setSelected] = useState<G.WorkId>(initial || 'boards');
   const r = G.WORK_RECIPES.find((r) => r.id === selected)!;
+  const quote = G.processingQuote(s, selected),
+    variants = G.processingVariants(s, selected);
   const reason = G.workReason(s, selected);
   return (
     <div className="campaign-detail">
@@ -108,10 +110,23 @@ export function WorkshopPanel({
       />
       <article className="campaign-card">
         <h2>{r.name}</h2>
-        <p>{r.text}</p>
+        <InfoHint
+          title={quote.name}
+          body={<p>{quote.text} 切换配方或生产方式会重新开始当前批次。</p>}
+        >
+          <strong>{quote.name}</strong>
+        </InfoHint>
+        {variants.length > 1 && (
+          <Pick
+            label="选择原料配方"
+            value={quote.variant}
+            options={variants.map((v) => ({ value: v.variant, label: v.name }))}
+            onChange={(v) => act((x) => G.setWorkVariant(x, selected, v))}
+          />
+        )}
         <p className="material-price">
-          每 {G.workDuration(s, selected)} 秒：{G.costText(r.cost)} +{' '}
-          {G.materialCostText(r.materials)} → {r.output}{' '}
+          每 {quote.seconds} 秒：{G.costText(quote.cost)}{' '}
+          {G.materialCostText(quote.materials)} → {quote.output}{' '}
           {G.MATERIAL_NAMES[r.id]}
         </p>
         <progress

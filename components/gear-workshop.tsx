@@ -22,6 +22,9 @@ export function GearWorkshop({ s, item, act, onRemoved }: {
   const [affix, setAffix] = useState(String(item.affix));
   const [confirm, setConfirm] = useState(false);
   const [allowOverflow, setAllowOverflow] = useState(false);
+  const [setChoice, setSetChoice] = useState(item.setId || G.EQUIPMENT_SETS.find(set=>s.guild.depths[set.region]>0)?.id || G.EQUIPMENT_SETS[0].id);
+  const setQuote = G.setReforgePreview(s,item.id,setChoice);
+  const chosenSet = G.EQUIPMENT_SETS.find(set=>set.id===setChoice)!;
   const owner = G.gearOwner(s, item.id);
   const away = G.gearAway(s, item.id);
   const quote = G.reforgeQuote(s, item.id, Number(affix));
@@ -57,6 +60,14 @@ export function GearWorkshop({ s, item, act, onRemoved }: {
         onClick={() => act((x) => G.reforgeGear(x, item.id, Number(affix)))}>重铸为「{G.AFFIXES[Number(affix)].name}」</button>
       <small className="gear-action-reason">{quote.reason || '消耗对应品质材料，确定获得所选词条；保留强化与套装。'}</small>
     </section>
+    {G.EQUIPMENT_SETS.some(set=>s.guild.depths[set.region]>0) && <section>
+      <strong>定向套装改制</strong>
+      <Pick label="选择改制套装" value={setChoice} onChange={setSetChoice} options={G.EQUIPMENT_SETS.filter(set=>s.guild.depths[set.region]>0 || set.id===item.setId).map(set=>({value:set.id,label:set.name+' · '+G.REGIONS[set.region].name}))} />
+      <InfoHint title={chosenSet.name} body={chosenSet.text}>{chosenSet.name} · 套装效果</InfoHint>
+      <div className="reforge-cost"><span className={'rarity-'+setQuote.essences.rarity}>{setQuote.essences.name} {G.salvageCount(s,setQuote.essences.rarity)}/{setQuote.essences.amount}</span></div>
+      <Buy s={s} cost={setQuote.cost} materials={setQuote.materials} reason={setQuote.reason} label="改制为所选套装" onClick={()=>act(x=>G.reforgeGearSet(x,item.id,setChoice))} />
+      <small className="gear-action-reason">保留品质、阶级、词条和强化。使用当地材料及同品质分解产物，确定获得套装归属；四件即可使用独特战斗效果。</small>
+    </section>}
     <section className="gear-dismantle-actions">
       <strong>分解回收</strong>
       {owner && <button className="secondary-button" disabled={away} onClick={() => act((x) =>

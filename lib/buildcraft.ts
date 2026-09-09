@@ -79,7 +79,61 @@ export function gearSetHelp(item: G.Gear) {
   const set = G.EQUIPMENT_SETS.find((x) => x.id === item.setId);
   return set
     ? `${set.name} · ${G.REGIONS[set.region].name}守敌/首领掉落。\n${set.text}\n只计算穿戴者本人不同槽位的件数；2件与4件效果相加，可配4+2或2+2+2。`
-    : '散件可与任意套装混搭。套装由各地区守敌与首领掉落。';
+    : '散件可与任意套装混搭。套装由各地区守敌与首领掉落；击败该区首个守敌后，可在装备管理中消耗地区材料和同品质残片，将散件重制为该区套装。';
+}
+
+/** A deterministic equipment route: region victories unlock patterns; earned salvage pays for certainty. */
+export function setReforgePreview(s: G.State, gearId: string, setId: string) {
+  const gear = s.guild.inventory.find((item) => item.id === gearId);
+  const set = G.EQUIPMENT_SETS.find((item) => item.id === setId);
+  const rarity = (gear?.rarity || 1) as G.SalvageRarity;
+  const essences = {
+    rarity,
+    amount: gear ? gear.tier * 2 : 0,
+    name: G.SALVAGE_MATERIALS.find((material) => material.rarity === rarity)!
+      .name,
+  };
+  const cost: G.Cost =
+    gear && set ? { gold: 30 * gear.tier * (set.region + 1) } : {};
+  const materials: G.MaterialCost =
+    gear && set
+      ? { [G.REGION_MATERIALS[set.region]]: (8 + set.region * 4) * gear.tier }
+      : {};
+  const reason = !gear
+    ? '装备已不在仓库'
+    : !set
+      ? '请选择有效套装'
+      : !G.regionOpen(s, set.region) || s.guild.depths[set.region] < 1
+        ? '先击败该地区第一处守敌，取得套装纹样'
+        : G.gearAway(s, gearId)
+          ? '装备正在出征，归来后才能重制'
+          : gear.setId === setId
+            ? '已经属于这套装备'
+            : gear.locked
+              ? '先取消收藏，再重制套装'
+              : G.salvageCount(s, rarity) < essences.amount
+                ? `${essences.name}不足：需要 ${essences.amount}`
+                : G.materialReason(s, materials) ||
+                  (!G.canPay(s, cost) ? `资源不足：${G.costText(cost)}` : '');
+  return { cost, materials, essences, reason };
+}
+export function reforgeGearSet(s0: G.State, gearId: string, setId: string) {
+  const bill = setReforgePreview(s0, gearId, setId);
+  if (bill.reason) return s0;
+  const s = G.clone(s0);
+  for (const [key, amount] of Object.entries(bill.cost))
+    s.resources[key as G.Resource] -= amount!;
+  G.spendMaterials(s, bill.materials);
+  s.guild.salvage ??= G.freshSalvage();
+  s.guild.salvage[bill.essences.rarity] -= bill.essences.amount;
+  const gear = s.guild.inventory.find((item) => item.id === gearId)!;
+  gear.setId = setId;
+  G.log(
+    s,
+    `${G.gearName(gear)}已重制为「${G.EQUIPMENT_SETS.find((set) => set.id === setId)!.name}」；品质、阶级、词条与强化保留。`,
+    'good',
+  );
+  return s;
 }
 export function monsterEquipment(
   s: G.State,
@@ -121,7 +175,12 @@ export function monsterEquipment(
     throw Error('出战前必须为战利品预留装备空间');
   }
   s.guild.inventory.push(item);
-  const receipt = G.recordLoot(s, item, kind, `${G.REGIONS[region].name} · ${s.battle?.enemyName || (kind === 'boss' ? '首领' : '据点守敌')}`);
+  const receipt = G.recordLoot(
+    s,
+    item,
+    kind,
+    `${G.REGIONS[region].name} · ${s.battle?.enemyName || (kind === 'boss' ? '首领' : '据点守敌')}`,
+  );
   G.log(
     s,
     `${kind === 'boss' ? '首领战利品' : '守敌掉落'}：${G.gearName(item)}。`,

@@ -85,6 +85,8 @@ export function EconomyDesk({ s, act, go }: Props) {
           </div>
           {recipes.map((w) => {
             const bill = G.processingBill(s, w.id),
+              recipe = G.processingRecipe(s, w.id),
+              variants = G.processingVariants(s, w.id),
               output = G.processingOutput(s, w.id),
               seconds = G.workDuration(s, w.id),
               reason = G.workReason(s, w.id);
@@ -92,14 +94,17 @@ export function EconomyDesk({ s, act, go }: Props) {
               <article className="flow-work" key={w.id}>
                 <div className="flow-line">
                   <InfoHint
-                    title={w.name}
+                    title={`${w.name} · ${recipe.name}`}
                     body={
                       <>
-                        <p>{w.text}</p>
+                        <p>{recipe.text}</p>
                         <p>
                           每批 {G.costText(bill.cost)}，
                           {G.materialCostText(bill.materials)}，产出 {output}{' '}
                           件。改良工艺改善成材率；赶工提高产速但增加每批投入。
+                        </p>
+                        <p>
+                          配方决定用哪些原料，生产方式决定速度与每批用量。切换任一项会重新开始当前批次。当地两项工程均完成后，该地区替代配方的普通资源费用降低10%。
                         </p>
                       </>
                     }
@@ -119,6 +124,34 @@ export function EconomyDesk({ s, act, go }: Props) {
                     {s.world.work[w.id] ? '暂停' : '开工'}
                   </button>
                 </div>
+                {variants.length > 1 && (
+                  <div className="flow-line">
+                    <InfoHint
+                      title={recipe.name}
+                      body={
+                        <>
+                          <p>{recipe.text}</p>
+                          <Bill s={s} {...bill} />
+                          <p>
+                            每批 {output} 件 · {seconds}{' '}
+                            秒。切换配方会清除未完成的加工时间，已完成的成品保留。
+                          </p>
+                        </>
+                      }
+                    >
+                      <span>配方 · {recipe.name}</span>
+                    </InfoHint>
+                    <Pick
+                      label={`${w.name}原料配方`}
+                      value={recipe.variant}
+                      options={variants.map((v) => ({
+                        value: v.variant,
+                        label: v.name,
+                      }))}
+                      onChange={(v) => act((x) => G.setWorkVariant(x, w.id, v))}
+                    />
+                  </div>
+                )}
                 <div className="flow-controls">
                   {G.workModesUnlocked(s, w.id) ? (
                     <Pick
