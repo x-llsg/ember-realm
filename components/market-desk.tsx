@@ -20,7 +20,7 @@ export function MarketDesk({ s, act }: { s: G.State; act: Act }) {
           金币 {count(s.resources.gold)} / {count(G.capacity(s, 'gold'))}
         </span>
       </div>
-      <div className="market-batches" role="group" aria-label="交易份数">
+      <fieldset className="market-batches" aria-label="交易份数">
         <span>交易份数</span>
         {[...G.TRADE_BATCH_CHOICES, 'max' as const].map((choice) => (
           <button
@@ -32,11 +32,16 @@ export function MarketDesk({ s, act }: { s: G.State; act: Act }) {
             {choice === 'max' ? '最大' : `×${count(choice)}`}
           </button>
         ))}
-      </div>
+      </fieldset>
       <p className="life-hint market-quantity-hint">
         1份 = {G.TRADE_BATCH_SIZE}
         单位。按金币、库存和仓位自动限制数量，按钮显示本次成交总量。
       </p>
+      <div className="market-column-head" aria-hidden="true">
+        <span>物资与库存</span>
+        <span>买入 · 支付金币</span>
+        <span>卖出 · 获得金币</span>
+      </div>
       <div className="life-card-body life-market">
         {goods.map((k) => {
           const buy = G.tradeQuote(s, k, true, batch),

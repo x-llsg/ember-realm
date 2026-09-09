@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { TREE_ROLES } from '../lib/skill-tree-data.ts';
@@ -272,4 +273,30 @@ test('existing embedded artwork and local SVG filter references remain self-cont
   const embedded = await embedLocalArtwork(original);
   assert.ok(embedded.endsWith(original));
   assertSelfContainedCss(embedded);
+});
+
+test('bundled UI font covers current Chinese game text and retains its license', async () => {
+  const metadata = JSON.parse(await readFile(path.join(root, 'public/fonts/manifest.json'), 'utf8'));
+  const font = await readFile(path.join(root, 'public/fonts/ember-ui.woff2'));
+  assert.equal(font.toString('ascii', 0, 4), 'wOF2');
+  assert.equal(createHash('sha256').update(font).digest('hex'), metadata.sha256);
+  assert.match(await readFile(path.join(root, 'public/fonts/OFL.txt'), 'utf8'), /SIL OPEN FONT LICENSE Version 1.1/);
+  const points = new Set(metadata.codepoints);
+  for (const directory of ['app', 'components', 'lib']) {
+    for (const file of await readdir(path.join(root, directory), { recursive: true })) {
+      if (!/\.tsx?$/.test(file)) continue;
+      const source = await readFile(path.join(root, directory, file), 'utf8');
+      const missing = [...new Set(source.match(/[\u3400-\u9fff]/gu) ?? [])].filter(c => !points.has(c.codePointAt(0)));
+      assert.deepEqual(missing, [], `${directory}/${file}: rebuild the UI font subset for new characters`);
+    }
+  }
+});
+
+test('portable build embeds exact UI font bytes without a font server', async () => {
+  const theme = await readFile(path.join(root, 'app/visual-theme.css'), 'utf8');
+  const embedded = await embedLocalArtwork(theme);
+  assertSelfContainedCss(embedded);
+  const font = embedded.match(/data:font\/woff2;base64,([A-Za-z0-9+/=]+)/);
+  assert.ok(font);
+  assert.ok(Buffer.from(font[1], 'base64').equals(await readFile(path.join(root, 'public/fonts/ember-ui.woff2'))));
 });

@@ -530,8 +530,10 @@ export default function Home() {
               <ArrowRight />
             </button>
           )}
-          {!(view === 'explore' && s.battle) && <PlanningBoard s={s} act={act} go={go} />}
-          <LootNotice s={s} act={act} go={go} />
+          <div className="life-meta">
+            {!(view === 'explore' && s.battle) && <PlanningBoard s={s} act={act} go={go} />}
+            <LootNotice s={s} act={act} go={go} />
+          </div>
           <HuntActivity s={s} act={act} go={go} />
           {(e || s.order.enabled) && view !== 'explore' && (
             <div className="life-activity">

@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable jsx-a11y/no-noninteractive-tabindex -- The independently scrolling, named reading region needs keyboard focus without moving the purchase controls. */
 
 import { InfoHint } from './info-hint';
 import { GameIcon } from './game-art';
@@ -289,69 +290,83 @@ function ResearchDesk({ s, act, focus }: Props) {
         >
           {current ? (
             <>
-              <span className="life-kicker">
-                {GROUPS.find((g) => g.id === current.group)?.name}
-              </span>
-              <h2 className="illustrated-research-heading">
-                <GameIcon kind="research" id={current.id} size={36} />
-                <span>
-                  {current.name}
-                  {current.level !== undefined && (
-                    <small>
-                      {' '}
-                      · {current.level}/
-                      {current.group === 'development' ? G.DEVELOPMENT_MAX : 10}{' '}
-                      级
-                    </small>
-                  )}
+              <section
+                className="research-reading"
+                aria-label="研究效果与条件"
+                tabIndex={0}
+              >
+                <span className="life-kicker">
+                  {GROUPS.find((g) => g.id === current.group)?.name}
                 </span>
-              </h2>
-              <p className="research-description">{current.description}</p>
-              {current.done ? (
-                <output className="research-status complete">
-                  已掌握，效果持续生效。
-                </output>
-              ) : (
-                <>
+                <h2 className="illustrated-research-heading">
+                  <GameIcon kind="research" id={current.id} size={36} />
+                  <span>
+                    {current.name}
+                    {current.level !== undefined && (
+                      <small>
+                        {' '}
+                        · {current.level}/
+                        {current.group === 'development'
+                          ? G.DEVELOPMENT_MAX
+                          : 10}{' '}
+                        级
+                      </small>
+                    )}
+                  </span>
+                </h2>
+                <p className="research-description">{current.description}</p>
+                {!current.done && (
                   <p className="research-note">{current.note}</p>
-                  {current.group !== 'doctrine' && (
-                    <PinPlan
-                      s={s}
-                      act={act}
-                      kind={
-                        current.group === 'technology'
-                          ? 'technology'
-                          : current.group === 'development'
-                            ? 'development'
-                            : 'research'
-                      }
-                      id={current.id}
-                    />
-                  )}
-                  <output
-                    className={`research-status${currentReason ? ' blocked' : ' ready'}`}
-                  >
-                    {currentReason
-                      ? '尚有条件需要准备，缺口见下方。'
-                      : '材料与前置均已满足，可以开始研究。'}
+                )}
+                {current.group === 'technology' && (
+                  <p className="research-current">
+                    当前：{G.TOWN_RANK_NAMES[G.townRank(s)]} · 生产建筑上限{' '}
+                    {G.buildingLimit(s, 'lumber')} 级 · 训练上限 {G.levelCap(s)}{' '}
+                    级 · 装备 T{G.gearTier(s)}
+                  </p>
+                )}
+              </section>
+              <div className="research-purchase">
+                {current.done ? (
+                  <output className="research-status complete">
+                    已掌握，效果持续生效。
                   </output>
-                  <Buy
-                    s={s}
-                    cost={current.cost}
-                    materials={current.materials}
-                    reason={current.reason}
-                    label={current.label}
-                    onClick={() => act(current.apply)}
-                  />
-                </>
-              )}
-              {current.group === 'technology' && (
-                <p className="research-current">
-                  当前：{G.TOWN_RANK_NAMES[G.townRank(s)]} · 生产建筑上限{' '}
-                  {G.buildingLimit(s, 'lumber')} 级 · 训练上限 {G.levelCap(s)}{' '}
-                  级 · 装备 T{G.gearTier(s)}
-                </p>
-              )}
+                ) : (
+                  <>
+                    <div className="research-action-header">
+                      <output
+                        className={`research-status${currentReason ? ' blocked' : ' ready'}`}
+                      >
+                        {currentReason
+                          ? '尚有条件需要准备，缺口见下方。'
+                          : '材料与前置均已满足，可以开始研究。'}
+                      </output>
+                      {current.group !== 'doctrine' && (
+                        <PinPlan
+                          s={s}
+                          act={act}
+                          kind={
+                            current.group === 'technology'
+                              ? 'technology'
+                              : current.group === 'development'
+                                ? 'development'
+                                : 'research'
+                          }
+                          id={current.id}
+                        />
+                      )}
+                    </div>
+                    <Buy
+                      s={s}
+                      cost={current.cost}
+                      materials={current.materials}
+                      reason={current.reason}
+                      label={current.label}
+                      onClick={() => act(current.apply)}
+                    />
+                  </>
+                )}
+              </div>
             </>
           ) : (
             <p className="life-hint">

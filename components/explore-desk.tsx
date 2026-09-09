@@ -515,30 +515,29 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
               aria-pressed={id === region}
               onClick={() => selectRegion(id)}
             >
-              <span>
-                {String(id + 1).padStart(2, '0')} ·{' '}
-                {s.cleared.includes(id)
-                  ? `首领已败 · 据点 ${s.guild.depths[id]}/5`
-                  : returned
-                    ? `据点 ${s.guild.depths[id]}/5`
-                    : '待调查'}
+              <span className="explore-region-number" aria-hidden="true">
+                {String(id + 1).padStart(2, '0')}
               </span>
-              <strong>
-                <InfoHint
-                  withinControl
-                  title={definition.name}
-                  body={definition.desc}
-                >
-                  {definition.name}
-                </InfoHint>
-              </strong>
-              <small>
-                {s.expedition?.region === id
-                  ? `队伍正在${routeNames[s.expedition.route]}`
-                  : G.regionVisited(s, id)
-                    ? G.MATERIAL_NAMES[G.REGION_MATERIALS[id]]
-                    : '等待第一次调查'}
-              </small>
+              <span className="explore-region-copy">
+                <strong>
+                  <InfoHint
+                    withinControl
+                    title={definition.name}
+                    body={`${definition.desc}${G.regionVisited(s, id) ? `\n地区材料：${G.MATERIAL_NAMES[G.REGION_MATERIALS[id]]}` : ''}`}
+                  >
+                    {definition.name}
+                  </InfoHint>
+                </strong>
+                <small>
+                  {s.expedition?.region === id
+                    ? `队伍正在${routeNames[s.expedition.route]}`
+                    : s.cleared.includes(id)
+                      ? `首领已败 · ${s.guild.depths[id]}/5`
+                      : returned
+                        ? `据点 ${s.guild.depths[id]}/5`
+                        : '等待第一次调查'}
+                </small>
+              </span>
             </button>
           ))}
           <button
@@ -728,30 +727,36 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
                   </small>
                 </div>
               </div>
-              <button
-                className="primary-button"
-                disabled={!!guardianBlocker}
-                onClick={() => {
-                  go({
-                    view: 'explore',
-                    region,
-                    guardian: guardianNode,
-                    route: mission.route,
-                  });
-                  act((x) =>
-                    G.beginBattle(x, region, 'guardian', guardianNode),
-                  );
-                }}
-              >
-                {rematch ? '再战守敌' : guardReady ? '挑战守敌' : '推进后挑战'}
-              </button>
-              <HuntControl
-                s={s}
-                act={act}
-                region={region}
-                kind="guardian"
-                node={guardianNode}
-              />
+              <div className="guardian-actions">
+                <button
+                  className="primary-button"
+                  disabled={!!guardianBlocker}
+                  onClick={() => {
+                    go({
+                      view: 'explore',
+                      region,
+                      guardian: guardianNode,
+                      route: mission.route,
+                    });
+                    act((x) =>
+                      G.beginBattle(x, region, 'guardian', guardianNode),
+                    );
+                  }}
+                >
+                  {rematch
+                    ? '再战守敌'
+                    : guardReady
+                      ? '挑战守敌'
+                      : '推进后挑战'}
+                </button>
+                <HuntControl
+                  s={s}
+                  act={act}
+                  region={region}
+                  kind="guardian"
+                  node={guardianNode}
+                />
+              </div>
               <InfoHint
                 {...G.dropHelp(guardianLoot)}
                 className="guardian-loot-note"

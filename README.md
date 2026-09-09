@@ -1,6 +1,6 @@
 # 余烬之境 · The Ember Realm
 
-**V0.2.1** · 中文西幻增量文字游戏 · MIT
+**V0.2.2** · 中文西幻增量文字游戏 · MIT
 
 ### [⬇ 下载游戏 · Windows 免安装版](https://github.com/x-llsg/ember-realm/releases/latest/download/ember-realm-windows-portable.zip)
 
@@ -24,7 +24,7 @@ GitHub 的绿色 Code → Download ZIP 按钮下载的是源代码；直接游�
 
 ## 已有内容
 
-- 手绘职业头像、六章守敌与首领图鉴，资源、建筑、装备图标；全部配图支持离线游玩。
+- 手绘风格的职业头像、六章守敌与首领图鉴，资源、建筑、装备图标；全部配图支持离线游玩。
 - 从手动采集开始，随着发展逐步开放资源、建筑、研究和城镇经营。
 - 居民分工、材料加工、地区运输、订单、留守任职与临时来访。
 - 随机冒险者、五档潜力、出身与利弊统一的分级天赋，自由组合职业。
@@ -71,4 +71,6 @@ Windows 还可运行 `npm run build:release`，生成带启动器的免安装压
 
 欢迎通过 Issues 提交问题。请附游戏版本、复现步骤与必要的截图；上传存档前先确认其中没有你不希望公开的内容。
 
-本仓库原创代码和资源使用 [MIT 许可证](LICENSE)。依赖组件保留各自许可证。版本变更见 [CHANGELOG.md](CHANGELOG.md)。
+本仓库原创代码和资源使用 [MIT 许可证](LICENSE)。依赖组件保留各自许可证。内置中文字体来自 [Noto Sans SC](https://github.com/google/fonts/tree/main/ofl/notosanssc)，按 [SIL OFL 1.1](public/fonts/OFL.txt) 分发；已按游戏文字制作子集，随免安装网页内嵌，无需联网。版本变更见 [CHANGELOG.md](CHANGELOG.md)。
+
+新增中文文案若触发字体覆盖检查，可安装开发工具 `fonttools[woff]` 后，运行 `python scripts/subset-ui-font.py NotoSansSC.ttf` 重建子集。普通构建及玩家启动不需要 Python。

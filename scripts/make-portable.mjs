@@ -42,10 +42,17 @@ export async function embedLocalArtwork(
       continue;
     }
     // Unknown local paths, traversal, network paths and queries fail explicitly.
-    if (!/^\/art\/[a-z0-9][a-z0-9_-]*\.webp$/i.test(value)) {
+    const isFont = value === '/fonts/ember-ui.woff2';
+    if (!isFont && !/^\/art\/[a-z0-9][a-z0-9_-]*\.webp$/i.test(value)) {
       throw Error(`Portable artwork is not an approved local asset: ${value}`);
     }
     const bytes = await readFile(path.join(publicDirectory, value.slice(1)));
+    if (isFont) {
+      if (bytes.toString('ascii', 0, 4) !== 'wOF2')
+        throw Error(`Portable UI font is not a valid WOFF2 container: ${value}`);
+      assets.set(value, `url("data:font/woff2;base64,${bytes.toString('base64')}")`);
+      continue;
+    }
     if (
       bytes.toString('ascii', 0, 4) !== 'RIFF' ||
       bytes.toString('ascii', 8, 12) !== 'WEBP'
@@ -74,8 +81,9 @@ async function main() {
   const css = await embedLocalArtwork(
     await readFile(path.join(root, '.portable-build/game.css'), 'utf8'),
   );
+  const fontLicense = await readFile(path.join(root, 'public/fonts/OFL.txt'), 'utf8');
   new vm.Script(js, { filename: 'portable-game.js' });
-  const html = `<!doctype html><html lang="zh-CN" class="dark"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#111a17"><title>余烬之境 · V${version}</title><meta name="description" content="穿越异世，建造城镇、雇佣冒险者，走向魔王、巨龙与神明的终局。"><style>${css.replaceAll('</style', '<\\/style')}</style></head><body><div id="root"></div><noscript>请在浏览器设置中允许 JavaScript，以继续这段旅程。</noscript><script>${js.replaceAll('</script', '<\\/script')}</script></body></html>`;
+  const html = `<!doctype html><html lang="zh-CN" class="dark"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#101114"><title>余烬之境 · V${version}</title><meta name="description" content="穿越异世，建造城镇、雇佣冒险者，走向魔王、巨龙与神明的终局。"><style>${css.replaceAll('</style', '<\\/style')}</style></head><body><div id="root"></div><noscript>请在浏览器设置中允许 JavaScript，以继续这段旅程。</noscript><script>${js.replaceAll('</script', '<\\/script')}</script></body></html>`;
   if (/<script\b[^>]*\bsrc=|<link\b[^>]*\bhref=|\bimport\s*\(/.test(html)) {
     throw Error('Portable game must not load external scripts or styles.');
   }
@@ -86,7 +94,8 @@ async function main() {
   ) {
     throw Error('Portable game must not load external image or media files.');
   }
-  await writeFile(path.join(root, 'play.html'), html);
+  const licensedHtml = html.replace('</body>', `<template id="ui-font-license">${fontLicense.replaceAll('&', '&amp;').replaceAll('<', '&lt;')}</template></body>`);
+  await writeFile(path.join(root, 'play.html'), licensedHtml);
   console.log(
     `Offline game ready: ${Math.round(Buffer.byteLength(html) / 1024)} KB. Embedded art, styles and code; no server required.`,
   );

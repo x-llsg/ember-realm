@@ -80,7 +80,7 @@ export function BattleDesk({ s, act }: { s: G.State; act: Act }) {
             {b.kind === 'guardian' ? `第 ${b.node + 1} 据点守卫` : '首领决战'}
           </strong>
         </div>
-        <span>
+        <span className="battle-round">
           第 <strong>{b.round}</strong> 回合
         </span>
       </header>

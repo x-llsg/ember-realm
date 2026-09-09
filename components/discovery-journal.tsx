@@ -49,6 +49,9 @@ export function DiscoveryJournal({
             aria-pressed={r.id === id}
             onClick={() => setSelected(r.id)}
           >
+            <span className="journal-chapter-number" aria-hidden="true">
+              {String(r.id + 1).padStart(2, '0')}
+            </span>
             <span>{r.name}</span>
             <small>
               {s.guild.depths[r.id]}/5据点
@@ -59,12 +62,15 @@ export function DiscoveryJournal({
       </nav>
       <div className="journal-detail">
         <header>
-          <InfoHint
-            title={region.name}
-            body={s.cleared.includes(id) ? region.story : region.desc}
-          >
-            <h2>{region.name}</h2>
-          </InfoHint>
+          <div className="journal-heading-copy">
+            <small className="journal-eyebrow">第 {id + 1} 章 · 地区档案</small>
+            <InfoHint
+              title={region.name}
+              body={s.cleared.includes(id) ? region.story : region.desc}
+            >
+              <h2>{region.name}</h2>
+            </InfoHint>
+          </div>
           <span>材料来源 · 套装部位 · 调查线索</span>
         </header>
         <div className="journal-grid">

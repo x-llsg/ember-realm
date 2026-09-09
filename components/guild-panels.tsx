@@ -77,16 +77,13 @@ function Person({ s, h }: { s: G.State; h: G.Hero }) {
             {d.role} · 等级 {h.level}
           </span>
           <small className={'potential-' + h.quality}>
-            {'★'.repeat(h.quality)}
+            <Term name="potential">{'★'.repeat(h.quality)} 潜力</Term>
           </small>
         </div>
       </div>
       <p className="guild-meta">
         <InfoHint {...G.originHelp(h)}>{h.origin}</InfoHint> ·{' '}
-        <span className={'potential-' + h.quality}>
-          <Term name="potential">潜力 {'★'.repeat(h.quality)}</Term>
-        </span>{' '}
-        · <Term name="aptitudes">资质</Term> 体{h.aptitude.hp} / 攻
+        <Term name="aptitudes">资质</Term> 体{h.aptitude.hp} / 攻
         {h.aptitude.attack} / 防{h.aptitude.defense}
         {' · 成长 ×'}
         {G.POTENTIAL_GROWTH[h.quality - 1]}
@@ -328,23 +325,42 @@ export function GuildTeam({ s, act, go, focus }: Props) {
               <div className="team-identity-art">
                 <HeroPortrait hero={h} size="lg" />
                 <div className="team-identity-copy">
+                  <span className="team-identity-kicker">
+                    旅人档案{' '}
+                    <span>
+                      {heroLocked
+                        ? '出征中'
+                        : s.party.includes(h.id)
+                          ? '出战成员'
+                          : '留守城镇'}
+                    </span>
+                  </span>
                   <h3>
                     <span className={'potential-' + h.quality}>{h.name}</span>{' '}
                     <small>
                       {G.heroDefinition(s, h.id).role} · 等级 {h.level}
                     </small>
                   </h3>
-                  <p>
-                    生命 <b>{Math.round(personal.hp)}</b> · 攻击{' '}
-                    <b>{Math.round(personal.attack)}</b> · 防御{' '}
-                    <b>{Math.round(personal.defense)}</b>
+                  <div className="hero-quick-stats">
+                    <span>
+                      <small>生命</small>
+                      <b>{Math.round(personal.hp)}</b>
+                    </span>
+                    <span>
+                      <small>攻击</small>
+                      <b>{Math.round(personal.attack)}</b>
+                    </span>
+                    <span>
+                      <small>防御</small>
+                      <b>{Math.round(personal.defense)}</b>
+                    </span>
                     <InfoHint
                       title={G.heroDefinition(s, h.id).skill}
                       body={G.heroDefinition(s, h.id).skillText}
                     >
                       {G.heroDefinition(s, h.id).skill}
                     </InfoHint>
-                  </p>
+                  </div>
                   <HeroTraits h={h} />
                 </div>
               </div>

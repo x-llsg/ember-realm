@@ -22,6 +22,8 @@ $exePath = Join-Path $stageDir '启动余烬之境.exe'
 if ($LASTEXITCODE -ne 0) { throw 'Launcher compilation failed' }
 Copy-Item -LiteralPath (Join-Path $projectDir 'play.html') -Destination (Join-Path $stageDir 'ember-realm/play.html') -Force
 Copy-Item -LiteralPath (Join-Path $projectDir 'LICENSE') -Destination (Join-Path $stageDir 'LICENSE.txt') -Force
+$licenseBundle = (Get-Content -LiteralPath (Join-Path $projectDir 'LICENSE') -Raw -Encoding UTF8) + [Environment]::NewLine + 'Bundled UI font: Noto Sans SC (subset), SIL Open Font License 1.1' + [Environment]::NewLine + (Get-Content -LiteralPath (Join-Path $projectDir 'public/fonts/OFL.txt') -Raw -Encoding UTF8)
+[System.IO.File]::WriteAllText((Join-Path $stageDir 'LICENSE.txt'),$licenseBundle,[Text.UTF8Encoding]::new($false))
 $cmd = '@echo off' + [Environment]::NewLine + 'start "" "%~dp0ember-realm\play.html"' + [Environment]::NewLine + 'exit /b'
 [System.IO.File]::WriteAllText((Join-Path $stageDir '启动余烬之境.cmd'),$cmd,[Text.Encoding]::ASCII)
 $guide = '余烬之境 V' + $version + [Environment]::NewLine + '完整解压后双击启动程序，或打开 ember-realm/play.html。无需联网。' + [Environment]::NewLine + '更新：在旧版设置中导出手记，关闭旧页面，启动新版后导入手记。更换浏览器或目录也请迁移手记。'
