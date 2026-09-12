@@ -123,7 +123,8 @@ export function SiteExploreDesk({
   const [rewardKind, setRewardKind] = useState<SiteRewardKind>(
       run?.rewardKind || 'basic',
     ),
-    [receiptOpen, setReceiptOpen] = useState(false);
+    [receiptOpen, setReceiptOpen] = useState(false),
+    [repeatOpen, setRepeatOpen] = useState(false);
   const relic = RELICS.find((r) => r.id === site.relicId)!;
   const reward = run?.rewards || S.siteReward(s, siteId, rewardKind);
   const prep = run?.preparation || s.guild.preparation;
@@ -149,7 +150,7 @@ export function SiteExploreDesk({
       : 1;
   return (
     <>
-      <div className="explore-desk world-site-desk">
+      <div className="explore-desk explore-layout world-site-desk">
         <nav className="explore-regions" aria-label="已通路地区">
           <div className="explore-region-head">
             <Compass aria-hidden="true" />
@@ -171,7 +172,7 @@ export function SiteExploreDesk({
                 <span className="explore-region-copy">
                   <strong>{r.name}</strong>
                   <small>
-                    {s.cleared.includes(id) ? '首领已败 · ' : ''}据点{' '}
+                    {s.cleared.includes(id) ? '首领已败 · ' : '据点 '}
                     {s.guild.depths[id]}/5
                   </small>
                 </span>
@@ -187,13 +188,15 @@ export function SiteExploreDesk({
             上次地点收获
           </button>
         </nav>
-        <section className="world-site-center" aria-label={`${site.name}探索`}>
+        <div className="explore-location-bar">
           <SiteNavigation
             s={s}
             go={go}
             region={site.region}
             selected={site.id}
           />
+        </div>
+        <section className="world-site-center" aria-label={`${site.name}探索`}>
           <header className="world-site-head">
             <RegionScene region={site.region} />
             <RelicSigil id={site.relicId} />
@@ -209,8 +212,51 @@ export function SiteExploreDesk({
               </h2>
             </div>
           </header>
+          <section
+            className="world-journey-ledger"
+            aria-label="行程费用与预计收获"
+          >
+            <div className="world-journey-cost">
+              <InfoHint
+                title="基础行程"
+                body="出发时支付基础路费，覆盖去程、现场和归程；实际战斗耗时另计。两种处理方式的额外投入见下方路线。"
+              >
+                <strong>
+                  {run ? '已付路费' : '基础行程'} ·{' '}
+                  {duration(run?.total ?? view.travel.seconds)}
+                </strong>
+              </InfoHint>
+              <WorldBill
+                s={s}
+                {...(run?.travelPaid || view.travel)}
+                reward={!!run}
+              />
+            </div>
+            <div className="world-journey-reward">
+              <label htmlFor="site-reward">收获侧重</label>
+              <Pick
+                id="site-reward"
+                label="支线收获侧重"
+                value={run?.rewardKind || rewardKind}
+                disabled={!!run}
+                options={[
+                  { value: 'basic', label: '回收基础补给' },
+                  {
+                    value: 'material',
+                    label: G.materialDiscovered(
+                      s,
+                      G.REGION_MATERIALS[site.region],
+                    )
+                      ? `回收${G.MATERIAL_NAMES[G.REGION_MATERIALS[site.region]]}`
+                      : '当地原料未发现 · 使用基础补给',
+                  },
+                ]}
+                onChange={(v) => setRewardKind(v as SiteRewardKind)}
+              />
+              <WorldBill s={s} {...reward} reward empty="当前没有可回收物资" />
+            </div>
+          </section>
           <div className="world-site-body">
-            <p className="world-site-story">{site.story}</p>
             <div className="world-preview">
               <InfoHint
                 title={variant.name}
@@ -272,7 +318,9 @@ export function SiteExploreDesk({
                       {method === 'assault' ? (
                         <span className="world-site-enemy-preview">
                           <SiteEnemyPortrait siteId={site.id} size="sm" />
-                          <span>迎战 {site.enemy}。读清意图，安排护盾、治疗与反制。</span>
+                          <span>
+                            迎战 {site.enemy}。读清意图，安排护盾、治疗与反制。
+                          </span>
                         </span>
                       ) : (
                         '付出材料解决现场问题，按预计时间安全完成。无需指定职业或潜力。'
@@ -314,34 +362,11 @@ export function SiteExploreDesk({
                     )}
                     <footer>
                       {run?.phase === 'awaitingChoice' ? (
-                        <>
-                          <button
-                            type="button"
-                            className={
-                              method === 'clever'
-                                ? 'primary-button'
-                                : 'secondary-button'
-                            }
-                            disabled={!!quote.reason}
-                            onClick={() =>
-                              act(
-                                (x) => S.chooseSiteRoute(x, method),
-                                method === 'assault'
-                                  ? '已确认强攻，准备物资已支付。'
-                                  : `已安排${site.clever}。`,
-                              )
-                            }
-                          >
-                            {method === 'assault'
-                              ? '确认强攻'
-                              : `确认${site.clever}`}
-                          </button>
-                          <p className="world-hint">
-                            {method === 'assault'
-                              ? '确认即使用准备及药剂，接敌期间撤回不退款。'
-                              : '确认一次付费，完成现场作业后归来。'}
-                          </p>
-                        </>
+                        <p className="world-hint">
+                          {method === 'assault'
+                            ? '确认即使用准备及药剂，接敌期间撤回不退款。'
+                            : '确认一次付费，完成现场作业后归来。'}
+                        </p>
                       ) : !run?.method ? (
                         <PinPlan
                           s={s}
@@ -398,14 +423,18 @@ export function SiteExploreDesk({
                 <button
                   type="button"
                   className="life-text-button"
-                  onClick={() => go({ view: 'town', tab: 'workshop',site:site.id })}
+                  onClick={() =>
+                    go({ view: 'town', tab: 'workshop', site: site.id })
+                  }
                 >
                   经营这处地点 →
                 </button>
               </div>
             )}
           </div>
-          <footer className="world-site-actions">
+          <footer
+            className={`world-site-actions${run?.phase === 'awaitingChoice' ? ' world-site-choosing' : ''}`}
+          >
             <small>
               {run
                 ? '撤回放弃尚未结算收获，已实际支付费用不退。'
@@ -414,6 +443,34 @@ export function SiteExploreDesk({
                   : '选中与预览不扣费。地点不会成为主线首领的新门票。'}
             </small>
             <div className="world-button-row">
+              {run?.phase === 'awaitingChoice' &&
+                (['assault', 'clever'] as SiteMethod[]).map((method) => {
+                  const quote = view.routes[method];
+                  return (
+                    <button
+                      key={method}
+                      type="button"
+                      className={
+                        method === 'clever'
+                          ? 'primary-button'
+                          : 'secondary-button'
+                      }
+                      disabled={!!quote.reason}
+                      onClick={() =>
+                        act(
+                          (x) => S.chooseSiteRoute(x, method),
+                          method === 'assault'
+                            ? '已确认强攻，准备物资已支付。'
+                            : `已安排${site.clever}。`,
+                        )
+                      }
+                    >
+                      {method === 'assault'
+                        ? '确认强攻'
+                        : `确认巧解 · ${site.clever}`}
+                    </button>
+                  );
+                })}
               {run && (
                 <button
                   type="button"
@@ -436,103 +493,94 @@ export function SiteExploreDesk({
           </footer>
         </section>
         <aside className="world-site-preparation" aria-label="地点出发准备">
-          <h3>这次出行</h3>
-          <button
-            type="button"
-            className="life-text-button"
-            onClick={() => go({ view: 'heroes' })}
-          >
-            同行 {run?.partyIds.length ?? s.party.length}/4 · 调整队伍 →
-          </button>
-          <div className="world-prep-row">
-            <label htmlFor="site-reward">收获侧重</label>
-            <Pick
-              id="site-reward"
-              label="支线收获侧重"
-              value={run?.rewardKind || rewardKind}
-              disabled={!!run}
-              options={[
-                { value: 'basic', label: '回收基础补给' },
-                {
-                  value: 'material',
-                  label: G.materialDiscovered(
-                    s,
-                    G.REGION_MATERIALS[site.region],
-                  )
-                    ? `回收${G.MATERIAL_NAMES[G.REGION_MATERIALS[site.region]]}`
-                    : '当地原料未发现 · 使用基础补给',
-                },
-              ]}
-              onChange={(v) => setRewardKind(v as SiteRewardKind)}
-            />
-            <WorldBill s={s} {...reward} reward empty="当前没有可回收物资" />
-          </div>
-          <div className="world-prep-row">
-            <span className="world-hint">
-              基础行程 · {duration(view.travel.seconds)}
-            </span>
-            <WorldBill s={s} {...view.travel} />
-            <p className="world-hint">
-              包括去程、现场和归程；真实战斗耗时另计。
-            </p>
-          </div>
-          <div className="world-prep-row">
-            <label htmlFor="site-stance">战术姿态</label>
-            <Pick
-              id="site-stance"
-              label="支线战术姿态"
-              value={prep.stance}
-              disabled={locked}
-              options={[
-                { value: 'balanced', label: '均衡 · 标准攻防' },
-                { value: 'cautious', label: '谨慎 · 伤害与承伤 −10%' },
-                { value: 'assault', label: '强攻 · 伤害与承伤 +12%' },
-              ]}
-              onChange={(v) => setPrep({ stance: v as typeof prep.stance })}
-            />
-          </div>
-          {potions.length > 0 && (
+          <div className="world-preparation-content">
+            <header className="world-preparation-head">
+              <h3>出战准备</h3>
+              <button
+                type="button"
+                className="life-text-button"
+                onClick={() => go({ view: 'heroes' })}
+              >
+                同行 {run?.partyIds.length ?? s.party.length}/4 →
+              </button>
+            </header>
             <div className="world-prep-row">
-              <label htmlFor="site-potion">抗性药剂</label>
+              <label htmlFor="site-stance">战术姿态</label>
               <Pick
-                id="site-potion"
-                label="支线抗性药剂"
-                value={prep.element}
+                id="site-stance"
+                label="支线战术姿态"
+                value={prep.stance}
                 disabled={locked}
                 options={[
-                  { value: 'physical', label: '不携带药剂' },
-                  ...potions.map((p) => ({
-                    value: p.id,
-                    label: `${p.name} · ${G.potionCount(s, p.id)}份`,
-                  })),
+                  { value: 'balanced', label: '均衡 · 标准攻防' },
+                  { value: 'cautious', label: '谨慎 · 伤害与承伤 −10%' },
+                  { value: 'assault', label: '强攻 · 伤害与承伤 +12%' },
                 ]}
-                onChange={(v) => setPrep({ element: v as G.Element })}
+                onChange={(v) => setPrep({ stance: v as typeof prep.stance })}
               />
             </div>
-          )}
-          <label className="world-button-row">
-            <input
-              type="checkbox"
-              checked={prep.remedy}
-              disabled={locked}
-              onChange={(e) => setPrep({ remedy: e.target.checked })}
-            />
-            携带额外应急药囊
-          </label>
-          <p className="world-hint">
-            只在确认强攻时消耗所选准备；巧解不使用战斗药剂。
-          </p>
-          <PotionWorkshop s={s} act={act} />
-          {progress.routesCompleted.length > 0 && (
-            <SiteRepeatForm key={siteId} s={s} act={act} siteId={siteId} />
-          )}
-          {plan && (
-            <p className="world-hint">
-              {plan.enabled ? '重复安排中' : '重复已停'} · 已完成{' '}
-              {plan.completed} 趟{plan.reason ? ` · ${plan.reason}` : ''}
-            </p>
-          )}
+            {potions.length > 0 && (
+              <div className="world-prep-row">
+                <label htmlFor="site-potion">抗性药剂</label>
+                <Pick
+                  id="site-potion"
+                  label="支线抗性药剂"
+                  value={prep.element}
+                  disabled={locked}
+                  options={[
+                    { value: 'physical', label: '不携带药剂' },
+                    ...potions.map((p) => ({
+                      value: p.id,
+                      label: `${p.name} · ${G.potionCount(s, p.id)}份`,
+                    })),
+                  ]}
+                  onChange={(v) => setPrep({ element: v as G.Element })}
+                />
+              </div>
+            )}
+            <label className="world-button-row world-remedy-choice">
+              <input
+                type="checkbox"
+                checked={prep.remedy}
+                disabled={locked}
+                onChange={(e) => setPrep({ remedy: e.target.checked })}
+              />
+              <InfoHint
+                title="额外应急药囊"
+                body="沿用主队的应急准备。只有确认强攻才实际消耗准备费用，巧解不会消耗；当趟出发后不能更改准备。费用会计入中央的强攻报价。"
+              >
+                携带额外应急药囊
+              </InfoHint>
+            </label>
+            <p className="world-hint">确认强攻时消耗，巧解不消耗。</p>
+            <PotionWorkshop s={s} act={act} />
+          </div>
           <div className="world-start">
+            {progress.routesCompleted.length > 0 && (
+              <button
+                type="button"
+                className="world-repeat-trigger life-text-button"
+                aria-haspopup="dialog"
+                onClick={() => setRepeatOpen(true)}
+              >
+                <Repeat2 size={13} aria-hidden="true" /> 重复探索设置
+                <ChevronRight size={13} aria-hidden="true" />
+              </button>
+            )}
+            {plan && (
+              <p className="world-hint">
+                <InfoHint
+                  title={plan.enabled ? '重复安排中' : '重复已停'}
+                  body={
+                    plan.reason ||
+                    '只按已确认的状况策略与预算执行。可打开重复探索设置查看或调整后续安排。'
+                  }
+                >
+                  {plan.enabled ? '重复安排中' : '重复已停'} · 已完成{' '}
+                  {plan.completed} 趟{plan.reason ? ' · 查看原因' : ''}
+                </InfoHint>
+              </p>
+            )}
             {!run && (
               <>
                 <button
@@ -568,6 +616,17 @@ export function SiteExploreDesk({
           </div>
         </aside>
       </div>
+      <Dialog open={repeatOpen} onOpenChange={setRepeatOpen}>
+        <DialogContent className="world-drawer world-repeat-dialog">
+          <DialogTitle className="world-drawer-title">重复探索设置</DialogTitle>
+          <DialogDescription className="world-drawer-description">
+            {site.name} · 只执行亲自完成过的路线。设置在点击应用后生效。
+          </DialogDescription>
+          {repeatOpen && (
+            <SiteRepeatForm key={siteId} s={s} act={act} siteId={siteId} />
+          )}
+        </DialogContent>
+      </Dialog>
       <SiteReceiptDialog
         s={s}
         act={act}
@@ -597,7 +656,13 @@ function SiteRepeatForm({
       : null;
   const [options, setOptions] = useState<SiteRepeatOptions>(() =>
     existing
-      ? structuredClone({strategies:existing.strategies,limit:existing.limit,reserve:existing.reserve,maxExtraCost:existing.maxExtraCost,maxExtraMaterials:existing.maxExtraMaterials})
+      ? structuredClone({
+          strategies: existing.strategies,
+          limit: existing.limit,
+          reserve: existing.reserve,
+          maxExtraCost: existing.maxExtraCost,
+          maxExtraMaterials: existing.maxExtraMaterials,
+        })
       : {
           strategies: { A: null, B: null },
           limit: 5,
@@ -607,7 +672,7 @@ function SiteRepeatForm({
         },
   );
   const [budget, setBudget] = useState(false);
-  const repeatReason=S.siteRepeatReason(s,siteId,options);
+  const repeatReason = S.siteRepeatReason(s, siteId, options);
   const sameRun = s.worldExploration.activeRun?.siteId === siteId;
   const active =
     !!s.expedition ||
@@ -638,61 +703,58 @@ function SiteRepeatForm({
       return { ...o, [kind]: next };
     });
   return (
-    <details className="world-repeat">
-      <summary>
-        <Repeat2 size={12} aria-hidden="true" /> 安排熟练路线
-      </summary>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          act(
-            (x) => S.setSiteRepeat(x, siteId, options),
-            '已应用支线重复安排。',
-          );
-        }}
-      >
-        {(['A', 'B'] as SiteVariant[]).map((v) => (
-          <div key={v} className="world-prep-row">
-            <label>
-              {definition.variants[v].name}
-              <Pick
-                label={`${definition.variants[v].name}自动方式`}
-                value={options.strategies[v]?.method || ''}
-                options={[
-                  { value: '', label: '停止，等待我决定' },
-                  ...progress.routesCompleted.map((method) => ({
-                    value: method,
-                    label: `${methodNames[method]} · ${definition[method]}`,
-                  })),
-                ]}
-                onChange={(value) => strategy(v, value)}
-              />
-            </label>
-            {options.strategies[v] && (
-              <Pick
-                label={`${definition.variants[v].name}自动收获`}
-                value={options.strategies[v]!.rewardKind}
-                options={[
-                  { value: 'basic', label: '回收基础补给' },
-                  { value: 'material', label: '回收已发现的当地原料' },
-                ]}
-                onChange={(value) =>
-                  setOptions((o) => ({
-                    ...o,
-                    strategies: {
-                      ...o.strategies,
-                      [v]: {
-                        ...o.strategies[v]!,
-                        rewardKind: value as SiteRewardKind,
+    <form
+      className="world-repeat"
+      onSubmit={(e) => {
+        e.preventDefault();
+        act((x) => S.setSiteRepeat(x, siteId, options), '已应用支线重复安排。');
+      }}
+    >
+      <div className="world-repeat-body">
+        <div className="world-repeat-strategies">
+          {(['A', 'B'] as SiteVariant[]).map((v) => (
+            <div key={v} className="world-prep-row">
+              <label>
+                {definition.variants[v].name}
+                <Pick
+                  label={`${definition.variants[v].name}自动方式`}
+                  value={options.strategies[v]?.method || ''}
+                  options={[
+                    { value: '', label: '停止，等待我决定' },
+                    ...progress.routesCompleted.map((method) => ({
+                      value: method,
+                      label: `${methodNames[method]} · ${definition[method]}`,
+                    })),
+                  ]}
+                  onChange={(value) => strategy(v, value)}
+                />
+              </label>
+              {options.strategies[v] && (
+                <Pick
+                  label={`${definition.variants[v].name}自动收获`}
+                  value={options.strategies[v]!.rewardKind}
+                  options={[
+                    { value: 'basic', label: '回收基础补给' },
+                    { value: 'material', label: '回收已发现的当地原料' },
+                  ]}
+                  onChange={(value) =>
+                    setOptions((o) => ({
+                      ...o,
+                      strategies: {
+                        ...o.strategies,
+                        [v]: {
+                          ...o.strategies[v]!,
+                          rewardKind: value as SiteRewardKind,
+                        },
                       },
-                    },
-                  }))
-                }
-              />
-            )}
-          </div>
-        ))}
-        <label>
+                    }))
+                  }
+                />
+              )}
+            </div>
+          ))}
+        </div>
+        <label className="world-repeat-limit">
           成功多少趟后停止
           <input
             aria-label="支线重复成功趟数"
@@ -715,6 +777,7 @@ function SiteRepeatForm({
         <button
           type="button"
           className="life-text-button"
+          aria-expanded={budget}
           onClick={() => setBudget(!budget)}
         >
           {budget ? '收起' : '设置'}保留量与费用上限
@@ -781,6 +844,8 @@ function SiteRepeatForm({
         <p className="world-hint">
           陌生状况、缺料、战败和待领都会停止；恢复库存后需主动重启，不自动买药或分解装备。
         </p>
+      </div>
+      <footer className="world-repeat-apply">
         <button
           type="submit"
           className="secondary-button"
@@ -788,9 +853,13 @@ function SiteRepeatForm({
         >
           {sameRun ? '应用到下一趟' : '启用重复安排'}
         </button>
-        {(active || repeatReason) && <p className="world-hint">{active?'请先结束当前的其他活动。':repeatReason}</p>}
-      </form>
-    </details>
+        {(active || repeatReason) && (
+          <p className="world-hint">
+            {active ? '请先结束当前的其他活动。' : repeatReason}
+          </p>
+        )}
+      </footer>
+    </form>
   );
 }
 
@@ -814,9 +883,11 @@ export function SiteReceiptDialog({
     receipt = progress?.pendingReceipt || progress?.lastResult;
   const relic = RELICS.find((r) => r.siteId === siteId);
   const relicState = relic && s.worldExploration.relics.owned[relic.id];
-  const relicDeployed = relic && (relic.kind === 'town'
-    ? s.worldExploration.relics.town.some((r) => r.id === relic.id)
-    : !!s.worldExploration.relics.combat[relic.id]);
+  const relicDeployed =
+    relic &&
+    (relic.kind === 'town'
+      ? s.worldExploration.relics.town.some((r) => r.id === relic.id)
+      : !!s.worldExploration.relics.combat[relic.id]);
   const relicStatus = relicDeployed
     ? '已部署'
     : relicState?.repaired
@@ -875,7 +946,9 @@ export function SiteReceiptDialog({
                     <strong>{relic.name}</strong>
                   </InfoHint>
                 </div>
-                <p className="world-hint">遗物当前状态：{relicStatus}。本地点设施也已开放独立修复资格。</p>
+                <p className="world-hint">
+                  遗物当前状态：{relicStatus}。本地点设施也已开放独立修复资格。
+                </p>
                 <div className="world-button-row">
                   <button
                     className="secondary-button"
@@ -889,14 +962,23 @@ export function SiteReceiptDialog({
                       });
                     }}
                   >
-                    {relicState?.repaired ? '查看遗物' : relicState?.operation ? '查看修复进度' : '修复遗物'} →
+                    {relicState?.repaired
+                      ? '查看遗物'
+                      : relicState?.operation
+                        ? '查看修复进度'
+                        : '修复遗物'}{' '}
+                    →
                   </button>
                   <button
                     type="button"
                     className="life-text-button"
                     onClick={() => {
                       onOpenChange(false);
-                      go({ view: 'town', tab: 'workshop',site:receipt.siteId });
+                      go({
+                        view: 'town',
+                        tab: 'workshop',
+                        site: receipt.siteId,
+                      });
                     }}
                   >
                     查看地区设施 →
@@ -940,10 +1022,7 @@ export function SiteReceiptDialog({
                   type="button"
                   className="primary-button"
                   onClick={() =>
-                    act(
-                      (x) => S.claimSite(x, siteId),
-                    '已按当前仓位领取物资。',
-                    )
+                    act((x) => S.claimSite(x, siteId), '已按当前仓位领取物资。')
                   }
                 >
                   按仓位领取
@@ -985,7 +1064,9 @@ export function SiteActivity({ s, act, go }: Props) {
     );
   const signature = `${plan?.siteId}:${plan?.completed}:${plan?.reason}`;
   const showActivity = !!(
-    run || results.length || (plan && (plan.enabled || signature !== dismissed))
+    run ||
+    results.length ||
+    (plan && (plan.enabled || signature !== dismissed))
   );
   // Reading the last result can hide the bar, but must not hide an open dialog
   // while preserving its selection to accidentally reopen with the next trip.
@@ -993,71 +1074,73 @@ export function SiteActivity({ s, act, go }: Props) {
   const site = S.siteDefinition(run?.siteId || plan?.siteId || results[0]?.[0]);
   return (
     <>
-      {showActivity && <div className="world-activity" aria-label="支线活动与收获">
-        {site && (
-          <button
-            type="button"
-            onClick={() =>
-              go({ view: 'explore', region: site.region, site: site.id })
-            }
-          >
-            <Compass aria-hidden="true" />
-            <strong>{site.name}</strong>
-            <ChevronRight aria-hidden="true" />
-          </button>
-        )}
-        <span className="world-activity-phase">
-          {run
-            ? `${run.phase === 'resolving' && run.method === 'assault' ? '接敌准备' : phases[run.phase]}${run.phase === 'awaitingChoice' || run.phase === 'battle' ? '' : ` · ${duration(run.remaining)}`}${s.paused ? ' · 暂停' : ''}`
-            : plan
-              ? `${plan.enabled ? '等待下一趟' : '重复已停'} · ${plan.reason || `已完成${plan.completed}趟`}`
-              : '有新的地点收获'}
-        </span>
-        {results.length > 0 && (
-          <button
-            type="button"
-            className="world-receipt-count"
-            onClick={() => {
-              const id = results[0][0];
-              act((x) => S.readSiteReceipt(x, id), '已查看地点收获。');
-              setReceiptId(id);
-            }}
-          >
-            <PackageOpen aria-hidden="true" />
-            收获 {results.length}
-          </button>
-        )}
-        {plan?.enabled && (
-          <button
-            type="button"
-            onClick={() =>
-              act(
-                (x) => S.setSiteRepeat(x, plan.siteId, null),
-                '已停止后续重复。',
-              )
-            }
-          >
-            停止重复
-          </button>
-        )}
-        {run && (
-          <button
-            type="button"
-            onClick={() => act(S.recallSite, '已立即撤回支线队伍。')}
-          >
-            立即撤回
-          </button>
-        )}
-        {!run && !plan?.enabled && !results.length && (
-          <button
-            type="button"
-            aria-label="收起支线状态"
-            onClick={() => setDismissed(signature)}
-          >
-            ×
-          </button>
-        )}
-      </div>}
+      {showActivity && (
+        <div className="world-activity" aria-label="支线活动与收获">
+          {site && (
+            <button
+              type="button"
+              onClick={() =>
+                go({ view: 'explore', region: site.region, site: site.id })
+              }
+            >
+              <Compass aria-hidden="true" />
+              <strong>{site.name}</strong>
+              <ChevronRight aria-hidden="true" />
+            </button>
+          )}
+          <span className="world-activity-phase">
+            {run
+              ? `${run.phase === 'resolving' && run.method === 'assault' ? '接敌准备' : phases[run.phase]}${run.phase === 'awaitingChoice' || run.phase === 'battle' ? '' : ` · ${duration(run.remaining)}`}${s.paused ? ' · 暂停' : ''}`
+              : plan
+                ? `${plan.enabled ? '等待下一趟' : '重复已停'} · ${plan.reason || `已完成${plan.completed}趟`}`
+                : '有新的地点收获'}
+          </span>
+          {results.length > 0 && (
+            <button
+              type="button"
+              className="world-receipt-count"
+              onClick={() => {
+                const id = results[0][0];
+                act((x) => S.readSiteReceipt(x, id), '已查看地点收获。');
+                setReceiptId(id);
+              }}
+            >
+              <PackageOpen aria-hidden="true" />
+              收获 {results.length}
+            </button>
+          )}
+          {plan?.enabled && (
+            <button
+              type="button"
+              onClick={() =>
+                act(
+                  (x) => S.setSiteRepeat(x, plan.siteId, null),
+                  '已停止后续重复。',
+                )
+              }
+            >
+              停止重复
+            </button>
+          )}
+          {run && (
+            <button
+              type="button"
+              onClick={() => act(S.recallSite, '已立即撤回支线队伍。')}
+            >
+              立即撤回
+            </button>
+          )}
+          {!run && !plan?.enabled && !results.length && (
+            <button
+              type="button"
+              aria-label="收起支线状态"
+              onClick={() => setDismissed(signature)}
+            >
+              ×
+            </button>
+          )}
+        </div>
+      )}
       {receiptId && (
         <SiteReceiptDialog
           s={s}
