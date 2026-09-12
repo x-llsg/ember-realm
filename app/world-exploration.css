@@ -165,6 +165,21 @@
   margin: 0;
   max-width: 75ch;
 }
+/* On short windows, place information shares one scroll area instead of
+   reserving the banner height and squeezing routes to a few pixels. */
+@media (max-height: 680px) {
+  .v21-ui.v21-ui.v9-ui .world-site-center {
+    overflow: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+  .v21-ui.v21-ui.v9-ui .world-site-center > * {
+    flex: none;
+  }
+  .v21-ui.v21-ui.v9-ui .world-site-body {
+    overflow: visible;
+  }
+}
 .v21-ui .world-preview {
   display: flex;
   align-items: baseline;
@@ -572,9 +587,28 @@
 }
 .v21-ui .world-facility-list {
   display: grid;
-  max-height: 250px;
-  overflow: auto;
   min-height: 0;
+}
+/* When the workbench owns scrolling, grid rows must retain content height.
+   Visible overflow alone leaves the second row covering the route facilities. */
+@media (max-width: 1099px) {
+  .v21-ui.v21-ui.v9-ui .flow-columns {
+    grid-template-rows: none;
+    grid-auto-rows: max-content;
+    align-content: start;
+  }
+  .v21-ui.v21-ui.v9-ui .flow-columns > .flow-column {
+    height: auto;
+    min-height: max-content;
+    max-height: none;
+    flex: none;
+    align-self: start;
+    overflow: visible;
+  }
+  .v21-ui.v21-ui.v9-ui .flow-management {
+    grid-template-rows: none;
+    grid-auto-rows: max-content;
+  }
 }
 .v21-ui .world-facility-filters {
   display: flex;
@@ -721,9 +755,6 @@
   }
   .v21-ui .world-route {
     gap: 7px;
-  }
-  .v21-ui .world-facility-list {
-    max-height: 190px;
   }
   .v21-ui .world-relic-copy {
     font-size: 13px;

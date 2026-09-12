@@ -4,7 +4,11 @@ import { EnemyPortrait, RegionScene } from './game-art';
 import { PinPlan } from './planning-board';
 import { BattleLoot } from './loot-notice';
 import { HuntControl } from './hunt-controls';
-import { SiteExploreDesk, SiteNavigation, rememberedSite } from './site-explore-desk';
+import {
+  SiteExploreDesk,
+  SiteNavigation,
+  rememberedSite,
+} from './site-explore-desk';
 
 import { InfoHint } from './info-hint';
 import { CombatRecommendation } from './combat-recommendation';
@@ -178,7 +182,8 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
   const modifiers = G.battleModifiers(s, region),
     prep = s.guild.preparation;
   const reason = G.bossReason(s, region),
-    preparationLocked = !!s.expedition || !!s.battle || !!s.worldExploration.activeRun;
+    preparationLocked =
+      !!s.expedition || !!s.battle || !!s.worldExploration.activeRun;
   const party = G.partyStats(s);
 
   // Exclude the ticking clock and ordinary stock growth. Include every preparation
@@ -501,7 +506,10 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
   }
 
   const siteId = rememberedSite(s, region, focus.site);
-  if (siteId) return <SiteExploreDesk key={siteId} s={s} act={act} go={go} siteId={siteId} />;
+  if (siteId)
+    return (
+      <SiteExploreDesk key={siteId} s={s} act={act} go={go} siteId={siteId} />
+    );
 
   return (
     <>
@@ -578,226 +586,228 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
           className="explore-center"
           aria-labelledby="explore-region-title"
         >
-          <SiteNavigation s={s} go={go} region={region} />
-          <header className="explore-heading">
-            <RegionScene region={region} className="explore-region-scene" />
-            <div className="explore-heading-copy">
-              <span className="life-kicker">
-                {String(region + 1).padStart(2, '0')} / {enemy.biome}
-              </span>
-              <h2 id="explore-region-title">
-                <InfoHint title={enemy.name} body={enemy.desc}>
-                  {enemy.name}
-                </InfoHint>
-              </h2>
-            </div>
-            <button
-              type="button"
-              className="explore-party"
-              onClick={() => go({ view: 'heroes', tab: 'roster' })}
-              title={s.party
-                .map((id) => s.heroes.find((h) => h.id === id)?.name)
-                .filter(Boolean)
-                .join('、')}
-            >
-              <span>
-                小队战力 <strong>{party.power}</strong>
-              </span>
-              <small>{s.party.length} 位同行者 · 调整队伍 →</small>
-            </button>
-          </header>
+          <div className="explore-map-scroll" aria-label="地图与据点">
+            <header className="explore-heading">
+              <RegionScene region={region} className="explore-region-scene" />
+              <div className="explore-heading-copy">
+                <span className="life-kicker">
+                  {String(region + 1).padStart(2, '0')} / {enemy.biome}
+                </span>
+                <h2 id="explore-region-title">
+                  <InfoHint title={enemy.name} body={enemy.desc}>
+                    {enemy.name}
+                  </InfoHint>
+                </h2>
+              </div>
+              <SiteNavigation s={s} go={go} region={region} />
+              <button
+                type="button"
+                className="explore-party"
+                onClick={() => go({ view: 'heroes', tab: 'roster' })}
+                title={s.party
+                  .map((id) => s.heroes.find((h) => h.id === id)?.name)
+                  .filter(Boolean)
+                  .join('、')}
+              >
+                <span>
+                  小队战力 <strong>{party.power}</strong>
+                </span>
+                <small>{s.party.length} 位同行者 · 调整队伍 →</small>
+              </button>
+            </header>
 
-          <div className="explore-frontier">
-            {returned ? (
-              <>
-                <ol className="explore-path" aria-label="本地区五处据点">
-                  {G.FRONTIERS[region].map((name, index) => (
-                    <li
-                      key={name}
-                      className={
-                        index < frontier.depth
-                          ? 'done'
-                          : index === frontier.depth
-                            ? 'current'
-                            : ''
-                      }
-                      aria-current={
-                        index === frontier.depth ? 'step' : undefined
-                      }
-                    >
-                      <button
-                        type="button"
-                        disabled={index > frontier.depth}
-                        aria-label={`${name}${index < frontier.depth ? ' · 已夺取，可再战' : index === frontier.depth ? ' · 当前据点' : ' · 尚未抵达'}`}
-                        aria-pressed={index === guardianNode}
-                        onClick={() =>
-                          go({
-                            view: 'explore',
-                            region,
-                            guardian: index,
-                            route: mission.route,
-                          })
+            <div className="explore-frontier">
+              {returned ? (
+                <>
+                  <ol className="explore-path" aria-label="本地区五处据点">
+                    {G.FRONTIERS[region].map((name, index) => (
+                      <li
+                        key={name}
+                        className={
+                          index < frontier.depth
+                            ? 'done'
+                            : index === frontier.depth
+                              ? 'current'
+                              : ''
+                        }
+                        aria-current={
+                          index === frontier.depth ? 'step' : undefined
                         }
                       >
-                        <b>
-                          {index < frontier.depth ? (
-                            <Check aria-label="已夺取" />
-                          ) : (
-                            index + 1
-                          )}
-                        </b>
-                        <span>{name}</span>
-                      </button>
-                    </li>
-                  ))}
-                </ol>
-                <div className="explore-progress">
-                  <strong>
-                    <InfoHint
-                      title={enemy.name + ' · 据点道路'}
-                      body={
-                        <>
-                          <p>
-                            {G.FRONTIERS[region]
-                              .map(
-                                (name, index) =>
-                                  `${index + 1}. ${name}${index < frontier.depth ? '（已夺取）' : ''}`,
-                              )
-                              .join(' → ')}
-                          </p>
-                          <p>
-                            {frontier.depth < 5 ? '下一据点首占奖励：' : ''}
-                            {layerReward}
-                          </p>
-                          <p>
-                            成功推进 +{frontier.progress}；当前{' '}
-                            {s.guild.progress[region]}/{frontier.required}。
-                          </p>
-                        </>
-                      }
-                    >
-                      {frontier.depth === 5 ? '道路已打通' : frontier.name}
-                    </InfoHint>
-                  </strong>
-                  <span>
-                    {frontier.depth === 5
-                      ? '据点 5/5'
-                      : `${s.guild.progress[region]}/${frontier.required} · 成功推进 +${frontier.progress}`}
-                  </span>
-                </div>
-                <Meter
-                  value={
-                    frontier.depth === 5
-                      ? 100
-                      : (s.guild.progress[region] / frontier.required) * 100
-                  }
-                  label="当前据点推进"
-                />
-                <p className="explore-reward" title={layerReward}>
-                  {frontier.depth < 5 ? '下一据点首占奖励：' : ''}
-                  {layerReward}
-                </p>
-              </>
-            ) : (
-              <p className="explore-reward">
-                先调查森林边缘。带回样品与见闻后，再选择深入据点或运输补给。
-              </p>
-            )}
-          </div>
-
-          {returned && (
-            <div className={`guardian-preview${guardReady ? ' ready' : ''}`}>
-              <div className="guardian-identity">
-                <span className="guardian-portrait" aria-hidden="true">
-                  <EnemyPortrait
-                    region={region}
-                    node={guardianNode}
-                    size="sm"
+                        <button
+                          type="button"
+                          disabled={index > frontier.depth}
+                          aria-label={`${name}${index < frontier.depth ? ' · 已夺取，可再战' : index === frontier.depth ? ' · 当前据点' : ' · 尚未抵达'}`}
+                          aria-pressed={index === guardianNode}
+                          onClick={() =>
+                            go({
+                              view: 'explore',
+                              region,
+                              guardian: index,
+                              route: mission.route,
+                            })
+                          }
+                        >
+                          <b>
+                            {index < frontier.depth ? (
+                              <Check aria-label="已夺取" />
+                            ) : (
+                              index + 1
+                            )}
+                          </b>
+                          <span>{name}</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ol>
+                  <div className="explore-progress">
+                    <strong>
+                      <InfoHint
+                        title={enemy.name + ' · 据点道路'}
+                        body={
+                          <>
+                            <p>
+                              {G.FRONTIERS[region]
+                                .map(
+                                  (name, index) =>
+                                    `${index + 1}. ${name}${index < frontier.depth ? '（已夺取）' : ''}`,
+                                )
+                                .join(' → ')}
+                            </p>
+                            <p>
+                              {frontier.depth < 5 ? '下一据点首占奖励：' : ''}
+                              {layerReward}
+                            </p>
+                            <p>
+                              成功推进 +{frontier.progress}；当前{' '}
+                              {s.guild.progress[region]}/{frontier.required}。
+                            </p>
+                          </>
+                        }
+                      >
+                        {frontier.depth === 5 ? '道路已打通' : frontier.name}
+                      </InfoHint>
+                    </strong>
+                    <span>
+                      {frontier.depth === 5
+                        ? '据点 5/5'
+                        : `${s.guild.progress[region]}/${frontier.required} · 成功推进 +${frontier.progress}`}
+                    </span>
+                  </div>
+                  <Meter
+                    value={
+                      frontier.depth === 5
+                        ? 100
+                        : (s.guild.progress[region] / frontier.required) * 100
+                    }
+                    label="当前据点推进"
                   />
-                </span>
-                <div className="guardian-identity-copy">
-                  <InfoHint
-                    title={guardian.name}
-                    body={`生命 ${guardian.hp} · 攻击 ${guardian.attack} · 护甲 ${guardian.defense}。${G.ELEMENT_NAMES[guardian.element]}伤害。${rematch ? '再战按所选节点掉落当地套装，不重复首占奖励、经验或据点进度。' : '推荐练度包括装备与技能养成；战败保留路线。'}`}
-                  >
-                    <strong>{guardian.name}</strong>
-                  </InfoHint>
-                  <small>
-                    {rematch
-                      ? '再战守敌 · 不重复首占奖励'
-                      : guardReady
-                        ? '守敌已现身'
-                        : '当前节点守敌'}{' '}
-                    · 生命 {guardian.hp.toLocaleString('zh-CN')}
-                  </small>
-                </div>
-              </div>
-              <div className="guardian-actions">
-                <button
-                  className="primary-button"
-                  disabled={!!guardianBlocker}
-                  onClick={() => {
-                    go({
-                      view: 'explore',
-                      region,
-                      guardian: guardianNode,
-                      route: mission.route,
-                    });
-                    act((x) =>
-                      G.beginBattle(x, region, 'guardian', guardianNode),
-                    );
-                  }}
-                >
-                  {rematch
-                    ? '再战守敌'
-                    : guardReady
-                      ? '挑战守敌'
-                      : '推进后挑战'}
-                </button>
-                <HuntControl
-                  s={s}
-                  act={act}
-                  region={region}
-                  kind="guardian"
-                  node={guardianNode}
-                />
-              </div>
-              <InfoHint
-                {...G.dropHelp(guardianLoot)}
-                className="guardian-loot-note"
-              >
-                {G.dropSummary(guardianLoot)}
-              </InfoHint>
-              {guardReady && guardianBlocker && (
-                <small>{guardianBlocker}</small>
+                  <p className="explore-reward" title={layerReward}>
+                    {frontier.depth < 5 ? '下一据点首占奖励：' : ''}
+                    {layerReward}
+                  </p>
+                </>
+              ) : (
+                <p className="explore-reward">
+                  先调查森林边缘。带回样品与见闻后，再选择深入据点或运输补给。
+                </p>
               )}
             </div>
-          )}
-          {returned && (
-            <CombatRecommendation
-              s={s}
-              region={region}
-              node={guardianNode + 1}
-            />
-          )}
-          {returned && (
-            <label className="guardian-auto">
-              <input
-                type="checkbox"
-                checked={s.combatAuto}
-                onChange={(event) =>
-                  act((x) => G.setCombatAuto(x, event.target.checked))
-                }
-              />
-              守敌自动战斗{' '}
-              <InfoHint
-                title="自动推进"
-                body="勾选后，重复推进的队伍在抵达守敌时自动付出准备费用并作战。每秒执行一步，随时可关闭；战败停止续派。自动使用实际属性、血条与冷却，不保证胜利。"
-              >
-                规则
-              </InfoHint>
-            </label>
-          )}
+
+            {returned && (
+              <div className={`guardian-preview${guardReady ? ' ready' : ''}`}>
+                <div className="guardian-identity">
+                  <span className="guardian-portrait" aria-hidden="true">
+                    <EnemyPortrait
+                      region={region}
+                      node={guardianNode}
+                      size="sm"
+                    />
+                  </span>
+                  <div className="guardian-identity-copy">
+                    <InfoHint
+                      title={guardian.name}
+                      body={`生命 ${guardian.hp} · 攻击 ${guardian.attack} · 护甲 ${guardian.defense}。${G.ELEMENT_NAMES[guardian.element]}伤害。${rematch ? '再战按所选节点掉落当地套装，不重复首占奖励、经验或据点进度。' : '推荐练度包括装备与技能养成；战败保留路线。'}`}
+                    >
+                      <strong>{guardian.name}</strong>
+                    </InfoHint>
+                    <small>
+                      {rematch
+                        ? '再战守敌 · 不重复首占奖励'
+                        : guardReady
+                          ? '守敌已现身'
+                          : '当前节点守敌'}{' '}
+                      · 生命 {guardian.hp.toLocaleString('zh-CN')}
+                    </small>
+                  </div>
+                </div>
+                <div className="guardian-actions">
+                  <button
+                    className="primary-button"
+                    disabled={!!guardianBlocker}
+                    onClick={() => {
+                      go({
+                        view: 'explore',
+                        region,
+                        guardian: guardianNode,
+                        route: mission.route,
+                      });
+                      act((x) =>
+                        G.beginBattle(x, region, 'guardian', guardianNode),
+                      );
+                    }}
+                  >
+                    {rematch
+                      ? '再战守敌'
+                      : guardReady
+                        ? '挑战守敌'
+                        : '推进后挑战'}
+                  </button>
+                  <HuntControl
+                    s={s}
+                    act={act}
+                    region={region}
+                    kind="guardian"
+                    node={guardianNode}
+                  />
+                </div>
+                <InfoHint
+                  {...G.dropHelp(guardianLoot)}
+                  className="guardian-loot-note"
+                >
+                  {G.dropSummary(guardianLoot)}
+                </InfoHint>
+                {guardReady && guardianBlocker && (
+                  <small>{guardianBlocker}</small>
+                )}
+              </div>
+            )}
+            {returned && (
+              <div className="guardian-readiness">
+                <CombatRecommendation
+                  s={s}
+                  region={region}
+                  node={guardianNode + 1}
+                />
+                <label className="guardian-auto">
+                  <input
+                    type="checkbox"
+                    checked={s.combatAuto}
+                    onChange={(event) =>
+                      act((x) => G.setCombatAuto(x, event.target.checked))
+                    }
+                  />
+                  守敌自动战斗{' '}
+                  <InfoHint
+                    title="自动推进"
+                    body="勾选后，重复推进的队伍在抵达守敌时自动付出准备费用并作战。每秒执行一步，随时可关闭；战败停止续派。自动使用实际属性、血条与冷却，不保证胜利。"
+                  >
+                    规则
+                  </InfoHint>
+                </label>
+              </div>
+            )}
+          </div>
           <MissionPlanner
             key={`${region}:${mission.revision}`}
             s={s}

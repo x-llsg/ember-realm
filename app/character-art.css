@@ -20,6 +20,10 @@
   font-weight: 600;
   letter-spacing: 0;
 }
+.v21-ui.v21-ui.v9-ui .life-view:has(> .team-desk) {
+  flex: 1 1 0;
+  max-height: none;
+}
 .v21-ui.v21-ui.v9-ui .team-desk {
   grid-template-columns: 206px minmax(0, 1fr);
   padding: 14px;
@@ -429,6 +433,8 @@
   font-size: 12px;
 }
 .v21-ui.v21-ui.v9-ui .guild-candidates:has(.recruit-card) {
+  /* The list scrolls; a short viewport must not compress a dossier's text. */
+  grid-auto-rows: max-content;
   align-content: start;
   align-items: stretch;
   gap: 0;
@@ -437,8 +443,9 @@
 }
 .v21-ui.v21-ui.v9-ui .guild-board .recruit-card {
   position: relative;
-  min-height: 0;
+  min-height: max-content;
   height: auto;
+  overflow: visible;
   border: 0;
   border-left: 1px solid var(--desk-line);
   border-radius: 0;
@@ -488,7 +495,8 @@
   letter-spacing: 1px;
 }
 .v21-ui.v21-ui.v9-ui .guild-board .recruit-card .guild-card-body {
-  flex: 1;
+  flex: 1 0 auto;
+  min-height: auto;
   overflow: visible;
   gap: 12px;
 }
@@ -507,11 +515,13 @@
 /* The artwork sits outside the inline text trigger, including portal dialogs. */
 .gear-name > .gear-label-art {
   display: inline-flex;
+  flex: none;
   vertical-align: middle;
   align-items: center;
   justify-content: center;
   width: 24px;
   height: 24px;
+  aspect-ratio: 1;
   margin-right: 6px;
   pointer-events: none;
 }
@@ -1044,5 +1054,28 @@ body:has(.v21-ui)
   }
   .v21-ui.v21-ui.v9-ui .warehouse-heading strong {
     font-size: 18px;
+  }
+}
+/* Short CSS viewports include desktop windows at 125% zoom. Keep one scroll
+   owner for the selected hero instead of squeezing the action columns away. */
+@media (max-height: 680px) {
+  .v21-ui.v21-ui.v9-ui .team-detail {
+    overflow: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--desk-line) transparent;
+  }
+  .v21-ui.v21-ui.v9-ui .team-detail > .world-deployment-strip {
+    flex: none;
+  }
+  .v21-ui.v21-ui.v9-ui .team-columns {
+    flex: none;
+    overflow: visible;
+  }
+  .v21-ui.v21-ui.v9-ui
+    .team-columns
+    > :is(.training-actions, .gear-slots, .forge-mini) {
+    max-height: none;
+    overflow: visible;
   }
 }

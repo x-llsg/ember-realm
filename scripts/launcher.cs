@@ -6,7 +6,7 @@ using System.Reflection;
 [assembly: AssemblyTitle("余烬之境")]
 [assembly: AssemblyDescription("余烬之境离线版一键启动")]
 [assembly: AssemblyProduct("余烬之境")]
-[assembly: AssemblyVersion("0.3.0.0")]
+[assembly: AssemblyVersion("0.3.1.0")]
 internal static class Launcher {
  [STAThread] private static void Main() {
   string target=Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"ember-realm","play.html");
