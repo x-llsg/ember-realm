@@ -4,7 +4,7 @@ import * as G from '@/lib/realm';
 import { GearLabel, GearWearer } from './gear-presentation';
 import { DEFAULT_GEAR_SORT, GearSortControl } from './gear-sort-control';
 import { GearWorkshop, SalvageYield } from './gear-workshop';
-import { InfoHint, Term } from './info-hint';
+import { InfoHint } from './info-hint';
 import { Pick, type Act, type Destination } from './realm-panels';
 import {
   Dialog,
@@ -73,7 +73,7 @@ export function EquipmentWarehouse({
       enabled ? [...new Set([...ids, id])] : ids.filter((x) => x !== id),
     );
   return (
-    <div className="equipment-warehouse">
+    <div className="equipment-warehouse roster-warehouse">
       <header className="warehouse-heading">
         <div>
           <strong>装备仓库</strong>
@@ -86,6 +86,23 @@ export function EquipmentWarehouse({
             件
           </span>
         </div>
+        <InfoHint
+          title="分解材料库存"
+          body={[
+            '锻造尘 ' + s.guild.dust + '/9999',
+            ...G.SALVAGE_MATERIALS.map(
+              (m) =>
+                m.name +
+                ' ' +
+                G.salvageCount(s, m.rarity) +
+                '/' +
+                G.SALVAGE_CAP,
+            ),
+            '分解材料按品质独立使用。每件产出等于装备阶级；定向重铸消耗两倍装备阶级的同品质材料。',
+          ].join('\n')}
+        >
+          分解材料库存
+        </InfoHint>
         <button
           className="secondary-button"
           onClick={() => go({ view: 'heroes', hero: recipient })}
@@ -94,134 +111,129 @@ export function EquipmentWarehouse({
         </button>
       </header>
       <div className="warehouse-content">
-        <div className="warehouse-wallet" aria-label="分解材料库存">
-          <Term name="dust">锻造尘 {s.guild.dust}/9999</Term>
-          {G.SALVAGE_MATERIALS.map((m) => (
-            <InfoHint
-              key={m.rarity}
-              title={m.name}
-              body={`分解${G.QUALITY_NAMES[m.rarity - 1]}装备获得，每件产出等于装备阶级。定向重铸同品质装备消耗两倍装备阶级的${m.name}，其他品质不能代付。库存上限${G.SALVAGE_CAP}。`}
-              className={'rarity-' + m.rarity}
-            >
-              {m.name} {G.salvageCount(s, m.rarity)}
-            </InfoHint>
-          ))}
-        </div>
-        <div className="warehouse-filters">
-          <input
-            aria-label="搜索装备"
-            placeholder="搜索名称、词条、套装…"
-            value={filters?.search || ''}
-            onChange={(e) => changeFilters({ search: e.target.value })}
-          />
-          <Pick
-            label="仓库装备部位"
-            value={filters?.slot || 'all'}
-            onChange={(slot) =>
-              changeFilters({ slot: slot as G.GearSlot | 'all' })
-            }
-            options={[
-              { value: 'all', label: '全部部位' },
-              ...G.GEAR_SLOT_OPTIONS,
-            ]}
-          />
-          <Pick
-            label="仓库装备状态"
-            value={
-              filters?.locked === 'locked'
-                ? 'locked'
-                : filters?.equipped || 'all'
-            }
-            onChange={(status) =>
-              changeFilters(
-                status === 'locked'
-                  ? { locked: 'locked', equipped: 'all' }
-                  : {
-                      locked: 'all',
-                      equipped: status as 'all' | 'equipped' | 'unequipped',
-                    },
-              )
-            }
-            options={[
-              { value: 'all', label: '全部状态' },
-              { value: 'unequipped', label: '闲置装备' },
-              { value: 'equipped', label: '已穿戴' },
-              { value: 'locked', label: '已收藏' },
-            ]}
-          />
-          <Pick
-            label="仓库套装筛选"
-            value={filters?.set || 'all'}
-            onChange={(set) => changeFilters({ set })}
-            options={[
-              { value: 'all', label: '全部套装与散件' },
-              { value: 'none', label: '只看散件' },
-              ...G.EQUIPMENT_SETS.filter((set) => setIds.has(set.id)).map(
-                (set) => ({ value: set.id, label: set.name }),
-              ),
-            ]}
-          />
-          <GearSortControl
-            label="仓库装备"
-            sort={filters?.sort}
-            order={filters?.order}
-            onChange={changeFilters}
-          />
-        </div>
-        <div
-          className="warehouse-quality"
-          role="group"
-          aria-label="筛选装备品质"
-        >
-          <button
-            aria-pressed={!filters?.rarities?.length}
-            onClick={() => changeFilters({ rarities: [] })}
-          >
-            全部品质
-          </button>
-          {G.QUALITY_NAMES.map((name, i) => (
-            <button
-              key={name}
-              className={'rarity-' + (i + 1)}
-              aria-pressed={!!filters?.rarities?.includes(i + 1)}
-              onClick={() => {
-                const rarities = filters?.rarities || [];
-                changeFilters({
-                  rarities: rarities.includes(i + 1)
-                    ? rarities.filter((r) => r !== i + 1)
-                    : [...rarities, i + 1],
-                });
-              }}
-            >
-              {name}
-            </button>
-          ))}
-          <span>找到 {items.length} 件</span>
-          <button
-            onClick={() => {
-              setFilters({ ...DEFAULT_GEAR_SORT });
-              setSelected([]);
-            }}
-          >
-            清除筛选
-          </button>
-        </div>
         <div className="warehouse-body">
           <section className="warehouse-list-area" aria-label="装备整理清单">
+            <div className="warehouse-filters">
+              <input
+                aria-label="搜索装备"
+                placeholder="搜索名称、词条、套装…"
+                value={filters?.search || ''}
+                onChange={(e) => changeFilters({ search: e.target.value })}
+              />
+              <Pick
+                label="仓库装备部位"
+                value={filters?.slot || 'all'}
+                onChange={(slot) =>
+                  changeFilters({ slot: slot as G.GearSlot | 'all' })
+                }
+                options={[
+                  { value: 'all', label: '全部部位' },
+                  ...G.GEAR_SLOT_OPTIONS,
+                ]}
+              />
+              <Pick
+                label="仓库装备状态"
+                value={
+                  filters?.locked === 'locked'
+                    ? 'locked'
+                    : filters?.equipped || 'all'
+                }
+                onChange={(status) =>
+                  changeFilters(
+                    status === 'locked'
+                      ? { locked: 'locked', equipped: 'all' }
+                      : {
+                          locked: 'all',
+                          equipped: status as 'all' | 'equipped' | 'unequipped',
+                        },
+                  )
+                }
+                options={[
+                  { value: 'all', label: '全部状态' },
+                  { value: 'unequipped', label: '闲置装备' },
+                  { value: 'equipped', label: '已穿戴' },
+                  { value: 'locked', label: '已收藏' },
+                ]}
+              />
+              <Pick
+                label="仓库套装筛选"
+                value={filters?.set || 'all'}
+                onChange={(set) => changeFilters({ set })}
+                options={[
+                  { value: 'all', label: '全部套装与散件' },
+                  { value: 'none', label: '只看散件' },
+                  ...G.EQUIPMENT_SETS.filter((set) => setIds.has(set.id)).map(
+                    (set) => ({ value: set.id, label: set.name }),
+                  ),
+                ]}
+              />
+              <details className="warehouse-quality-menu">
+                <summary>
+                  品质 ·{' '}
+                  {filters?.rarities?.length
+                    ? filters.rarities.length + '类'
+                    : '全部'}
+                </summary>
+                <div
+                  className="warehouse-quality"
+                  role="group"
+                  aria-label="筛选装备品质"
+                >
+                  <button
+                    aria-pressed={!filters?.rarities?.length}
+                    onClick={() => changeFilters({ rarities: [] })}
+                  >
+                    全部品质
+                  </button>
+                  {G.QUALITY_NAMES.map((name, i) => (
+                    <button
+                      key={name}
+                      className={'rarity-' + (i + 1)}
+                      aria-pressed={!!filters?.rarities?.includes(i + 1)}
+                      onClick={() => {
+                        const rarities = filters?.rarities || [];
+                        changeFilters({
+                          rarities: rarities.includes(i + 1)
+                            ? rarities.filter((r) => r !== i + 1)
+                            : [...rarities, i + 1],
+                        });
+                      }}
+                    >
+                      {name}
+                    </button>
+                  ))}
+                  <span>找到 {items.length} 件</span>
+                  <button
+                    onClick={() => {
+                      setFilters({ ...DEFAULT_GEAR_SORT });
+                      setSelected([]);
+                    }}
+                  >
+                    清除筛选
+                  </button>
+                </div>
+              </details>
+              <GearSortControl
+                label="仓库装备"
+                sort={filters?.sort}
+                order={filters?.order}
+                onChange={changeFilters}
+              />
+            </div>
             <div className="warehouse-selection">
               <button
                 className="secondary-button"
                 disabled={!eligible.count}
                 onClick={() => setSelected(eligible.ids)}
               >
-                全选可分解项
+                全选可分解
               </button>
               <button
                 className="secondary-button"
                 disabled={!selected.length}
                 onClick={() => setSelected([])}
               >
-                清空选择
+                清空
               </button>
               <span>已选 {chosen.count} 件</span>
               <label>
@@ -230,7 +242,7 @@ export function EquipmentWarehouse({
                   checked={includeSets}
                   onChange={(e) => protectionChanged('sets', e.target.checked)}
                 />
-                包含套装
+                含套装
               </label>
               <label>
                 <input
@@ -240,7 +252,7 @@ export function EquipmentWarehouse({
                     protectionChanged('enhanced', e.target.checked)
                   }
                 />
-                包含强化装备
+                含强化
               </label>
             </div>
             <div className="warehouse-items">
@@ -306,14 +318,11 @@ export function EquipmentWarehouse({
             {item ? (
               <>
                 <div className="warehouse-detail-heading">
-                  <small>选中装备</small>
+                  <small className="warehouse-detail-caption">选中装备</small>
                   <h3>
                     <GearLabel s={s} item={item} />
                   </h3>
                 </div>
-                {item.setId && (
-                  <p className="warehouse-set-help">{G.gearSetHelp(item)}</p>
-                )}
                 {s.heroes.length > 0 && (
                   <div className="warehouse-equip">
                     <Pick
@@ -345,7 +354,20 @@ export function EquipmentWarehouse({
                     </button>
                   </div>
                 )}
-                <GearWorkshop key={item.id} s={s} item={item} act={act} />
+                <div className="warehouse-detail-body">
+                  {item.setId && (
+                    <InfoHint title="套装效果" body={G.gearSetHelp(item)}>
+                      套装效果与配装说明
+                    </InfoHint>
+                  )}
+                  <GearWorkshop
+                    key={item.id}
+                    s={s}
+                    item={item}
+                    act={act}
+                    compact
+                  />
+                </div>
               </>
             ) : (
               <div className="warehouse-empty">
@@ -389,7 +411,7 @@ export function EquipmentWarehouse({
           if (!open) setConfirm(null);
         }}
       >
-        <DialogContent className="life-dialog salvage-confirm">
+        <DialogContent className="life-dialog salvage-confirm roster-dialog">
           <DialogTitle>确认批量分解 · {pending.count} 件</DialogTitle>
           <div className="salvage-confirm-body">
             <DialogDescription>

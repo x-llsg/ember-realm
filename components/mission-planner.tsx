@@ -195,32 +195,35 @@ export function MissionPlanner({
             确认{purpose.name} · {G.REGIONS[region].name}
           </DialogTitle>
           <DialogDescription>{purpose.detail}</DialogDescription>
-          <div className="mission-confirm-party" aria-label="本次出发队伍">
-            {s.party.map((id) => {
-              const hero = s.heroes.find((h) => h.id === id);
-              return hero ? (
-                <span key={id} className="mission-confirm-hero">
-                  <HeroPortrait hero={hero} size="sm" />
-                  <span>
-                    <strong className={`potential-${hero.quality}`}>
-                      {hero.name}
-                    </strong>
-                    <small>
-                      {G.HEROES.find((h) => h.id === hero.role)?.role || '旅人'}
-                    </small>
+          <div className="mission-confirm-body">
+            <div className="mission-confirm-party" aria-label="本次出发队伍">
+              {s.party.map((id) => {
+                const hero = s.heroes.find((h) => h.id === id);
+                return hero ? (
+                  <span key={id} className="mission-confirm-hero">
+                    <HeroPortrait hero={hero} size="sm" />
+                    <span>
+                      <strong className={`potential-${hero.quality}`}>
+                        {hero.name}
+                      </strong>
+                      <small>
+                        {G.HEROES.find((h) => h.id === hero.role)?.role ||
+                          '旅人'}
+                      </small>
+                    </span>
                   </span>
-                </span>
-              ) : null;
-            })}
+                ) : null;
+              })}
+            </div>
+            <p>
+              扣除 {info.cost} 口粮 · 耗时 {duration(info.duration)} ·{' '}
+              {repeat
+                ? '归来后继续同类远征，缺料会暂停'
+                : '只执行这一次，归来后休息'}
+            </p>
+            {reason && <p className="short">{reason}</p>}
           </div>
-          <p>
-            扣除 {info.cost} 口粮 · 耗时 {duration(info.duration)} ·{' '}
-            {repeat
-              ? '归来后继续同类远征，缺料会暂停'
-              : '只执行这一次，归来后休息'}
-          </p>
-          {reason && <p className="short">{reason}</p>}
-          <div className="life-inline-actions">
+          <div className="life-inline-actions dialog-actions">
             <button
               className="secondary-button"
               onClick={() => setConfirm(false)}

@@ -1,10 +1,13 @@
 'use client';
 import { PinPlan } from './planning-board';
-import { RelicCollectionButton, RelicDeploymentStrip } from './relic-collection';
+import {
+  RelicCollectionButton,
+  RelicDeploymentStrip,
+} from './relic-collection';
 import { SkillTreePanel } from './skill-tree-panel';
 import { GearLabel, GearStats, GearWearer } from './gear-presentation';
 import { DEFAULT_GEAR_SORT, GearSortControl } from './gear-sort-control';
-import { GearWorkshop } from './gear-workshop';
+import { GearWorkshop, RosterBuy } from './gear-workshop';
 import { GameIcon, HeroPortrait } from './game-art';
 import '@/app/character-art.css';
 import { useState, useSyncExternalStore } from 'react';
@@ -110,7 +113,7 @@ export function GuildRecruitment({ s, act, go }: Props) {
     count = Math.ceil(s.guild.applicants.length / (size === 1 ? 1 : 3)),
     current = Math.min(page, Math.max(0, count - 1));
   return (
-    <div className="econ-board guild-board">
+    <div className="econ-board guild-board roster-recruitment">
       <div className="econ-board-head">
         <strong>渡鸦酒馆 · 旅人招募</strong>
         <span>名册 {s.heroes.length}/12</span>
@@ -262,7 +265,7 @@ export function GuildTeam({ s, act, go, focus }: Props) {
         ? '小队已满，先将一人转为候补'
         : '';
   return (
-    <div className="team-desk">
+    <div className="team-desk roster-layout">
       <aside className="team-roster" aria-label="队伍角色列表">
         <div className="desk-heading">
           <strong>旅人名册</strong>
@@ -306,7 +309,13 @@ export function GuildTeam({ s, act, go, focus }: Props) {
       </aside>
       <section className="team-detail" aria-label="选中角色详情">
         <div className="team-party-line">
-          <RelicCollectionButton s={s} act={act} kind="combat" go={go} initialId={focus?.relic} />
+          <RelicCollectionButton
+            s={s}
+            act={act}
+            kind="combat"
+            go={go}
+            initialId={focus?.relic}
+          />
           <strong>
             出战 {s.party.length}/4 · <Term name="partyPower">战力</Term>{' '}
             {stats.power}
@@ -395,93 +404,80 @@ export function GuildTeam({ s, act, go, focus }: Props) {
                     <Term name="levels">本阶段 Lv.{G.levelCap(s)}</Term>
                   </small>
                 </div>
-                <p className="desk-muted">
-                  <span className={'potential-' + h.quality}>
-                    <Term name="potential">潜力 {'★'.repeat(h.quality)}</Term>
-                  </span>{' '}
-                  · 成长 ×{G.POTENTIAL_GROWTH[h.quality - 1]}
-                  <br />
-                  <Term name="aptitudes">资质</Term> 体 {h.aptitude.hp} / 攻{' '}
-                  {h.aptitude.attack} / 防 {h.aptitude.defense}
-                </p>
-                <div className="hero-loadout">
-                  <InfoHint {...G.skillHelp(G.heroSkill(h).id)}>
-                    携带技能
-                  </InfoHint>
-                  <Pick
-                    label="携带职业技能"
-                    disabled={heroLocked}
-                    value={G.heroSkill(h).id}
-                    options={G.unlockedSkills(h).map((skill) => ({
-                      value: skill.id,
-                      label: skill.name + ' · ' + skill.energy + '士气',
-                    }))}
-                    onChange={(value) =>
-                      act((x) => G.setHeroSkill(x, h.id, value))
-                    }
-                  />
-                </div>
-                {h.level >= 20 && (
+                <div className="roster-section-body">
                   <div className="hero-loadout">
-                    <InfoHint
-                      title="第二技能栏"
-                      body="根技能常备。Lv.20可同时携带两项不同分支技能，每人每回合仍只行动一次，共享士气、独立冷却。"
-                    >
-                      第二技能
+                    <InfoHint {...G.skillHelp(G.heroSkill(h).id)}>
+                      携带技能
                     </InfoHint>
                     <Pick
-                      label="第二携带技能"
+                      label="携带职业技能"
                       disabled={heroLocked}
-                      value={h.secondarySkill || ''}
-                      options={[
-                        { value: '', label: '不携带' },
-                        ...G.unlockedSkills(h)
-                          .filter(
-                            (skill) =>
-                              skill.id !== G.DEFAULT_SKILL[h.role] &&
-                              skill.id !== G.heroSkill(h).id,
-                          )
-                          .map((skill) => ({
-                            value: skill.id,
-                            label: skill.name,
-                          })),
-                      ]}
+                      value={G.heroSkill(h).id}
+                      options={G.unlockedSkills(h).map((skill) => ({
+                        value: skill.id,
+                        label: skill.name + ' · ' + skill.energy + '士气',
+                      }))}
                       onChange={(value) =>
-                        act((x) => G.setSecondarySkill(x, h.id, value))
+                        act((x) => G.setHeroSkill(x, h.id, value))
                       }
                     />
                   </div>
-                )}
-                <div className="team-experience">
-                  <SkillTreePanel s={s} h={h} act={act} />
-                  <InfoHint
-                    title="暴击与闪避"
-                    body="个人暴击率上限60%，默认暴击造成150%伤害；个人闪避上限40%，仅能躲避单体攻击，群体重击不能闪避。职业、装备词条与技能树均可提升。"
-                  >
-                    暴击 {Math.round(G.individualStats(s, h).crit * 100)}% ·
-                    闪避 {Math.round(G.individualStats(s, h).dodge * 100)}%
-                  </InfoHint>
-                  <span>
-                    <Term name="xp">经验</Term> {Math.floor(h.xp)} /{' '}
-                    {60 + h.level * h.level * 10}
-                  </span>
-                  <progress value={h.xp} max={60 + h.level * h.level * 10} />
-                </div>
-                <Buy
-                  s={s}
-                  cost={G.payableTrainCost(s, h)}
-                  reason={
-                    heroLocked
-                      ? '该角色正在出征'
-                      : h.level >= G.levelCap(s)
-                        ? '达到本阶段等级上限'
-                        : ''
-                  }
-                  label="训练升一级"
-                  onClick={() => act((x) => G.train(x, h.id))}
-                />
-                {s.buildings.tavern >= 2 && (
-                  <>
+                  {h.level >= 20 && (
+                    <div className="hero-loadout">
+                      <InfoHint
+                        title="第二技能栏"
+                        body="根技能常备。Lv.20可同时携带两项不同分支技能，每人每回合仍只行动一次，共享士气、独立冷却。"
+                      >
+                        第二技能
+                      </InfoHint>
+                      <Pick
+                        label="第二携带技能"
+                        disabled={heroLocked}
+                        value={h.secondarySkill || ''}
+                        options={[
+                          { value: '', label: '不携带' },
+                          ...G.unlockedSkills(h)
+                            .filter(
+                              (skill) =>
+                                skill.id !== G.DEFAULT_SKILL[h.role] &&
+                                skill.id !== G.heroSkill(h).id,
+                            )
+                            .map((skill) => ({
+                              value: skill.id,
+                              label: skill.name,
+                            })),
+                        ]}
+                        onChange={(value) =>
+                          act((x) => G.setSecondarySkill(x, h.id, value))
+                        }
+                      />
+                    </div>
+                  )}
+                  <div className="team-experience">
+                    <SkillTreePanel s={s} h={h} act={act} />
+                    <InfoHint
+                      title="暴击与闪避"
+                      body="个人暴击率上限60%，默认暴击造成150%伤害；个人闪避上限40%，仅能躲避单体攻击，群体重击不能闪避。职业、装备词条与技能树均可提升。"
+                    >
+                      暴击 {Math.round(G.individualStats(s, h).crit * 100)}% ·
+                      闪避 {Math.round(G.individualStats(s, h).dodge * 100)}%
+                    </InfoHint>
+                    <span>
+                      <Term name="xp">经验</Term> {Math.floor(h.xp)} /{' '}
+                      {60 + h.level * h.level * 10}
+                    </span>
+                    <progress value={h.xp} max={60 + h.level * h.level * 10} />
+                  </div>
+                  <p className="desk-muted">
+                    <span className={'potential-' + h.quality}>
+                      <Term name="potential">潜力 {'★'.repeat(h.quality)}</Term>
+                    </span>{' '}
+                    · 成长 ×{G.POTENTIAL_GROWTH[h.quality - 1]}
+                    <br />
+                    <Term name="aptitudes">资质</Term> 体 {h.aptitude.hp} / 攻{' '}
+                    {h.aptitude.attack} / 防 {h.aptitude.defense}
+                  </p>
+                  {s.buildings.tavern >= 2 && (
                     <div className="desk-heading">
                       <span>
                         <Term name="mastery">
@@ -490,30 +486,49 @@ export function GuildTeam({ s, act, go, focus }: Props) {
                       </span>
                       <small>每级基础血 / 攻 / 防 +4%</small>
                     </div>
-                    <Buy
-                      s={s}
-                      cost={G.masteryCost(h)}
-                      materials={G.masteryMaterials(s, h)}
-                      reason={G.masteryReason(s, h)}
-                      label="培养专精"
-                      onClick={() => act((x) => G.mentorHero(x, h.id))}
-                    />
-                  </>
-                )}
-                <InfoHint
-                  title="培养投入与传承"
-                  body={`1–5星训练花费倍率：${G.TRAINING_FACTORS.join(' / ')}；经验倍率：${G.LEARNING_FACTORS.join(' / ')}。\n退役时，实际支付的新训练费用80%转为全公会训练抵扣。经验、招募、装备和已消耗抵扣不返还，旧培养没有账目不追算。\n当前可抵扣：${s.civic.trainingCredit.gold} 金、${s.civic.trainingCredit.food} 粮；下次训练自动使用。\n这位角色退役可传承：${Math.floor((h.trainingInvestment?.gold || 0) * 0.8)} 金、${Math.floor((h.trainingInvestment?.food || 0) * 0.8)} 粮。`}
-                >
-                  训练抵扣 {s.civic.trainingCredit.gold} 金 /{' '}
-                  {s.civic.trainingCredit.food} 粮
-                </InfoHint>
-                <button
-                  className="life-text-button team-retire"
-                  disabled={heroLocked}
-                  onClick={() => setDetail('retire:' + h.id)}
-                >
-                  安排退役…
-                </button>
+                  )}
+                  <InfoHint
+                    title="培养投入与传承"
+                    body={`1–5星训练花费倍率：${G.TRAINING_FACTORS.join(' / ')}；经验倍率：${G.LEARNING_FACTORS.join(' / ')}。\n退役时，实际支付的新训练费用80%转为全公会训练抵扣。经验、招募、装备和已消耗抵扣不返还，旧培养没有账目不追算。\n当前可抵扣：${s.civic.trainingCredit.gold} 金、${s.civic.trainingCredit.food} 粮；下次训练自动使用。\n这位角色退役可传承：${Math.floor((h.trainingInvestment?.gold || 0) * 0.8)} 金、${Math.floor((h.trainingInvestment?.food || 0) * 0.8)} 粮。`}
+                  >
+                    训练抵扣 {s.civic.trainingCredit.gold} 金 /{' '}
+                    {s.civic.trainingCredit.food} 粮
+                  </InfoHint>
+                  <button
+                    className="life-text-button team-retire"
+                    disabled={heroLocked}
+                    onClick={() => setDetail('retire:' + h.id)}
+                  >
+                    安排退役…
+                  </button>
+                </div>
+                <div className="roster-section-actions">
+                  <RosterBuy
+                    s={s}
+                    cost={G.payableTrainCost(s, h)}
+                    reason={
+                      heroLocked
+                        ? '该角色正在出征'
+                        : h.level >= G.levelCap(s)
+                          ? '达到本阶段等级上限'
+                          : ''
+                    }
+                    label="训练升一级"
+                    onClick={() => act((x) => G.train(x, h.id))}
+                  />
+                  {s.buildings.tavern >= 2 && (
+                    <>
+                      <RosterBuy
+                        s={s}
+                        cost={G.masteryCost(h)}
+                        materials={G.masteryMaterials(s, h)}
+                        reason={G.masteryReason(s, h)}
+                        label={`专精 ${h.mastery}/5 →`}
+                        onClick={() => act((x) => G.mentorHero(x, h.id))}
+                      />
+                    </>
+                  )}
+                </div>
               </section>
               <section className="gear-slots" aria-label="角色装备">
                 <div className="desk-heading">
@@ -534,79 +549,81 @@ export function GuildTeam({ s, act, go, focus }: Props) {
                     装备仓库 {s.guild.inventory.length}/{G.INVENTORY_CAP}
                   </button>
                 </div>
-                <div className="equipment-six-grid">
-                  {G.GEAR_SLOTS.map((slot) => {
-                    const g = s.guild.inventory.find(
-                      (g) => g.id === h.equipment[slot],
-                    );
-                    return (
-                      <article className="team-gear-slot" key={slot}>
-                        <div className="desk-heading">
-                          <small>{G.SLOT_NAMES[slot]}</small>
-                          <button
-                            className="life-text-button"
-                            onClick={() => openEquipment(slot)}
-                          >
-                            {g ? '更换' : '选择装备'}
-                          </button>
-                        </div>
-                        {g ? (
-                          <>
-                            <GearLabel s={s} item={g} />
-                            <GearStats s={s} item={g} />
-                            <div className="team-gear-actions">
-                              <button
-                                className="life-text-button"
-                                onClick={() => inspect(g)}
-                              >
-                                强化 / 重铸
-                              </button>
-                              <button
-                                className="life-text-button quick-unequip"
-                                aria-label={'卸下' + G.SLOT_NAMES[slot]}
-                                disabled={heroLocked}
-                                onClick={() =>
-                                  act((x) => G.unequipGear(x, h.id, slot))
+                <div className="roster-section-body">
+                  <div className="equipment-six-grid">
+                    {G.GEAR_SLOTS.map((slot) => {
+                      const g = s.guild.inventory.find(
+                        (g) => g.id === h.equipment[slot],
+                      );
+                      return (
+                        <article className="team-gear-slot" key={slot}>
+                          <div className="desk-heading">
+                            <small>{G.SLOT_NAMES[slot]}</small>
+                            <button
+                              className="life-text-button"
+                              onClick={() => openEquipment(slot)}
+                            >
+                              {g ? '更换' : '选择装备'}
+                            </button>
+                          </div>
+                          {g ? (
+                            <>
+                              <GearLabel s={s} item={g} />
+                              <GearStats s={s} item={g} />
+                              <div className="team-gear-actions">
+                                <button
+                                  className="life-text-button"
+                                  onClick={() => inspect(g)}
+                                >
+                                  强化 / 重铸
+                                </button>
+                                <button
+                                  className="life-text-button quick-unequip"
+                                  aria-label={'卸下' + G.SLOT_NAMES[slot]}
+                                  disabled={heroLocked}
+                                  onClick={() =>
+                                    act((x) => G.unequipGear(x, h.id, slot))
+                                  }
+                                >
+                                  卸下
+                                </button>
+                              </div>
+                            </>
+                          ) : (
+                            <p className="empty-gear-slot desk-muted">
+                              <GameIcon
+                                kind="equipment"
+                                id={
+                                  G.RECIPES.find((r) => r.slot === slot)?.id ||
+                                  slot
                                 }
-                              >
-                                卸下
-                              </button>
-                            </div>
-                          </>
-                        ) : (
-                          <p className="empty-gear-slot desk-muted">
-                            <GameIcon
-                              kind="equipment"
-                              id={
-                                G.RECIPES.find((r) => r.slot === slot)?.id ||
-                                slot
-                              }
-                              size={26}
-                            />
-                            尚未装备
-                          </p>
-                        )}
-                      </article>
-                    );
-                  })}
+                                size={26}
+                              />
+                              尚未装备
+                            </p>
+                          )}
+                        </article>
+                      );
+                    })}
+                  </div>
+                  <div className="equipment-set-summary">
+                    {G.equippedSets(s, h).map((set) => (
+                      <InfoHint key={set.id} title={set.name} body={set.text}>
+                        <span className={set.count >= 2 ? 'set-active' : ''}>
+                          {set.name} {set.count}/4 ·{' '}
+                          {set.count >= 4
+                            ? '2/4件生效'
+                            : set.count >= 2
+                              ? '2件生效'
+                              : '未激活'}
+                        </span>
+                      </InfoHint>
+                    ))}
+                  </div>
+                  <small className="desk-muted">
+                    六槽可自由混搭。套装按本人穿戴的件数生效。
+                  </small>
                 </div>
-                <div className="equipment-set-summary">
-                  {G.equippedSets(s, h).map((set) => (
-                    <InfoHint key={set.id} title={set.name} body={set.text}>
-                      <span className={set.count >= 2 ? 'set-active' : ''}>
-                        {set.name} {set.count}/4 ·{' '}
-                        {set.count >= 4
-                          ? '2/4件生效'
-                          : set.count >= 2
-                            ? '2件生效'
-                            : '未激活'}
-                      </span>
-                    </InfoHint>
-                  ))}
-                </div>
-                <small className="desk-muted">
-                  六槽可自由混搭。套装按本人穿戴的件数生效。
-                </small>
               </section>
               <section
                 className={
@@ -634,96 +651,107 @@ export function GuildTeam({ s, act, go, focus }: Props) {
                 </div>
                 {chosen ? (
                   <>
-                    <fieldset
-                      className="forge-slot-filter"
-                      aria-label="按装备部位筛选锻造配方"
-                    >
-                      {forgeSlots.map((slot) => (
-                        <button
-                          key={slot}
-                          type="button"
-                          aria-pressed={chosen.slot === slot}
-                          onClick={() =>
-                            setRecipe(recipes.find((r) => r.slot === slot)!.id)
-                          }
-                        >
-                          {G.SLOT_NAMES[slot]}
-                        </button>
-                      ))}
-                    </fieldset>
-                    <Pick
-                      label={G.SLOT_NAMES[chosen.slot] + '配方'}
-                      value={chosen.id}
-                      onChange={setRecipe}
-                      options={slotRecipes.map((r) => ({
-                        value: r.id,
-                        label: r.name,
-                      }))}
-                    />
-                    <Pick
-                      label="装备阶级"
-                      value={String(craftTier)}
-                      onChange={(v) => setCraftTier(Number(v))}
-                      options={Array.from(
-                        { length: G.gearTier(s) },
-                        (_, i) => ({
-                          value: String(i + 1),
-                          label:
-                            'T' +
-                            (i + 1) +
-                            ' · 相对T1 ×' +
-                            (
-                              G.gearTierScale(i + 1) / G.gearTierScale(1)
-                            ).toFixed(2),
-                        }),
-                      )}
-                    />
-                    <div className="forge-item-preview">
-                      <GameIcon kind="equipment" id={chosen.id} size={44} />
-                      <div>
-                        <InfoHint title={chosen.name} body={chosen.text}>
-                          {chosen.name}
-                        </InfoHint>
-                        <small>
-                          {G.SLOT_NAMES[chosen.slot]} · {craftTier}阶 · 基础属性
-                        </small>
+                    <div className="roster-section-body">
+                      <fieldset
+                        className="forge-slot-filter"
+                        aria-label="按装备部位筛选锻造配方"
+                      >
+                        {forgeSlots.map((slot) => (
+                          <button
+                            key={slot}
+                            type="button"
+                            aria-pressed={chosen.slot === slot}
+                            onClick={() =>
+                              setRecipe(
+                                recipes.find((r) => r.slot === slot)!.id,
+                              )
+                            }
+                          >
+                            {G.SLOT_NAMES[slot]}
+                          </button>
+                        ))}
+                      </fieldset>
+                      <Pick
+                        label={G.SLOT_NAMES[chosen.slot] + '配方'}
+                        value={chosen.id}
+                        onChange={setRecipe}
+                        options={slotRecipes.map((r) => ({
+                          value: r.id,
+                          label: r.name,
+                        }))}
+                      />
+                      <Pick
+                        label="装备阶级"
+                        value={String(craftTier)}
+                        onChange={(v) => setCraftTier(Number(v))}
+                        options={Array.from(
+                          { length: G.gearTier(s) },
+                          (_, i) => ({
+                            value: String(i + 1),
+                            label:
+                              'T' +
+                              (i + 1) +
+                              ' · 相对T1 ×' +
+                              (
+                                G.gearTierScale(i + 1) / G.gearTierScale(1)
+                              ).toFixed(2),
+                          }),
+                        )}
+                      />
+                      <div className="forge-item-preview">
+                        <GameIcon kind="equipment" id={chosen.id} size={44} />
+                        <div>
+                          <InfoHint title={chosen.name} body={chosen.text}>
+                            {chosen.name}
+                          </InfoHint>
+                          <small>
+                            {G.SLOT_NAMES[chosen.slot]} · {craftTier}阶 ·
+                            基础属性
+                          </small>
+                        </div>
+                      </div>
+                      <GearStats
+                        s={s}
+                        item={{
+                          id: 'preview',
+                          recipe: chosen.id,
+                          tier: craftTier,
+                          rarity: 1,
+                          affix: 0,
+                          upgrade: 0,
+                        }}
+                        base
+                      />
+                      <PinPlan
+                        s={s}
+                        act={act}
+                        kind="gear"
+                        id={chosen.id}
+                        tier={craftTier}
+                      />
+                      <div className="hero-term-line">
+                        <Term name="rarity">品质概率</Term>
+                        <Term name="craftPity">
+                          四次保底 {s.guild.crafts % 4}/4
+                        </Term>
+                        <Term name="tier">装备阶级</Term>
                       </div>
                     </div>
-                    <GearStats
-                      s={s}
-                      item={{
-                        id: 'preview',
-                        recipe: chosen.id,
-                        tier: craftTier,
-                        rarity: 1,
-                        affix: 0,
-                        upgrade: 0,
-                      }}
-                      base
-                    />
-                    <Buy
-                      s={s}
-                      cost={G.recipeCost(s, chosen.id, craftTier)}
-                      materials={G.recipeMaterialCost(s, chosen.id, craftTier)}
-                      reason={G.forgeReason(s, chosen.id, craftTier)}
-                      label="锻造一件"
-                      onClick={() =>
-                        act((x) => G.craftGear(x, chosen.id, craftTier))
-                      }
-                    />
-                    <PinPlan
-                      s={s}
-                      act={act}
-                      kind="gear"
-                      id={chosen.id}
-                      tier={craftTier}
-                    />
-                    <div className="hero-term-line">
-                      <Term name="rarity">品质概率</Term>
-                      <Term name="craftPity">
-                        四次保底 {s.guild.crafts % 4}/4
-                      </Term>
-                      <Term name="tier">装备阶级</Term>
+                    <div className="roster-section-actions">
+                      <RosterBuy
+                        s={s}
+                        cost={G.recipeCost(s, chosen.id, craftTier)}
+                        materials={G.recipeMaterialCost(
+                          s,
+                          chosen.id,
+                          craftTier,
+                        )}
+                        reason={G.forgeReason(s, chosen.id, craftTier)}
+                        label="锻造一件"
+                        onClick={() =>
+                          act((x) => G.craftGear(x, chosen.id, craftTier))
+                        }
+                      />
                     </div>
                   </>
                 ) : (
@@ -737,23 +765,31 @@ export function GuildTeam({ s, act, go, focus }: Props) {
                         : 'team-kit'
                     }
                   >
-                    <div className="desk-heading">
-                      <strong>
+                    {s.kit >= 5 ? (
+                      <div className="team-kit-complete">
                         <Term name="kit">全队行装</Term>
-                      </strong>
-                      <small>{s.kit}/5 阶</small>
-                    </div>
-                    <small className="desk-muted">
-                      每阶全队攻击 +6%、生命 +8%
-                    </small>
-                    <Buy
-                      s={s}
-                      cost={G.kitCost(s)}
-                      materials={G.kitMaterialCost(s)}
-                      reason={busy ? '等待队伍归来' : G.kitReason(s)}
-                      label="升级行装"
-                      onClick={() => act(G.upgradeKit)}
-                    />
+                        <span>5/5 阶 · 已满级</span>
+                      </div>
+                    ) : (
+                      <div
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: 'auto minmax(0, 1fr)',
+                          alignItems: 'center',
+                          gap: 6,
+                        }}
+                      >
+                        <Term name="kit">行装</Term>
+                        <RosterBuy
+                          s={s}
+                          cost={G.kitCost(s)}
+                          materials={G.kitMaterialCost(s)}
+                          reason={busy ? '等待队伍归来' : G.kitReason(s)}
+                          label={`行装 ${s.kit}/5 →`}
+                          onClick={() => act(G.upgradeKit)}
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
               </section>
@@ -773,7 +809,7 @@ export function GuildTeam({ s, act, go, focus }: Props) {
         )}
       </section>
       <Dialog open={picker} onOpenChange={setPicker}>
-        <DialogContent className="life-dialog team-gear-picker">
+        <DialogContent className="life-dialog team-gear-picker roster-dialog">
           <DialogTitle>{h?.name || '旅人'} · 选择装备</DialogTitle>
           <DialogDescription>
             选择后直接装备到当前旅人；标明原主人的装备可转交。共{' '}
@@ -855,7 +891,7 @@ export function GuildTeam({ s, act, go, focus }: Props) {
           if (!v) setDetail(null);
         }}
       >
-        <DialogContent className="life-dialog">
+        <DialogContent className="life-dialog roster-gear-dialog roster-dialog">
           <DialogTitle>
             {item ? <GearLabel s={s} item={item} /> : '安排旅人退役'}
           </DialogTitle>
@@ -865,13 +901,15 @@ export function GuildTeam({ s, act, go, focus }: Props) {
               : '这位旅人会离开，穿戴装备全部归还装备库。'}
           </DialogDescription>
           {item ? (
-            <GearWorkshop
-              key={item.id}
-              s={s}
-              item={item}
-              act={act}
-              onRemoved={() => setDetail(null)}
-            />
+            <div className="roster-dialog-body">
+              <GearWorkshop
+                key={item.id}
+                s={s}
+                item={item}
+                act={act}
+                onRemoved={() => setDetail(null)}
+              />
+            </div>
           ) : (
             <button
               className="primary-button"

@@ -13,5 +13,8 @@ import './app/incremental.css';
 import './app/civic.css';
 import './app/visual-theme.css';
 import './app/expedition-layout.css';
+import './app/town-layout.css';
+import './app/roster-layout.css';
+import './app/workspace-layout.css';
 
 createRoot(document.getElementById('root')!).render(<Home />);

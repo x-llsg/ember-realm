@@ -2,12 +2,21 @@
 import * as G from '@/lib/realm';
 import { InfoHint, MaterialName, ResourceName } from './info-hint';
 import { GameIcon } from './game-art';
-import { RelicCollectionButton, RelicDeploymentStrip } from './relic-collection';
+import {
+  RelicCollectionButton,
+  RelicDeploymentStrip,
+} from './relic-collection';
 import { SiteFacilities } from './site-facilities';
 import { PotionWorkshop } from './potion-workshop';
 import { Pick, type Act, type Destination, short } from './realm-panels';
 
-type Props = { s: G.State; act: Act; go?: (d: Destination) => void; initialRelic?: string; initialSite?:string };
+type Props = {
+  s: G.State;
+  act: Act;
+  go?: (d: Destination) => void;
+  initialRelic?: string;
+  initialSite?: string;
+};
 function Bill({
   s,
   cost,
@@ -54,7 +63,13 @@ export function EconomyDesk({ s, act, go, initialRelic, initialSite }: Props) {
     <section className="econ-board flow-desk" aria-label="城镇经营">
       <header className="econ-board-head">
         <strong>城镇经营</strong>
-        <RelicCollectionButton s={s} act={act} kind="town" go={go} initialId={initialRelic} />
+        <RelicCollectionButton
+          s={s}
+          act={act}
+          kind="town"
+          go={go}
+          initialId={initialRelic}
+        />
         <span>
           <button onClick={() => go?.({ view: 'town', tab: 'workers' })}>
             调配住民 · 空闲 {G.idleWorkers(s)} →
@@ -67,413 +82,445 @@ export function EconomyDesk({ s, act, go, initialRelic, initialSite }: Props) {
           </button>
         </span>
       </header>
-      <RelicDeploymentStrip s={s} act={act} kind="town" />
-      <div className="flow-stock">
-        {G.MATERIAL_IDS.filter((id) => G.materialDiscovered(s, id)).map(
-          (id) => (
-            <span key={id}>
-              <MaterialName s={s} id={id} />
-              <strong>
-                {short(s.world.materials[id])}
-                <small> / {G.materialCapacity(s, id)}</small>
-              </strong>
-            </span>
-          ),
-        )}
-      </div>
-      <div className="flow-columns">
-        <div className="flow-column">
-          <PotionWorkshop s={s} act={act} />
-          <div className="flow-section-title">
-            <strong>材料加工</strong>
-            <small>产能、用料、库存共同决定产出</small>
-          </div>
-          {recipes.map((w) => {
-            const bill = G.processingBill(s, w.id),
-              recipe = G.processingRecipe(s, w.id),
-              variants = G.processingVariants(s, w.id),
-              output = G.processingOutput(s, w.id),
-              seconds = G.workDuration(s, w.id),
-              reason = G.workReason(s, w.id),
-              support = s.worldExploration.relics.town.find(
-                (r) => r.id === 'R01' &&
-                  (r.target === w.id || (r.mode === 'lend' && r.source === w.id)),
-              );
-            return (
-              <article className="flow-work" key={w.id}>
-                <div className="flow-line">
-                  <InfoHint
-                    title={`${w.name} · ${recipe.name}`}
-                    body={
-                      <>
-                        <p>{recipe.text}</p>
-                        <p>
-                          每批 {G.costText(bill.cost)}，
-                          {G.materialCostText(bill.materials)}，产出 {output}{' '}
-                          件。改良工艺改善成材率；赶工提高产速但增加每批投入。
-                        </p>
-                        <p>
-                          配方决定用哪些原料，生产方式决定速度与每批用量。切换任一项会重新开始当前批次。当地两项工程均完成后，该地区替代配方的普通资源费用降低10%。
-                        </p>
-                      </>
-                    }
-                  >
-                    <span className="illustrated-work-name">
-                      <GameIcon kind="material" id={w.id} size={24} />
-                      <strong>{w.name}</strong>
-                    </span>
-                  </InfoHint>
-                  <span className="world-processing-rate">
-                    <span>
-                      基础 {((output * 60) / seconds).toFixed(1)} 件/分 · {seconds} 秒/批
-                    </span>
-                    {support && (
-                      <InfoHint
-                        title="工匠机关台"
-                        body={G.RELICS.find((r) => r.id === 'R01')!.description}
-                      >
-                        <small>
-                          机关台 · {support.target !== w.id ? '工时借出' : support.mode === 'hand' ? '手摇支援' : '借工支援'}
-                        </small>
-                      </InfoHint>
-                    )}
-                  </span>
-                  <button
-                    className={
-                      s.world.work[w.id] ? 'secondary-button' : 'primary-button'
-                    }
-                    onClick={() => act((x) => G.toggleWork(x, w.id))}
-                  >
-                    {s.world.work[w.id] ? '暂停' : '开工'}
-                  </button>
-                </div>
-                {variants.length > 1 && (
+      <div className="flow-workspace">
+        <RelicDeploymentStrip s={s} act={act} kind="town" />
+        <div className="flow-stock">
+          {G.MATERIAL_IDS.filter((id) => G.materialDiscovered(s, id)).map(
+            (id) => (
+              <span key={id}>
+                <MaterialName s={s} id={id} />
+                <strong>
+                  {short(s.world.materials[id])}
+                  <small> / {G.materialCapacity(s, id)}</small>
+                </strong>
+              </span>
+            ),
+          )}
+        </div>
+        <div className="flow-columns">
+          <div className="flow-column">
+            <div className="flow-section-title">
+              <strong>材料加工</strong>
+              <small>产能、用料、库存共同决定产出</small>
+            </div>
+            <PotionWorkshop s={s} act={act} />
+            {recipes.map((w) => {
+              const bill = G.processingBill(s, w.id),
+                recipe = G.processingRecipe(s, w.id),
+                variants = G.processingVariants(s, w.id),
+                output = G.processingOutput(s, w.id),
+                seconds = G.workDuration(s, w.id),
+                reason = G.workReason(s, w.id),
+                support = s.worldExploration.relics.town.find(
+                  (r) =>
+                    r.id === 'R01' &&
+                    (r.target === w.id ||
+                      (r.mode === 'lend' && r.source === w.id)),
+                );
+              return (
+                <article className="flow-work" key={w.id}>
                   <div className="flow-line">
                     <InfoHint
-                      title={recipe.name}
+                      title={`${w.name} · ${recipe.name}`}
                       body={
                         <>
                           <p>{recipe.text}</p>
-                          <Bill s={s} {...bill} />
                           <p>
-                            每批 {output} 件 · {seconds}{' '}
-                            秒。切换配方会清除未完成的加工时间，已完成的成品保留。
+                            每批 {G.costText(bill.cost)}，
+                            {G.materialCostText(bill.materials)}，产出 {output}{' '}
+                            件。改良工艺改善成材率；赶工提高产速但增加每批投入。
+                          </p>
+                          <p>
+                            配方决定用哪些原料，生产方式决定速度与每批用量。切换任一项会重新开始当前批次。当地两项工程均完成后，该地区替代配方的普通资源费用降低10%。
                           </p>
                         </>
                       }
                     >
-                      <span>配方 · {recipe.name}</span>
+                      <span className="illustrated-work-name">
+                        <GameIcon kind="material" id={w.id} size={24} />
+                        <strong>{w.name}</strong>
+                      </span>
                     </InfoHint>
-                    <Pick
-                      label={`${w.name}原料配方`}
-                      value={recipe.variant}
-                      options={variants.map((v) => ({
-                        value: v.variant,
-                        label: v.name,
-                      }))}
-                      onChange={(v) => act((x) => G.setWorkVariant(x, w.id, v))}
-                    />
+                    <span className="world-processing-rate">
+                      <span>
+                        基础 {((output * 60) / seconds).toFixed(1)} 件/分 ·{' '}
+                        {seconds} 秒/批
+                      </span>
+                      {support && (
+                        <InfoHint
+                          title="工匠机关台"
+                          body={
+                            G.RELICS.find((r) => r.id === 'R01')!.description
+                          }
+                        >
+                          <small>
+                            机关台 ·{' '}
+                            {support.target !== w.id
+                              ? '工时借出'
+                              : support.mode === 'hand'
+                                ? '手摇支援'
+                                : '借工支援'}
+                          </small>
+                        </InfoHint>
+                      )}
+                    </span>
+                    <button
+                      className={
+                        s.world.work[w.id]
+                          ? 'secondary-button'
+                          : 'primary-button'
+                      }
+                      onClick={() => act((x) => G.toggleWork(x, w.id))}
+                    >
+                      {s.world.work[w.id] ? '暂停' : '开工'}
+                    </button>
                   </div>
-                )}
+                  {variants.length > 1 && (
+                    <div className="flow-line">
+                      <InfoHint
+                        title={recipe.name}
+                        body={
+                          <>
+                            <p>{recipe.text}</p>
+                            <Bill s={s} {...bill} />
+                            <p>
+                              每批 {output} 件 · {seconds}{' '}
+                              秒。切换配方会清除未完成的加工时间，已完成的成品保留。
+                            </p>
+                          </>
+                        }
+                      >
+                        <span>配方 · {recipe.name}</span>
+                      </InfoHint>
+                      <Pick
+                        label={`${w.name}原料配方`}
+                        value={recipe.variant}
+                        options={variants.map((v) => ({
+                          value: v.variant,
+                          label: v.name,
+                        }))}
+                        onChange={(v) =>
+                          act((x) => G.setWorkVariant(x, w.id, v))
+                        }
+                      />
+                    </div>
+                  )}
+                  <div className="flow-controls">
+                    {G.workModesUnlocked(s, w.id) ? (
+                      <Pick
+                        value={s.economy.modes[w.id]}
+                        label={`${w.name}生产方式`}
+                        options={[
+                          { value: 'steady', label: '标准加工' },
+                          {
+                            value: 'efficient',
+                            label: '精作 · 用料75% / 速度⅔',
+                          },
+                          {
+                            value: 'rush',
+                            label: '赶工 · 用料150% / 速度150%',
+                          },
+                        ]}
+                        onChange={(v) =>
+                          act((x) => G.setWorkMode(x, w.id, v as G.WorkMode))
+                        }
+                      />
+                    ) : (
+                      <button
+                        className="flow-link"
+                        onClick={() =>
+                          go?.({
+                            view: 'research',
+                            research: G.DEVELOPMENTS.find(
+                              (d) => d.work === w.id,
+                            )!.id,
+                          })
+                        }
+                      >
+                        工艺2级开放精作与赶工 →
+                      </button>
+                    )}
+                    {G.stockControlsUnlocked(s) && (
+                      <Pick
+                        label={`${w.name}库存目标`}
+                        value={String(s.economy.targets[w.id])}
+                        options={[0.25, 0.5, 0.75, 1].map((n) => ({
+                          value: String(n),
+                          label: `存至 ${n * 100}%`,
+                        }))}
+                        onChange={(v) =>
+                          act((x) => G.setWorkTarget(x, w.id, Number(v)))
+                        }
+                      />
+                    )}
+                  </div>
+                  <div className="flow-foot">
+                    <progress
+                      max={seconds}
+                      value={Math.min(seconds, s.world.workProgress[w.id])}
+                      aria-label={`${w.name}批次进度`}
+                    />
+                    <span>
+                      {s.world.work[w.id]
+                        ? reason ||
+                          `持续生产 · 已制 ${short(s.economy.crafted[w.id])} 件`
+                        : '等待开工'}
+                    </span>
+                  </div>
+                </article>
+              );
+            })}
+            {!recipes.length && (
+              <p className="flow-empty">
+                木匠正在等一段结实的古木。先安排居民订单与产线改良，首次探索会带来加工手艺。
+              </p>
+            )}
+          </div>
+          <div className="flow-column">
+            <div className="flow-section-title">
+              <strong>地区后勤</strong>
+              <span>
+                {G.transportLines(s)}/{G.transportSlots(s)} 条 · 搬运工{' '}
+                {G.transportWorkers(s)}
+              </span>
+            </div>
+            {routes.map(({ region, r }) => {
+              const route = s.economy.routes[r],
+                bill = G.routeCost(s, r),
+                reason = G.routeUpgradeReason(s, r),
+                upkeep = G.routeUpkeep(s, r);
+              return (
+                <article className="flow-route" key={r}>
+                  <div className="flow-line">
+                    <InfoHint
+                      title={`${region.name} · ${G.ROUTE_STAGES[route.level]}`}
+                      body={
+                        <>
+                          <p>
+                            守住第一据点后修路，第三据点开放驿站。每次施工立即改善运量，不占用主队。
+                          </p>
+                          <p>
+                            每分钟 {G.MATERIAL_NAMES[G.REGION_MATERIALS[r]]} +
+                            {(G.routeYield(s, r) * 60).toFixed(2)}；粮{' '}
+                            {(upkeep.food! * 60).toFixed(1)}、金{' '}
+                            {(upkeep.gold! * 60).toFixed(1)}
+                            。缺补给时按比例公平分配；满仓不扣费用。
+                          </p>
+                          <p>{reason || '物资备齐，可以施工。'}</p>
+                          <Bill s={s} {...bill} />
+                        </>
+                      }
+                    >
+                      <strong>{region.name}</strong>
+                    </InfoHint>
+                    <span className="flow-route-stage">
+                      {route.level}/4 · {G.ROUTE_STAGES[route.level]}
+                    </span>
+                    <button
+                      className="secondary-button"
+                      disabled={!!reason}
+                      onClick={() => act((x) => G.upgradeRoute(x, r))}
+                      title={reason || G.costText(bill.cost)}
+                    >
+                      {route.level >= 4
+                        ? '已建成'
+                        : route.level
+                          ? '扩建'
+                          : '修路'}
+                    </button>
+                  </div>
+                  {route.level > 0 ? (
+                    <div className="flow-line">
+                      <span className="flow-yield">
+                        <MaterialName s={s} id={G.REGION_MATERIALS[r]} />
+                        <small>+{(plan.yields[r] * 60).toFixed(1)}/分</small>
+                      </span>
+                      <div className="flow-stepper">
+                        <button
+                          aria-label={`减少${region.name}搬运工`}
+                          disabled={!!G.routeAssignmentReason(s, r, -1)}
+                          onClick={() => act((x) => G.assignRoute(x, r, -1))}
+                        >
+                          −
+                        </button>
+                        <span>{route.crew} 人</span>
+                        <button
+                          aria-label={`增加${region.name}搬运工`}
+                          disabled={!!G.routeAssignmentReason(s, r, 1)}
+                          title={G.routeAssignmentReason(s, r, 1)}
+                          onClick={() => act((x) => G.assignRoute(x, r, 1))}
+                        >
+                          ＋
+                        </button>
+                      </div>
+                      <button
+                        className="flow-link"
+                        disabled={!route.crew}
+                        onClick={() => act((x) => G.toggleRoute(x, r))}
+                      >
+                        {route.enabled ? '停运' : '启运'}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flow-route-price">
+                      <Bill s={s} {...bill} />
+                      {G.regionalDepth(s, r) < 1 && <small>需第一据点</small>}
+                    </div>
+                  )}
+                </article>
+              );
+            })}
+            {!routes.length && (
+              <p className="flow-empty">
+                首次探索带回路线，夺下据点后即可修建运输设施。运输工人从城镇住民中分配。
+              </p>
+            )}
+            {routes.length > 0 && (
+              <div className="flow-note">
+                主队推进与后勤同时运行。修路 → 装卸营地 → 常驻驿站 → 地区商道。
+              </div>
+            )}
+            <section className="flow-management" aria-label="城镇事务">
+              <div className="flow-section-title">
+                <strong>城镇事务</strong>
+                <small>批量订单与留守人才</small>
+              </div>
+              <article className="flow-work">
+                <div className="flow-line">
+                  <InfoHint
+                    title="居民订单"
+                    body="居民订单持续把木、粮、石等物资换成金币；不占用主队，不需要反复领取。每批完成时扣料并付款，缺料、达到保留线或金币仓满时停工；没有限时惩罚。"
+                  >
+                    <strong>{order.name}</strong>
+                  </InfoHint>
+                  <span>
+                    {order.seconds}秒 → {order.gold} 金
+                  </span>
+                  <button
+                    className={
+                      s.economy.orderActive
+                        ? 'secondary-button'
+                        : 'primary-button'
+                    }
+                    onClick={() => act(G.toggleCivicOrder)}
+                  >
+                    {s.economy.orderActive ? '暂停' : '接单'}
+                  </button>
+                </div>
+                <Bill s={s} cost={order.cost} />
                 <div className="flow-controls">
-                  {G.workModesUnlocked(s, w.id) ? (
+                  {G.orderBatches(s).length > 1 ? (
                     <Pick
-                      value={s.economy.modes[w.id]}
-                      label={`${w.name}生产方式`}
-                      options={[
-                        { value: 'steady', label: '标准加工' },
-                        { value: 'efficient', label: '精作 · 用料75% / 速度⅔' },
-                        { value: 'rush', label: '赶工 · 用料150% / 速度150%' },
-                      ]}
+                      label="订单批量"
+                      value={String(s.economy.orderBatch || 1)}
+                      options={G.orderBatches(s).map((n) => ({
+                        value: String(n),
+                        label: n === 1 ? '小额订单' : '批量承接 · ' + n + '份',
+                      }))}
                       onChange={(v) =>
-                        act((x) => G.setWorkMode(x, w.id, v as G.WorkMode))
+                        act((x) => G.setOrderBatch(x, Number(v)))
                       }
                     />
                   ) : (
                     <button
                       className="flow-link"
                       onClick={() =>
-                        go?.({
-                          view: 'research',
-                          research: G.DEVELOPMENTS.find((d) => d.work === w.id)!
-                            .id,
-                        })
+                        go?.({ view: 'research', research: 'commerce' })
                       }
                     >
-                      工艺2级开放精作与赶工 →
+                      商事2级开放批量承接 →
                     </button>
                   )}
-                  {G.stockControlsUnlocked(s) && (
-                    <Pick
-                      label={`${w.name}库存目标`}
-                      value={String(s.economy.targets[w.id])}
-                      options={[0.25, 0.5, 0.75, 1].map((n) => ({
-                        value: String(n),
-                        label: `存至 ${n * 100}%`,
-                      }))}
-                      onChange={(v) =>
-                        act((x) => G.setWorkTarget(x, w.id, Number(v)))
-                      }
-                    />
+                  {G.orderBatches(s).length > 1 && (
+                    <small title="更换订单规模时清空当前备货进度，已完成订单保持不变。">
+                      重选后重新备货
+                    </small>
                   )}
                 </div>
                 <div className="flow-foot">
                   <progress
-                    max={seconds}
-                    value={Math.min(seconds, s.world.workProgress[w.id])}
-                    aria-label={`${w.name}批次进度`}
+                    max={order.seconds}
+                    value={s.economy.orderProgress}
+                    aria-label="居民订单进度"
                   />
                   <span>
-                    {s.world.work[w.id]
-                      ? reason ||
-                        `持续生产 · 已制 ${short(s.economy.crafted[w.id])} 件`
-                      : '等待开工'}
+                    {s.economy.orderActive
+                      ? G.orderReason(s) ||
+                        `交付中 · 已完成 ${s.economy.orders} 单`
+                      : '安排后自动承接'}
                   </span>
                 </div>
               </article>
-            );
-          })}
-          {!recipes.length && (
-            <p className="flow-empty">
-              木匠正在等一段结实的古木。先安排居民订单与产线改良，首次探索会带来加工手艺。
-            </p>
-          )}
-        </div>
-        <div className="flow-column">
-          <div className="flow-section-title">
-            <strong>地区后勤</strong>
-            <span>
-              {G.transportLines(s)}/{G.transportSlots(s)} 条 · 搬运工{' '}
-              {G.transportWorkers(s)}
-            </span>
-          </div>
-          {routes.map(({ region, r }) => {
-            const route = s.economy.routes[r],
-              bill = G.routeCost(s, r),
-              reason = G.routeUpgradeReason(s, r),
-              upkeep = G.routeUpkeep(s, r);
-            return (
-              <article className="flow-route" key={r}>
-                <div className="flow-line">
+              {G.stockControlsUnlocked(s) && (
+                <div className="flow-reserve">
                   <InfoHint
-                    title={`${region.name} · ${G.ROUTE_STAGES[route.level]}`}
-                    body={
-                      <>
-                        <p>
-                          守住第一据点后修路，第三据点开放驿站。每次施工立即改善运量，不占用主队。
-                        </p>
-                        <p>
-                          每分钟 {G.MATERIAL_NAMES[G.REGION_MATERIALS[r]]} +
-                          {(G.routeYield(s, r) * 60).toFixed(2)}；粮{' '}
-                          {(upkeep.food! * 60).toFixed(1)}、金{' '}
-                          {(upkeep.gold! * 60).toFixed(1)}
-                          。缺补给时按比例公平分配；满仓不扣费用。
-                        </p>
-                        <p>{reason || '物资备齐，可以施工。'}</p>
-                        <Bill s={s} {...bill} />
-                      </>
-                    }
+                    title="原料保留线"
+                    body="后勤、工坊、教学和居民订单不会消耗低于此比例的基础资源，给建设与下一次出征留出余量。原料不足时工作暂停，补足后自动恢复。"
                   >
-                    <strong>{region.name}</strong>
-                  </InfoHint>
-                  <span className="flow-route-stage">
-                    {route.level}/4 · {G.ROUTE_STAGES[route.level]}
-                  </span>
-                  <button
-                    className="secondary-button"
-                    disabled={!!reason}
-                    onClick={() => act((x) => G.upgradeRoute(x, r))}
-                    title={reason || G.costText(bill.cost)}
-                  >
-                    {route.level >= 4
-                      ? '已建成'
-                      : route.level
-                        ? '扩建'
-                        : '修路'}
-                  </button>
-                </div>
-                {route.level > 0 ? (
-                  <div className="flow-line">
-                    <span className="flow-yield">
-                      <MaterialName s={s} id={G.REGION_MATERIALS[r]} />
-                      <small>+{(plan.yields[r] * 60).toFixed(1)}/分</small>
-                    </span>
-                    <div className="flow-stepper">
-                      <button
-                        aria-label={`减少${region.name}搬运工`}
-                        disabled={!!G.routeAssignmentReason(s, r, -1)}
-                        onClick={() => act((x) => G.assignRoute(x, r, -1))}
-                      >
-                        −
-                      </button>
-                      <span>{route.crew} 人</span>
-                      <button
-                        aria-label={`增加${region.name}搬运工`}
-                        disabled={!!G.routeAssignmentReason(s, r, 1)}
-                        title={G.routeAssignmentReason(s, r, 1)}
-                        onClick={() => act((x) => G.assignRoute(x, r, 1))}
-                      >
-                        ＋
-                      </button>
-                    </div>
-                    <button
-                      className="flow-link"
-                      disabled={!route.crew}
-                      onClick={() => act((x) => G.toggleRoute(x, r))}
-                    >
-                      {route.enabled ? '停运' : '启运'}
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flow-route-price">
-                    <Bill s={s} {...bill} />
-                    {G.regionalDepth(s, r) < 1 && <small>需第一据点</small>}
-                  </div>
-                )}
-              </article>
-            );
-          })}
-          {!routes.length && (
-            <p className="flow-empty">
-              首次探索带回路线，夺下据点后即可修建运输设施。运输工人从城镇住民中分配。
-            </p>
-          )}
-          {routes.length > 0 && (
-            <div className="flow-note">
-              主队推进与后勤同时运行。修路 → 装卸营地 → 常驻驿站 → 地区商道。
-            </div>
-          )}
-          <SiteFacilities s={s} act={act} go={go} initialSite={initialSite} />
-        </div>
-        <div className="flow-column flow-management">
-          <div className="flow-section-title">
-            <strong>城镇事务</strong>
-            <small>批量订单与留守人才</small>
-          </div>
-          <article className="flow-work">
-            <div className="flow-line">
-              <InfoHint
-                title="居民订单"
-                body="居民订单持续把木、粮、石等物资换成金币；不占用主队，不需要反复领取。每批完成时扣料并付款，缺料、达到保留线或金币仓满时停工；没有限时惩罚。"
-              >
-                <strong>{order.name}</strong>
-              </InfoHint>
-              <span>
-                {order.seconds}秒 → {order.gold} 金
-              </span>
-              <button
-                className={
-                  s.economy.orderActive ? 'secondary-button' : 'primary-button'
-                }
-                onClick={() => act(G.toggleCivicOrder)}
-              >
-                {s.economy.orderActive ? '暂停' : '接单'}
-              </button>
-            </div>
-            <Bill s={s} cost={order.cost} />
-            <div className="flow-controls">
-              {G.orderBatches(s).length > 1 ? (
-                <Pick
-                  label="订单批量"
-                  value={String(s.economy.orderBatch || 1)}
-                  options={G.orderBatches(s).map((n) => ({
-                    value: String(n),
-                    label: n === 1 ? '小额订单' : '批量承接 · ' + n + '份',
-                  }))}
-                  onChange={(v) => act((x) => G.setOrderBatch(x, Number(v)))}
-                />
-              ) : (
-                <button
-                  className="flow-link"
-                  onClick={() =>
-                    go?.({ view: 'research', research: 'commerce' })
-                  }
-                >
-                  商事2级开放批量承接 →
-                </button>
-              )}
-              {G.orderBatches(s).length > 1 && (
-                <small title="更换订单规模时清空当前备货进度，已完成订单保持不变。">
-                  重选后重新备货
-                </small>
-              )}
-            </div>
-            <div className="flow-foot">
-              <progress
-                max={order.seconds}
-                value={s.economy.orderProgress}
-                aria-label="居民订单进度"
-              />
-              <span>
-                {s.economy.orderActive
-                  ? G.orderReason(s) || `交付中 · 已完成 ${s.economy.orders} 单`
-                  : '安排后自动承接'}
-              </span>
-            </div>
-          </article>
-          {G.stockControlsUnlocked(s) && (
-            <div className="flow-reserve">
-              <InfoHint
-                title="原料保留线"
-                body="后勤、工坊、教学和居民订单不会消耗低于此比例的基础资源，给建设与下一次出征留出余量。原料不足时工作暂停，补足后自动恢复。"
-              >
-                <strong>原料保留</strong>
-              </InfoHint>
-              <Pick
-                label="原料保留比例"
-                value={String(s.economy.reserve)}
-                options={[0, 0.1, 0.25, 0.5].map((n) => ({
-                  value: String(n),
-                  label: n ? `保留 ${n * 100}%` : '全部可用',
-                }))}
-                onChange={(v) => act((x) => G.setResourceReserve(x, Number(v)))}
-              />
-            </div>
-          )}
-          {s.heroes.length > 1 && (
-            <div className="flow-duties">
-              <strong>留守任职</strong>
-              {G.DUTIES.map((d) => (
-                <div className="flow-duty" key={d.id}>
-                  <InfoHint
-                    title={d.name}
-                    body={
-                      <>
-                        <p>{d.desc}</p>
-                        <p>
-                          只让未编入出战队伍的伙伴任职；任职不阻止培养。效率 ×
-                          {G.dutyMultiplier(s, d.id).toFixed(2)}
-                          。教官每10秒为每位可成长学员消耗2粮1金。
-                        </p>
-                      </>
-                    }
-                  >
-                    {d.name}
+                    <strong>原料保留</strong>
                   </InfoHint>
                   <Pick
-                    label={d.name}
-                    value={s.economy.duties[d.id] || ''}
-                    options={[
-                      { value: '', label: '暂不安排' },
-                      ...s.heroes
-                        .filter(
-                          (h) =>
-                            !s.party.includes(h.id) &&
-                            !Object.entries(s.economy.duties).some(
-                              ([key, id]) => key !== d.id && id === h.id,
-                            ),
-                        )
-                        .map((h) => ({
-                          value: h.id,
-                          label: `${h.name} · Lv.${h.level}`,
-                        })),
-                    ]}
-                    onChange={(v) => act((x) => G.assignDuty(x, d.id, v))}
+                    label="原料保留比例"
+                    value={String(s.economy.reserve)}
+                    options={[0, 0.1, 0.25, 0.5].map((n) => ({
+                      value: String(n),
+                      label: n ? `保留 ${n * 100}%` : '全部可用',
+                    }))}
+                    onChange={(v) =>
+                      act((x) => G.setResourceReserve(x, Number(v)))
+                    }
                   />
                 </div>
-              ))}
-            </div>
-          )}
+              )}
+              {s.heroes.length > 1 && (
+                <div className="flow-duties">
+                  <strong>留守任职</strong>
+                  {G.DUTIES.map((d) => (
+                    <div className="flow-duty" key={d.id}>
+                      <InfoHint
+                        title={d.name}
+                        body={
+                          <>
+                            <p>{d.desc}</p>
+                            <p>
+                              只让未编入出战队伍的伙伴任职；任职不阻止培养。效率
+                              ×{G.dutyMultiplier(s, d.id).toFixed(2)}
+                              。教官每10秒为每位可成长学员消耗2粮1金。
+                            </p>
+                          </>
+                        }
+                      >
+                        {d.name}
+                      </InfoHint>
+                      <Pick
+                        label={d.name}
+                        value={s.economy.duties[d.id] || ''}
+                        options={[
+                          { value: '', label: '暂不安排' },
+                          ...s.heroes
+                            .filter(
+                              (h) =>
+                                !s.party.includes(h.id) &&
+                                !Object.entries(s.economy.duties).some(
+                                  ([key, id]) => key !== d.id && id === h.id,
+                                ),
+                            )
+                            .map((h) => ({
+                              value: h.id,
+                              label: `${h.name} · Lv.${h.level}`,
+                            })),
+                        ]}
+                        onChange={(v) => act((x) => G.assignDuty(x, d.id, v))}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          </div>
+          <div className="flow-column flow-facility-column">
+            <SiteFacilities s={s} act={act} go={go} initialSite={initialSite} />
+          </div>
         </div>
       </div>
     </section>

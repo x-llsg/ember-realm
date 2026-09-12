@@ -125,10 +125,17 @@ export default function Home() {
   function go(d: Destination) {
     if (d.view === 'destiny' && d.tab === 'research')
       d = { ...d, view: 'research' };
-    if (d.view === 'heroes' && !ref.current.heroes.length && d.tab !== 'inventory')
+    if (
+      d.view === 'heroes' &&
+      !ref.current.heroes.length &&
+      d.tab !== 'inventory'
+    )
       d = { ...d, view: 'recruit' };
     if (d.view === 'explore' && d.region !== undefined) {
-      const next = d.site !== undefined ? rememberSite(ref.current, d.region, d.site) : G.rememberMap(ref.current, d.region);
+      const next =
+        d.site !== undefined
+          ? rememberSite(ref.current, d.region, d.site)
+          : G.rememberMap(ref.current, d.region);
       if (next !== ref.current) {
         commit(next, false);
         persist(next);
@@ -271,8 +278,14 @@ export default function Home() {
               loaded.explored.reduce((a, b) => a + b, 0) -
               before.explored.reduce((a, b) => a + b, 0),
             gains,
-            hunts: Math.max(0, (loaded.hunt?.wins ?? 0) - (before.hunt?.wins ?? 0)),
-            drops: Math.max(0, (loaded.hunt?.drops ?? 0) - (before.hunt?.drops ?? 0)),
+            hunts: Math.max(
+              0,
+              (loaded.hunt?.wins ?? 0) - (before.hunt?.wins ?? 0),
+            ),
+            drops: Math.max(
+              0,
+              (loaded.hunt?.drops ?? 0) - (before.hunt?.drops ?? 0),
+            ),
             message: before.hunt?.enabled
               ? loaded.hunt?.enabled
                 ? `仍在连刷：${G.huntStatus(loaded).target}。`
@@ -280,8 +293,8 @@ export default function Home() {
               : loaded.battle
                 ? '队伍仍在战斗中。'
                 : loaded.order.enabled
-              ? loaded.order.reason || '持续委托仍在执行。'
-              : '队伍正在镇内休息。',
+                  ? loaded.order.reason || '持续委托仍在执行。'
+                  : '队伍正在镇内休息。',
           });
         } else loaded = G.advance(loaded, seconds);
         loaded = G.settleStory(loaded);
@@ -405,12 +418,17 @@ export default function Home() {
     stage = s.buildings.fire ? G.TOWN_RANK_NAMES[G.townRank(s)] : '无人之地';
   const inventoryOpen = view === 'heroes' && focus.tab === 'inventory';
   const navValue = inventoryOpen ? 'equipment' : view;
-  const equipmentVisible = s.guild.inventory.length > 0 || s.guild.crafts > 0 || s.buildings.forge > 0;
+  const equipmentVisible =
+    s.guild.inventory.length > 0 || s.guild.crafts > 0 || s.buildings.forge > 0;
   return (
     <Tabs
       value={navValue}
       onValueChange={(v) => {
-        go(v === 'equipment' ? { view: 'heroes', tab: 'inventory' } : { view: v as G.View });
+        go(
+          v === 'equipment'
+            ? { view: 'heroes', tab: 'inventory' }
+            : { view: v as G.View },
+        );
       }}
       orientation="vertical"
       className="life-shell v7-ui v8-ui v9-ui v21-ui"
@@ -424,7 +442,9 @@ export default function Home() {
         </button>
         <span className="life-world">
           <Sun />第 {G.day(s)} 日 <span>· {stage}</span>
-          {G.achievementTitle(s) && <span className="achievement-title">{G.achievementTitle(s)}</span>}
+          {G.achievementTitle(s) && (
+            <span className="achievement-title">{G.achievementTitle(s)}</span>
+          )}
         </span>
         <div className="life-tools">
           <span>{saveStatus}</span>
@@ -438,14 +458,20 @@ export default function Home() {
         <aside className="life-nav">
           <span className="life-kicker">领主议事厅</span>
           <TabsList className="life-nav-list" aria-label="游戏区域">
-            {NAV.filter((n) => n.id === 'equipment' ? equipmentVisible : G.viewDiscovered(s, n.id)).map((n) => (
+            {NAV.filter((n) =>
+              n.id === 'equipment'
+                ? equipmentVisible
+                : G.viewDiscovered(s, n.id),
+            ).map((n) => (
               <TabsTrigger value={n.id} key={n.id}>
                 <n.icon />
                 {n.name}
                 {n.id === 'explore' && (e || s.battle) && (
                   <span className="life-dot" />
                 )}
-                {n.id === 'equipment' && G.lootUnread(s) > 0 && <span className="life-dot" />}
+                {n.id === 'equipment' && G.lootUnread(s) > 0 && (
+                  <span className="life-dot" />
+                )}
               </TabsTrigger>
             ))}
           </TabsList>
@@ -533,10 +559,14 @@ export default function Home() {
             </button>
           )}
           <div className="life-meta">
-            {!(view === 'explore' && s.battle) && <PlanningBoard s={s} act={act} go={go} />}
+            {!(view === 'explore' && s.battle) && (
+              <PlanningBoard s={s} act={act} go={go} />
+            )}
             <LootNotice s={s} act={act} go={go} />
           </div>
-          {!s.worldExploration.activeRun && <HuntActivity s={s} act={act} go={go} />}
+          {!s.worldExploration.activeRun && (
+            <HuntActivity s={s} act={act} go={go} />
+          )}
           <SiteActivity s={s} act={act} go={go} />
           {(e || s.order.enabled) && view !== 'explore' && (
             <div className="life-activity">
@@ -804,10 +834,10 @@ export default function Home() {
         }}
       >
         <AlertDialogContent className="life-dialog">
-          <AlertDialogTitle>
-            让故事从头开始？
-          </AlertDialogTitle>
-          <AlertDialogDescription>当前城镇和伙伴会被全新存档替换。浏览器会尝试保留一份恢复副本；你也可以先导出手记。</AlertDialogDescription>
+          <AlertDialogTitle>让故事从头开始？</AlertDialogTitle>
+          <AlertDialogDescription>
+            当前城镇和伙伴会被全新存档替换。浏览器会尝试保留一份恢复副本；你也可以先导出手记。
+          </AlertDialogDescription>
           <div className="life-inline-actions">
             <AlertDialogCancel>留在这里</AlertDialogCancel>
             <AlertDialogAction onClick={() => beginFresh()}>
@@ -846,9 +876,12 @@ export default function Home() {
               <p>
                 小队完成了 <strong>{welcome.trips}</strong> 次往返。
               </p>
-              {(welcome.hunts > 0 || welcome.drops > 0) && <p>
-                自动刷怪获胜 <strong>{welcome.hunts}</strong> 场，获得 <strong>{welcome.drops}</strong> 件装备。可在近期收获中查看。
-              </p>}
+              {(welcome.hunts > 0 || welcome.drops > 0) && (
+                <p>
+                  自动刷怪获胜 <strong>{welcome.hunts}</strong> 场，获得{' '}
+                  <strong>{welcome.drops}</strong> 件装备。可在近期收获中查看。
+                </p>
+              )}
               <p className="life-hint">{welcome.message}</p>
               <button
                 className="primary-button"
@@ -897,53 +930,55 @@ export default function Home() {
           <DialogDescription>
             先建立供给，再委托冒险。偶尔回来做一个真正改变城镇的决定。
           </DialogDescription>
-          <ol>
-            {s.buildings.fire > 0 && (
-              <li>
-                <strong>让小镇接过你的工作</strong>
-                <p>
-                  点火后建小屋、收留住民、安排分工。木材、石料和口粮是早期基础；集市提供金币。顶部采集按钮各自冷却
-                  3
-                  秒，研究工具可提高采集量。满仓会停止增产，扩建仓库可继续积累。
-                </p>
-              </li>
-            )}
-            {G.viewDiscovered(s, 'recruit') && (
-              <li>
-                <strong>让伙伴自己往返</strong>
-                <p>
-                  酒馆每批迎来随机旅人，按职业与实际资质挑选同行者。潜力决定每级成长，五星系数为一星的
-                  3.6
-                  倍；三项资质独立随机，天赋、缺点和装备影响用途。远征先选择调查、推进或补给，再检查并确认派遣；需要时可勾选归来后重复。
-                </p>
-              </li>
-            )}
-            {G.hasReturned(s) && (
-              <li>
-                <strong>让发现改变城镇</strong>
-                <p>
-                  带回样品后，研究页会出现新手艺；发展城镇、改进产线，再用这些产物武装同行者。已经走过的地区可以持续供料。有效战力达到地区基准
-                  2 倍，远征必定成功。
-                </p>
-              </li>
-            )}
-            {s.guild.depths.some((n) => n >= 4) && (
-              <li>
-                <strong>读懂敌人，再行动</strong>
-                <p>
-                  重甲怕穿甲，龙息需要火抗，神罚需要神抗。先在备战中推演，再决定阵容、装备、药剂与姿态。首领提前显示行动，破势可打断，坚守抵挡重击；第31回合起逐步狂怒。
-                </p>
-              </li>
-            )}
-            {s.ending && (
-              <li>
-                <strong>把故事写到生活里</strong>
-                <p>
-                  击败魔王、古龙与神明后，还有三项重建。全部完成后可选择带着生产加成再走一程，也可以留在完整的城镇里。
-                </p>
-              </li>
-            )}
-          </ol>
+          <div className="guide-body">
+            <ol>
+              {s.buildings.fire > 0 && (
+                <li>
+                  <strong>让小镇接过你的工作</strong>
+                  <p>
+                    点火后建小屋、收留住民、安排分工。木材、石料和口粮是早期基础；集市提供金币。顶部采集按钮各自冷却
+                    3
+                    秒，研究工具可提高采集量。满仓会停止增产，扩建仓库可继续积累。
+                  </p>
+                </li>
+              )}
+              {G.viewDiscovered(s, 'recruit') && (
+                <li>
+                  <strong>让伙伴自己往返</strong>
+                  <p>
+                    酒馆每批迎来随机旅人，按职业与实际资质挑选同行者。潜力决定每级成长，五星系数为一星的
+                    3.6
+                    倍；三项资质独立随机，天赋、缺点和装备影响用途。远征先选择调查、推进或补给，再检查并确认派遣；需要时可勾选归来后重复。
+                  </p>
+                </li>
+              )}
+              {G.hasReturned(s) && (
+                <li>
+                  <strong>让发现改变城镇</strong>
+                  <p>
+                    带回样品后，研究页会出现新手艺；发展城镇、改进产线，再用这些产物武装同行者。已经走过的地区可以持续供料。有效战力达到地区基准
+                    2 倍，远征必定成功。
+                  </p>
+                </li>
+              )}
+              {s.guild.depths.some((n) => n >= 4) && (
+                <li>
+                  <strong>读懂敌人，再行动</strong>
+                  <p>
+                    重甲怕穿甲，龙息需要火抗，神罚需要神抗。先在备战中推演，再决定阵容、装备、药剂与姿态。首领提前显示行动，破势可打断，坚守抵挡重击；第31回合起逐步狂怒。
+                  </p>
+                </li>
+              )}
+              {s.ending && (
+                <li>
+                  <strong>把故事写到生活里</strong>
+                  <p>
+                    击败魔王、古龙与神明后，还有三项重建。全部完成后可选择带着生产加成再走一程，也可以留在完整的城镇里。
+                  </p>
+                </li>
+              )}
+            </ol>
+          </div>
           <p className="life-hint">
             时间支持 1× / 3×，离线按 1× 结算，最多 8
             小时。暂停会同时停止离线收益。没有死亡删档。

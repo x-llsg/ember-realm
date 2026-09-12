@@ -54,7 +54,7 @@ export function RelicCollectionButton({ s, act, kind, go, initialId }: Props) {
         </span>
       </button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="world-drawer" aria-label="遗物收藏">
+        <DialogContent className="world-drawer roster-relic-dialog" aria-label="遗物收藏">
           <DialogTitle className="world-drawer-title">遗物收藏</DialogTitle>
           <DialogDescription className="world-drawer-description">
             探索带回的独特办法。修复后自行部署，收藏不会自动生效。
@@ -247,7 +247,6 @@ function RelicDetail({
     : [];
   return (
     <section className="world-relic-detail" aria-label={`${relic.name}详情`}>
-      <div className="world-relic-scroll">
         <header className="world-relic-identity">
           <RelicSigil id={relic.id} large />
           <div>
@@ -270,6 +269,7 @@ function RelicDetail({
             </small>
           </div>
         </header>
+      <div className="world-relic-scroll">
         <p className="world-relic-copy">{relic.description}</p>
         <button
           type="button"

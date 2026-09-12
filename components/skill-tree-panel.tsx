@@ -33,7 +33,7 @@ export function SkillTreePanel({
         →
       </button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="life-dialog skill-tree-dialog">
+        <DialogContent className="life-dialog skill-tree-dialog roster-dialog">
           <DialogTitle>
             <span className={'potential-' + h.quality}>{h.name}</span> ·{' '}
             {role.name}

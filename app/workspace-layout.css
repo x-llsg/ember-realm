@@ -1,0 +1,398 @@
+/* Shared viewport rules. Page-specific desks may scroll their content, but
+   never redefine the position of the global navigation or resource controls. */
+.v21-ui.v21-ui.v9-ui .life-main,
+.v21-ui.v21-ui.v9-ui .life-view {
+  min-width: 0;
+  min-height: 0;
+}
+.v21-ui.v21-ui.v9-ui .life-tabs {
+  justify-content: flex-start;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex-shrink: 0;
+  min-height: 36px;
+  scrollbar-width: thin;
+}
+.v21-ui.v21-ui.v9-ui .life-tabs > [data-slot='tabs-trigger'] {
+  flex: 0 0 auto;
+  min-width: 90px;
+  padding-inline: 16px;
+  white-space: nowrap;
+}
+.v21-ui.v21-ui.v9-ui :is(.life-card, .life-empty, .life-view) {
+  overflow-wrap: anywhere;
+}
+body:has(.v21-ui) .life-select [data-slot='select-value'] {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The adventure reference keeps its region selector and title in place. */
+.v21-ui.v21-ui.v9-ui .discovery-journal {
+  grid-template-columns: 170px minmax(0, 1fr);
+  min-height: 0;
+  overflow: hidden;
+}
+.v21-ui.v21-ui.v9-ui .journal-detail {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: 14px 18px;
+  overflow: hidden;
+}
+.v21-ui.v21-ui.v9-ui .journal-detail > header {
+  flex: 0 0 auto;
+  margin: 0 0 12px;
+  padding-bottom: 10px;
+}
+.v21-ui.v21-ui.v9-ui .journal-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  align-content: start;
+  gap: 16px 22px;
+  padding-right: 6px;
+}
+.v21-ui.v21-ui.v9-ui .journal-grid > section {
+  min-width: 0;
+  gap: 7px;
+  padding-bottom: 12px;
+}
+.v21-ui.v21-ui.v9-ui .life-card:has([aria-label='选择战后重建']) {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  gap: 12px;
+}
+.v21-ui.v21-ui.v9-ui .life-card:has([aria-label='选择战后重建']) > * {
+  flex-shrink: 0;
+}
+.v21-ui.v21-ui.v9-ui
+  .life-card:has([aria-label='选择战后重建'])
+  > .life-card-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  justify-content: flex-start;
+}
+
+/* Constrained modal headings and a single content scroller. Action groups
+   below those scrollers stay reachable when text or the viewport changes. */
+body:has(.v21-ui) :is(.life-dialog, .planning-dialog) {
+  max-height: calc(100dvh - 32px);
+  padding: 20px !important;
+  gap: 12px !important;
+  min-width: 0;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+body:has(.v21-ui)
+  :is(.life-dialog, .planning-dialog)
+  [data-slot='dialog-title'] {
+  padding-right: 28px;
+  font-size: 21px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+body:has(.v21-ui)
+  :is(.life-dialog, .planning-dialog)
+  [data-slot='dialog-description'] {
+  line-height: 1.65;
+}
+body:has(.v21-ui) :is(.life-guide, .mission-confirm) {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+body:has(.v21-ui) :is(.life-guide, .mission-confirm) > * {
+  flex-shrink: 0;
+}
+body:has(.v21-ui) :is(.guide-body, .mission-confirm-body) {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+body:has(.v21-ui) .mission-confirm-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+body:has(.v21-ui) .dialog-actions {
+  border-top: 1px solid var(--desk-line);
+  padding-top: 12px;
+  margin: 0;
+}
+body:has(.v21-ui) .life-log-dialog > :not(.life-dialog-scroll),
+body:has(.v21-ui) .achievement-dialog > :not(.achievement-list) {
+  flex-shrink: 0;
+}
+body:has(.v21-ui) .achievement-dialog {
+  overflow: hidden;
+}
+body:has(.v21-ui) .achievement-list {
+  min-height: 0;
+  overflow-y: auto;
+  align-content: start;
+}
+body:has(.v21-ui) .achievement-toolbar > [role='tablist'] {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  max-width: 100%;
+}
+body:has(.v21-ui) .achievement-toolbar [role='tab'] {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+body:has(.v21-ui) .planning-dialog > :not(.planning-body) {
+  flex-shrink: 0;
+}
+body:has(.v21-ui) .planning-body {
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+body:has(.v21-ui) .planning-targets {
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+body:has(.v21-ui) .planning-demand {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+body:has(.v21-ui) .planning-demand-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+body:has(.v21-ui) .planning-demand-scroll > small {
+  display: block;
+  margin: 6px 0;
+  font-size: 12px;
+  color: var(--desk-muted);
+}
+body:has(.v21-ui) .planning-estimate {
+  flex: 0 0 auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--desk-line);
+}
+body:has(.v21-ui) .planning-estimate > button {
+  width: 100%;
+}
+body:has(.v21-ui) .planning-ledger > div {
+  grid-template-columns: minmax(60px, 0.7fr) minmax(0, 1fr) minmax(65px, 0.7fr);
+  overflow-wrap: anywhere;
+}
+
+/* Manual commands are independent of the scrolling enemy and partner state. */
+.v21-ui.v21-ui.v9-ui .battle-desk {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+.v21-ui.v21-ui.v9-ui .battle-desk .battle-stage {
+  display: grid;
+  container-type: size;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) minmax(0, max-content);
+  overflow: hidden;
+  justify-content: stretch;
+}
+.v21-ui.v21-ui.v9-ui .battle-observation {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.v21-ui.v21-ui.v9-ui .battle-observation > * {
+  flex-shrink: 0;
+}
+.v21-ui.v21-ui.v9-ui .battle-command-deck {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  gap: 6px;
+  overflow-y: auto;
+  /* Resource and activity rows reduce the available battle height. Keep at
+     least half of that actual stage for enemy and partner information. */
+  max-height: min(42dvh, 50cqh);
+  border-top: 1px solid var(--desk-line);
+  padding-top: 5px;
+}
+.v21-ui.v21-ui.v9-ui .battle-command-deck > * {
+  flex-shrink: 0;
+}
+.v21-ui.v21-ui.v9-ui .battle-controls {
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 1000px) {
+  .v21-ui.v21-ui.v9-ui .life-layout {
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: 38px minmax(0, 1fr);
+  }
+  .v21-ui.v21-ui.v9-ui .life-nav {
+    grid-column: 1;
+    grid-row: 1;
+    padding: 2px 6px;
+    flex-direction: row;
+    align-items: center;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+  .v21-ui.v21-ui.v9-ui .life-nav > :not(.life-nav-list) {
+    display: none;
+  }
+  .v21-ui.v21-ui.v9-ui .life-nav-list {
+    display: flex !important;
+    flex-direction: row;
+    min-width: max-content;
+    gap: 3px !important;
+  }
+  .v21-ui.v21-ui.v9-ui .life-nav-list > [data-slot='tabs-trigger'] {
+    width: auto;
+    min-height: 30px;
+    padding: 4px 9px;
+    font-size: 12px;
+    gap: 5px;
+  }
+  .v21-ui.v21-ui.v9-ui .life-main {
+    grid-column: 1;
+    grid-row: 2;
+    width: 100%;
+    min-width: 0;
+  }
+  .v21-ui.v21-ui.v9-ui .life-meta {
+    flex-wrap: nowrap;
+    min-width: 0;
+    gap: 8px;
+  }
+  .v21-ui.v21-ui.v9-ui .life-meta .planning-strip {
+    flex: 0 0 auto;
+  }
+  .v21-ui.v21-ui.v9-ui .life-meta .planning-strip > :not(.planning-manage) {
+    display: none;
+  }
+  .v21-ui.v21-ui.v9-ui .life-meta .loot-notice {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+}
+@media (min-width: 761px) and (max-height: 900px) {
+  .v21-ui.v21-ui.v9-ui .battle-desk .battle-actions {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+  .v21-ui.v21-ui.v9-ui .battle-desk .battle-action-cell.skill,
+  .v21-ui.v21-ui.v9-ui
+    .battle-desk
+    .battle-action-cell.skill:last-child:nth-child(5) {
+    grid-column: auto;
+  }
+}
+@media (max-width: 1100px) {
+  .v21-ui.v21-ui.v9-ui .battle-desk .battle-content {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .v21-ui.v21-ui.v9-ui .battle-desk .battle-history {
+    display: none;
+  }
+  .v21-ui.v21-ui.v9-ui .battle-desk .battle-controls > .battle-history-trigger {
+    display: inline-flex;
+  }
+}
+@media (max-width: 760px) {
+  .v21-ui.v21-ui.v9-ui .world-activity {
+    flex-wrap: wrap;
+    gap: 3px 6px;
+    padding: 3px 6px;
+  }
+  .v21-ui.v21-ui.v9-ui .world-activity > button:first-child {
+    flex: 1;
+    overflow: hidden;
+  }
+  .v21-ui.v21-ui.v9-ui .world-activity > button:first-child strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .v21-ui.v21-ui.v9-ui .world-activity .world-activity-phase {
+    order: 1;
+    flex: 1 0 100%;
+  }
+  .v21-ui.v21-ui.v9-ui .life-tabs > [data-slot='tabs-trigger'] {
+    min-width: 70px;
+    padding-inline: 10px;
+  }
+  .v21-ui.v21-ui.v9-ui .discovery-journal {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 42px minmax(0, 1fr);
+    overflow: hidden;
+  }
+  .v21-ui.v21-ui.v9-ui .journal-regions {
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 0;
+    gap: 4px;
+    border-bottom: 1px solid var(--desk-line);
+  }
+  .v21-ui.v21-ui.v9-ui .journal-regions > strong,
+  .v21-ui.v21-ui.v9-ui .journal-regions > button > small {
+    display: none;
+  }
+  .v21-ui.v21-ui.v9-ui .journal-regions > button {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    padding: 6px 10px;
+    gap: 5px;
+    min-height: 34px;
+  }
+  .v21-ui.v21-ui.v9-ui .journal-detail {
+    padding: 10px;
+    overflow: hidden;
+  }
+  .v21-ui.v21-ui.v9-ui .journal-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  body:has(.v21-ui) .planning-body {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  body:has(.v21-ui)
+    :is(.planning-targets, .planning-demand, .planning-demand-scroll) {
+    flex: 0 0 auto;
+    overflow: visible;
+  }
+  body:has(.v21-ui) .planning-estimate {
+    position: sticky;
+    bottom: 0;
+    background: var(--desk-panel);
+  }
+}
+@media (max-height: 760px), (max-width: 600px) {
+  body:has(.v21-ui) :is(.life-dialog, .planning-dialog) {
+    padding: 14px !important;
+    gap: 10px !important;
+    max-height: calc(100dvh - 24px);
+  }
+  body:has(.v21-ui)
+    :is(.life-dialog, .planning-dialog)
+    [data-slot='dialog-title'] {
+    font-size: 19px;
+  }
+}

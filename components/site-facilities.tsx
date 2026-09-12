@@ -263,34 +263,6 @@ export function SiteFacilities({
                                     />
                                   </>
                                 )}
-                                <button
-                                  type="button"
-                                  className="secondary-button"
-                                  disabled={!!change.reason}
-                                  title={change.reason}
-                                  onClick={() => {
-                                    if (facility.mode && confirm !== mode.mode)
-                                      setConfirm(mode.mode);
-                                    else {
-                                      act(
-                                        (x) =>
-                                          E.setFacilityMode(
-                                            x,
-                                            site.id,
-                                            mode.mode,
-                                          ),
-                                        `已安排${site.name}采用${mode.name}。`,
-                                      );
-                                      setConfirm(null);
-                                    }
-                                  }}
-                                >
-                                  {confirm === mode.mode
-                                    ? '确认改设并清除未完进度'
-                                    : facility.mode
-                                      ? '改设为此用途'
-                                      : '选定此用途'}
-                                </button>
                               </>
                             )}
                             {chosen && (
@@ -308,63 +280,112 @@ export function SiteFacilities({
                   )}
                 </div>
               </div>
-              <footer className="world-site-actions">
-                {!facility.repaired && !facility.operation ? (
-                  <div>
-                    <WorldBill s={s} {...E.facilityRepairQuote(s, site.id)} />
-                    <PinPlan s={s} act={act} kind="facility" id={site.id} />
-                    <p className="world-hint">
-                      一次付款，后方修复，不占主队。工程不退款取消。
-                    </p>
+              <footer className="world-site-actions town-facility-actions">
+                {facility.repaired && (
+                  <div className="town-facility-choices">
+                    {E.FACILITY_MODES.filter((m) => m.siteId === site.id).map(
+                      (mode) => {
+                        const change = E.facilityChangeQuote(
+                            s,
+                            site.id,
+                            mode.mode,
+                          ),
+                          chosen = facility.mode === mode.mode;
+                        return !chosen ? (
+                          <button
+                            key={mode.id}
+                            type="button"
+                            className="secondary-button"
+                            disabled={!!change.reason}
+                            title={change.reason}
+                            onClick={() => {
+                              if (facility.mode && confirm !== mode.mode)
+                                setConfirm(mode.mode);
+                              else {
+                                act(
+                                  (x) =>
+                                    E.setFacilityMode(x, site.id, mode.mode),
+                                  `已安排${site.name}采用${mode.name}。`,
+                                );
+                                setConfirm(null);
+                              }
+                            }}
+                          >
+                            {confirm === mode.mode
+                              ? `确认改设${mode.name}并清除未完进度`
+                              : facility.mode
+                                ? `改设为${mode.name}`
+                                : `选定${mode.name}`}
+                          </button>
+                        ) : (
+                          <span className="world-hint" key={mode.id}>
+                            当前用途 · {mode.name}
+                          </span>
+                        );
+                      },
+                    )}
                   </div>
-                ) : (
-                  <p className="world-hint">
-                    缺料和满仓暂停时保留已分配岗位；主动停工才释放。
-                  </p>
                 )}
-                <div className="world-button-row">
-                  {!facility.repaired && !facility.operation && (
+                <div className="town-facility-operation">
+                  {!facility.repaired && !facility.operation ? (
+                    <div>
+                      <WorldBill s={s} {...E.facilityRepairQuote(s, site.id)} />
+                      <PinPlan s={s} act={act} kind="facility" id={site.id} />
+                      <p className="world-hint">
+                        一次付款，后方修复，不占主队。工程不退款取消。
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="world-hint">
+                      缺料和满仓暂停时保留已分配岗位；主动停工才释放。
+                    </p>
+                  )}
+                  <div className="world-button-row">
+                    {!facility.repaired && !facility.operation && (
+                      <button
+                        type="button"
+                        className="primary-button"
+                        disabled={!!E.facilityRepairQuote(s, site.id).reason}
+                        onClick={() =>
+                          act(
+                            (x) => E.repairFacility(x, site.id),
+                            `已开始修复${site.name}。`,
+                          )
+                        }
+                      >
+                        开始修复 · {E.facilityRepairQuote(s, site.id).seconds}秒
+                      </button>
+                    )}
+                    {facility.repaired && !facility.operation && (
+                      <button
+                        type="button"
+                        className="primary-button"
+                        disabled={
+                          !facility.enabled &&
+                          !!E.facilityEnableReason(s, site.id)
+                        }
+                        onClick={() => act((x) => E.toggleFacility(x, site.id))}
+                      >
+                        {facility.enabled
+                          ? '停工并释放岗位'
+                          : '分配1位居民开工'}
+                      </button>
+                    )}
                     <button
                       type="button"
-                      className="primary-button"
-                      disabled={!!E.facilityRepairQuote(s, site.id).reason}
-                      onClick={() =>
-                        act(
-                          (x) => E.repairFacility(x, site.id),
-                          `已开始修复${site.name}。`,
-                        )
-                      }
+                      className="secondary-button"
+                      onClick={() => {
+                        setSelected(null);
+                        go?.({
+                          view: 'explore',
+                          region: site.region,
+                          site: site.id,
+                        });
+                      }}
                     >
-                      开始修复 · {E.facilityRepairQuote(s, site.id).seconds}秒
+                      查看地点
                     </button>
-                  )}
-                  {facility.repaired && !facility.operation && (
-                    <button
-                      type="button"
-                      className="primary-button"
-                      disabled={
-                        !facility.enabled &&
-                        !!E.facilityEnableReason(s, site.id)
-                      }
-                      onClick={() => act((x) => E.toggleFacility(x, site.id))}
-                    >
-                      {facility.enabled ? '停工并释放岗位' : '分配1位居民开工'}
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    className="secondary-button"
-                    onClick={() => {
-                      setSelected(null);
-                      go?.({
-                        view: 'explore',
-                        region: site.region,
-                        site: site.id,
-                      });
-                    }}
-                  >
-                    查看地点
-                  </button>
+                  </div>
                 </div>
               </footer>
             </>

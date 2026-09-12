@@ -494,7 +494,7 @@ export function TownPanel({ s, act, go, focus }: Props) {
         <EconomyDesk s={s} act={act} go={go} initialRelic={focus.relic} initialSite={focus.site ?? undefined} />
       </Pane>
       <Pane value="workers">
-        <div className="life-card">
+        <div className="life-card town-resident-desk">
           <div className="life-title">
             <h2>让城镇自己运转</h2>
             <span>
@@ -594,11 +594,14 @@ export function TownPanel({ s, act, go, focus }: Props) {
         <MarketDesk s={s} act={act} />
       </Pane>
       <Pane value="events">
-        <div className="life-card">
+        <div className="life-card town-visitor-desk">
           {s.event !== null ? (
             <>
+              <header className="town-visitor-heading">
               <span className="life-kicker">镇口有人等你 · 选择会留下影响</span>
               <h2>{G.EVENTS[s.event].title}</h2>
+              </header>
+              <div className="town-visitor-reading">
               <p className="life-prose">{G.EVENTS[s.event].text}</p>
               <div className="life-choices">
                 {G.EVENTS[s.event].choices
@@ -643,6 +646,7 @@ export function TownPanel({ s, act, go, focus }: Props) {
                       )}
                     </button>
                   ))}
+              </div>
               </div>
               {G.EVENTS[s.event].repeat && (
                 <button

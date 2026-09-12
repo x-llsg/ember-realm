@@ -1,0 +1,547 @@
+/* Town workspaces own their scroll areas. Keep menus and payment controls out
+   of content that grows with discoveries, stock amounts, or selected entries. */
+.v21-ui.v21-ui.v9-ui
+  :is(
+    .dense-building-board,
+    .research-desk,
+    .market-desk,
+    .engineering-board,
+    .flow-desk,
+    .town-resident-desk,
+    .town-visitor-desk
+  ) {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+.v21-ui.v21-ui.v9-ui
+  :is(.econ-board-head, .engineering-heading, .market-desk > .life-title) {
+  flex-wrap: wrap;
+  align-content: center;
+}
+.v21-ui.v21-ui.v9-ui
+  :is(
+    .dense-building-list,
+    .research-list,
+    .market-scroll,
+    .engineering-list,
+    .flow-workspace,
+    .flow-column,
+    .world-facility-list,
+    .town-resident-desk > .life-card-body,
+    .town-visitor-reading
+  ) {
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: var(--desk-line) transparent;
+  overscroll-behavior: contain;
+}
+
+/* Building names, bills, and upgrade controls share one column contract. */
+.v21-ui.v21-ui.v9-ui .dense-building-board {
+  --building-columns: minmax(170px, 0.9fr) minmax(0, 1.4fr) 226px;
+}
+.v21-ui.v21-ui.v9-ui .dense-building-list {
+  display: grid;
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: auto;
+  grid-auto-rows: max-content;
+}
+.v21-ui.v21-ui.v9-ui
+  .dense-building-board
+  :is(.dense-list-caption, .econ-footnote) {
+  flex: none;
+}
+.v21-ui.v21-ui.v9-ui .dense-building-cost {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.v21-ui.v21-ui.v9-ui .building-upgrades {
+  justify-content: flex-end;
+}
+
+/* Research keeps a stationary contents pane and a separate fixed purchase area. */
+.v21-ui.v21-ui.v9-ui .research-desk .research-layout {
+  grid-template-columns: minmax(280px, 1fr) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  overflow: hidden;
+}
+.v21-ui.v21-ui.v9-ui .research-desk .research-list {
+  min-height: 0;
+  overflow: auto;
+  align-content: start;
+  grid-auto-rows: max-content;
+}
+.v21-ui.v21-ui.v9-ui .research-desk .research-detail {
+  grid-template-rows: minmax(0, 1fr) auto;
+  min-height: 0;
+  overflow: hidden;
+  padding: 12px 16px;
+}
+.v21-ui.v21-ui.v9-ui .research-desk .research-reading {
+  min-height: 0;
+  overflow: auto;
+}
+.v21-ui.v21-ui.v9-ui .research-purchase {
+  min-height: 0;
+  flex: none;
+}
+
+/* Workbench: production / logistics and town affairs / discovered facilities.
+   The facility directory no longer starts after all six transport routes. */
+.v21-ui.v21-ui.v9-ui .flow-workspace {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  gap: 8px;
+}
+.v21-ui.v21-ui.v9-ui
+  .flow-workspace
+  > :is(.world-deployment-strip, .flow-stock) {
+  flex: none;
+}
+.v21-ui.v21-ui.v9-ui .flow-desk .flow-columns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: minmax(0, 1fr);
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  align-content: stretch;
+}
+.v21-ui.v21-ui.v9-ui .flow-columns:has(> .flow-facility-column:empty) {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.v21-ui.v21-ui.v9-ui .flow-desk .flow-columns > .flow-column {
+  display: block;
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  align-self: stretch;
+  overflow: auto;
+}
+.v21-ui.v21-ui.v9-ui .flow-desk .flow-column > .flow-section-title {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  min-height: 32px;
+  background: var(--desk-panel);
+  border-bottom: 1px solid var(--desk-line);
+}
+.v21-ui.v21-ui.v9-ui .flow-desk .flow-management {
+  display: block;
+  padding: 12px 0 0;
+  margin-top: 12px;
+  border-top: 1px solid var(--desk-line);
+  border-left: 0;
+}
+.v21-ui.v21-ui.v9-ui .flow-desk .flow-management > .flow-section-title {
+  display: flex;
+}
+.v21-ui.v21-ui.v9-ui .flow-desk .flow-route {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+.v21-ui.v21-ui.v9-ui .flow-desk .flow-route > .flow-line {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+}
+.v21-ui.v21-ui.v9-ui .flow-route .flow-route-stage {
+  display: inline;
+  color: var(--desk-muted);
+  font-size: 11px;
+  margin-left: auto;
+}
+.v21-ui.v21-ui.v9-ui
+  .flow-desk
+  .flow-route
+  :is(.flow-yield, .flow-route-price) {
+  min-width: 0;
+  margin-right: auto;
+}
+.v21-ui.v21-ui.v9-ui .flow-desk .flow-route :is(button, .flow-stepper) {
+  flex: none;
+}
+.v21-ui.v21-ui.v9-ui .flow-desk .flow-facility-column:empty {
+  display: none;
+}
+.v21-ui.v21-ui.v9-ui .flow-desk .flow-columns > .flow-facility-column {
+  overflow: hidden;
+}
+.v21-ui.v21-ui.v9-ui .flow-facility-column .world-facilities {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.v21-ui.v21-ui.v9-ui
+  .flow-facility-column
+  .world-facilities
+  > :not(.world-facility-list) {
+  flex: none;
+}
+.v21-ui.v21-ui.v9-ui .flow-facility-column .flow-section-title {
+  min-height: 32px;
+  border-bottom: 1px solid var(--desk-line);
+}
+.v21-ui.v21-ui.v9-ui .flow-facility-column .world-facility-list {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: auto;
+  align-content: start;
+  grid-auto-rows: max-content;
+}
+.v21-ui.v21-ui.v9-ui .world-facility-name {
+  min-width: 0;
+}
+.v21-ui.v21-ui.v9-ui .world-facility-name > .realm-hint-trigger {
+  width: fit-content;
+  max-width: 100%;
+  justify-self: start;
+}
+
+/* Market batch controls stay put; goods and their explanation share one scroll. */
+.v21-ui.v21-ui.v9-ui .market-desk {
+  --market-columns: minmax(0, 1.1fr) repeat(2, minmax(0, 1fr));
+}
+.v21-ui.v21-ui.v9-ui .market-desk .market-batches {
+  display: flex;
+  flex: none;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  min-width: 0;
+  scrollbar-width: thin;
+  align-items: center;
+}
+.v21-ui.v21-ui.v9-ui .market-batches > * {
+  flex: none;
+  white-space: nowrap;
+}
+.v21-ui.v21-ui.v9-ui .market-quantity-hint {
+  flex: none;
+  margin: 0;
+}
+.v21-ui.v21-ui.v9-ui .market-scroll {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: auto;
+}
+.v21-ui.v21-ui.v9-ui .market-scroll .market-column-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--desk-panel);
+}
+.v21-ui.v21-ui.v9-ui .market-scroll .life-market {
+  display: grid;
+  flex: none;
+  overflow: visible;
+  height: auto;
+  align-content: start;
+  grid-auto-rows: max-content;
+}
+.v21-ui.v21-ui.v9-ui
+  .market-scroll
+  :is(.market-column-head, .market-goods-row) {
+  gap: 10px;
+}
+.v21-ui.v21-ui.v9-ui .market-scroll .market-goods-row > * {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.v21-ui.v21-ui.v9-ui .market-scroll .market-goods-row > button {
+  white-space: normal;
+}
+.v21-ui.v21-ui.v9-ui .market-scroll > .life-hint {
+  margin-top: 10px;
+}
+
+/* Confirmation panels keep the action area fixed, including facility mode choice. */
+.v21-ui .dense-building-row .econ-action {
+  position: relative;
+}
+
+.v21-ui.v21-ui[data-slot='dialog-content'].engineering-confirm {
+  display: flex;
+  flex-direction: column;
+  width: min(680px, calc(100vw - 32px));
+  max-width: 680px;
+  max-height: calc(100dvh - 32px);
+  overflow: hidden;
+  gap: 12px;
+}
+.v21-ui.engineering-confirm > [data-slot='dialog-title'] {
+  flex: none;
+  padding-right: 24px;
+}
+.v21-ui .town-confirm-reading {
+  min-height: 0;
+  overflow: auto;
+  scrollbar-width: thin;
+  overscroll-behavior: contain;
+}
+.v21-ui .town-confirm-reading > p {
+  margin: 0 0 10px;
+}
+.v21-ui .town-confirm-actions {
+  display: grid;
+  gap: 8px;
+  flex: none;
+  border-top: 1px solid var(--desk-line);
+  padding-top: 8px;
+}
+.v21-ui .town-confirm-actions > .life-buy {
+  margin: 0;
+}
+.v21-ui.v21-ui[data-slot='dialog-content'].world-facility-drawer {
+  height: auto;
+  max-height: calc(100dvh - 32px);
+  overflow: hidden;
+  gap: 8px;
+  padding: 16px;
+}
+.v21-ui.world-facility-drawer
+  > :is(
+    .world-drawer-title,
+    .world-drawer-description,
+    .town-facility-actions
+  ) {
+  flex: none;
+}
+.v21-ui.world-facility-drawer > .world-relic-scroll {
+  min-width: 0;
+  min-height: 0;
+}
+.v21-ui.world-facility-drawer .world-facility-comparison {
+  flex: none;
+  min-height: max-content;
+  align-items: start;
+}
+.v21-ui.world-facility-drawer .world-facility-mode {
+  gap: 8px;
+  padding-block: 4px;
+}
+.v21-ui.world-facility-drawer .world-facility-mode > footer {
+  margin-top: 0;
+}
+.v21-ui.world-facility-drawer .town-facility-actions {
+  display: grid;
+  gap: 8px;
+  padding-top: 8px;
+}
+.v21-ui .town-facility-choices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: center;
+  gap: 8px;
+}
+.v21-ui .town-facility-choices > button {
+  min-width: 0;
+  white-space: normal;
+}
+.v21-ui .town-facility-operation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.v21-ui .town-facility-operation > .world-button-row {
+  flex: none;
+}
+
+/* Residents use compact parallel job rows; visitor choices keep content height. */
+.v21-ui.v21-ui.v9-ui .town-resident-desk > .life-card-body {
+  min-height: 0;
+  flex: 1 1 0;
+  overflow: auto;
+}
+.v21-ui.v21-ui.v9-ui .town-resident-desk > .life-card-body > * {
+  flex: none;
+}
+.v21-ui.v21-ui.v9-ui .town-resident-desk .life-workers {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: max-content;
+  align-content: start;
+  gap: 8px 20px;
+}
+.v21-ui.v21-ui.v9-ui .town-resident-desk .life-workers > div {
+  min-height: 62px;
+  padding: 8px 0;
+}
+.v21-ui.v21-ui.v9-ui .town-resident-desk .life-workers > div > svg {
+  flex: none;
+}
+.v21-ui.v21-ui.v9-ui .town-resident-desk .life-inline-actions {
+  flex: none;
+  border-top: 1px solid var(--desk-line);
+  padding-top: 10px;
+}
+.v21-ui.v21-ui.v9-ui .town-visitor-desk {
+  gap: 12px;
+}
+.v21-ui.v21-ui.v9-ui .town-visitor-heading {
+  flex: none;
+  border-bottom: 1px solid var(--desk-line);
+  padding-bottom: 10px;
+}
+.v21-ui.v21-ui.v9-ui .town-visitor-heading h2 {
+  margin: 6px 0 0;
+}
+.v21-ui.v21-ui.v9-ui .town-visitor-reading {
+  min-height: 0;
+  overflow: auto;
+  flex: 1 1 0;
+}
+.v21-ui.v21-ui.v9-ui .town-visitor-reading > .life-prose {
+  margin: 0 0 14px;
+}
+.v21-ui.v21-ui.v9-ui .town-visitor-reading .life-choices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: max-content;
+  align-content: start;
+  gap: 10px;
+  margin: 0;
+}
+.v21-ui.v21-ui.v9-ui .town-visitor-reading .life-choices > button {
+  min-width: 0;
+  min-height: 0;
+  padding: 12px;
+  gap: 8px;
+  justify-content: flex-start;
+}
+.v21-ui.v21-ui.v9-ui .town-visitor-desk > :is(.life-text-button, .life-hint) {
+  flex: none;
+  margin: 0;
+}
+
+@media (max-width: 1100px) {
+  .v21-ui.v21-ui.v9-ui .research-desk .research-list:has(> .research-group) {
+    grid-template-columns: 1fr;
+  }
+}
+/* At short heights the entire workshop has one scroll owner. Its columns and
+   facility rows must take natural height, not overflow a zero-height grid row. */
+@media (max-width: 999px), (max-height: 680px) {
+  .v21-ui.v21-ui.v9-ui .flow-workspace {
+    overflow: auto;
+  }
+  .v21-ui.v21-ui.v9-ui .flow-desk .flow-columns {
+    flex: none;
+    overflow: visible;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: none;
+    grid-auto-rows: max-content;
+    align-content: start;
+    row-gap: 16px;
+  }
+  .v21-ui.v21-ui.v9-ui .flow-desk .flow-columns > .flow-column {
+    min-height: max-content;
+    height: auto;
+    overflow: visible;
+  }
+  .v21-ui.v21-ui.v9-ui .flow-desk .flow-column > .flow-section-title {
+    position: static;
+  }
+  .v21-ui.v21-ui.v9-ui .flow-desk .flow-columns > .flow-facility-column {
+    grid-column: 1 / -1;
+    border-left: 0;
+    border-top: 1px solid var(--desk-line);
+    padding: 12px 0 0;
+  }
+  .v21-ui.v21-ui.v9-ui .flow-facility-column .world-facilities {
+    height: auto;
+  }
+  .v21-ui.v21-ui.v9-ui .flow-facility-column .world-facility-list {
+    flex: none;
+    overflow: visible;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 18px;
+  }
+  .v21-ui .town-facility-operation {
+    flex-wrap: wrap;
+  }
+}
+@media (max-width: 700px) {
+  .v21-ui.v21-ui.v9-ui .dense-building-board {
+    --building-columns: minmax(0, 1fr) max-content;
+  }
+  .v21-ui.v21-ui.v9-ui .dense-building-cost {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  .v21-ui.v21-ui.v9-ui .research-desk .research-layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(84px, 0.38fr) minmax(0, 1fr);
+    gap: 8px;
+  }
+  .v21-ui.v21-ui.v9-ui .research-desk .research-list:has(> .research-group) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    min-height: 0;
+    overflow: auto;
+    gap: 8px;
+    padding: 0;
+  }
+  .v21-ui.v21-ui.v9-ui .research-desk .research-row {
+    flex-direction: row;
+    align-items: center;
+  }
+  .v21-ui.v21-ui.v9-ui .research-desk .research-detail {
+    margin: 0;
+    padding: 10px;
+  }
+  .v21-ui.v21-ui.v9-ui .research-desk .research-reading {
+    overflow: auto;
+  }
+  .v21-ui.v21-ui.v9-ui .research-desk .research-action-header {
+    gap: 6px;
+  }
+  .v21-ui.v21-ui.v9-ui .flow-desk .flow-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .v21-ui.v21-ui.v9-ui .flow-columns:has(> .flow-facility-column:empty) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .v21-ui.v21-ui.v9-ui .flow-desk .flow-columns > .flow-column {
+    padding: 0;
+    border-left: 0;
+  }
+  .v21-ui.v21-ui.v9-ui .flow-facility-column .world-facility-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .v21-ui.v21-ui.v9-ui .market-scroll .market-column-head {
+    display: none;
+  }
+  .v21-ui.v21-ui.v9-ui .market-scroll .market-goods-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .v21-ui.v21-ui.v9-ui .market-scroll .market-goods-row > strong {
+    grid-column: 1 / -1;
+  }
+  .v21-ui.v21-ui.v9-ui
+    :is(
+      .town-resident-desk .life-workers,
+      .town-visitor-reading .life-choices
+    ) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .v21-ui .town-facility-choices {
+    gap: 6px;
+  }
+  .v21-ui .town-facility-operation > .world-button-row {
+    flex-wrap: wrap;
+  }
+}

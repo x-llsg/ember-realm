@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, type ComponentProps } from 'react';
 import * as G from '@/lib/realm';
 import { GearStats, GearWearer } from './gear-presentation';
 import { GameIcon } from './game-art';
@@ -13,6 +13,62 @@ import {
   DialogDescription,
 } from './ui/dialog';
 import '@/app/equipment.css';
+
+/** A complete bill on hover, with the same payment guard as Buy. */
+export function RosterBuy({
+  s,
+  cost,
+  reason = '',
+  label,
+  onClick,
+  materials = {},
+}: ComponentProps<typeof Buy>) {
+  const blocked =
+    reason || G.capacityReason(s, cost) || G.materialReason(s, materials);
+  const missing = Object.entries(cost)
+    .filter(([key, amount]) => s.resources[key as G.Resource] < amount!)
+    .map(
+      ([key, amount]) =>
+        `${G.RESOURCE_NAMES[key as G.Resource]} ${Math.ceil(amount! - s.resources[key as G.Resource])}`,
+    );
+  const hint =
+    blocked || (missing.length ? `还缺 ${missing.join('、')}` : '资源充足');
+  const bill = [
+    ...Object.entries(cost).map(
+      ([key, amount]) =>
+        `${G.RESOURCE_NAMES[key as G.Resource]} ${amount}（持有 ${Math.floor(s.resources[key as G.Resource])}）`,
+    ),
+    ...Object.entries(materials).map(
+      ([key, amount]) =>
+        `${G.MATERIAL_NAMES[key as G.MaterialId]} ${amount}（持有 ${Math.floor(s.world.materials[key as G.MaterialId])}）`,
+    ),
+  ];
+  const summary =
+    G.costText(cost) +
+    (Object.keys(materials).length
+      ? ` · ${Object.keys(materials).length}种材料`
+      : '');
+  return (
+    <div className="roster-buy">
+      <InfoHint
+        title={`${label} · 费用与条件`}
+        body={[...bill, hint].join('\n')}
+        className={
+          blocked || missing.length ? 'roster-bill shortage' : 'roster-bill'
+        }
+      >
+        {blocked || (missing.length ? hint : summary) || '无需资源'}
+      </InfoHint>
+      <button
+        className="primary-button"
+        disabled={!!blocked || !G.canPay(s, cost)}
+        onClick={onClick}
+      >
+        {label}
+      </button>
+    </div>
+  );
+}
 
 export function SalvageYield({
   dust,
@@ -48,13 +104,16 @@ export function GearWorkshop({
   item,
   act,
   onRemoved,
+  compact = false,
 }: {
   s: G.State;
   item: G.Gear;
   act: Act;
   onRemoved?: () => void;
+  compact?: boolean;
 }) {
   const [affix, setAffix] = useState(String(item.affix));
+  const [operation, setOperation] = useState('enhance');
   const [confirm, setConfirm] = useState(false);
   const [allowOverflow, setAllowOverflow] = useState(false);
   const [setChoice, setSetChoice] = useState(
@@ -73,14 +132,21 @@ export function GearWorkshop({
     allowOverflow,
   });
   return (
-    <div className="gear-workshop">
+    <div
+      className={
+        'gear-workshop roster-workshop' +
+        (compact ? ' roster-workshop-compact' : '')
+      }
+    >
       <div className={'workshop-item-preview rarity-' + item.rarity}>
-        <GameIcon kind="equipment" id={item.recipe} size={46} />
+        {!compact && <GameIcon kind="equipment" id={item.recipe} size={46} />}
         <div>
-          <strong>
-            {G.QUALITY_NAMES[item.rarity - 1]} · {item.tier}阶 · 强化 +
-            {item.upgrade}
-          </strong>
+          {!compact && (
+            <strong>
+              {G.QUALITY_NAMES[item.rarity - 1]} · {item.tier}阶 · 强化 +
+              {item.upgrade}
+            </strong>
+          )}
           <GearStats s={s} item={item} />
         </div>
       </div>
@@ -94,178 +160,221 @@ export function GearWorkshop({
           {item.locked ? '已收藏 · 取消收藏' : '收藏保护'}
         </button>
       </div>
-      <section>
-        <strong>
-          <Term name="enhancement">装备强化</Term> · 当前 +{item.upgrade}
-        </strong>
-        <Buy
-          s={s}
-          cost={G.enhancementCost(item)}
-          materials={G.enhancementMaterials(s, item)}
-          reason={
-            away
-              ? '该装备正由出征角色携带'
-              : item.upgrade >= 8
-                ? '强化已达 +8'
-                : ''
-          }
-          label={`强化至 +${Math.min(8, item.upgrade + 1)}`}
-          onClick={() => act((x) => G.enhanceGear(x, item.id))}
-        />
-      </section>
-      <section>
-        <strong>
-          <Term name="affix">定向重铸</Term>
-        </strong>
-        <Pick
-          label="选择重铸词条"
-          value={affix}
-          onChange={setAffix}
-          options={G.AFFIXES.map((a, i) => ({
-            value: String(i),
-            label: `${a.name} · ${a.text}`,
-          }))}
-        />
-        <InfoHint
-          {...affixHelp(Number(affix), s, { ...item, affix: Number(affix) })}
-        >
-          词条预览：{G.AFFIXES[Number(affix)].name}
-        </InfoHint>
-        <div className="reforge-cost">
-          <span className={s.guild.dust < quote.dust ? 'shortage' : ''}>
-            锻造尘 {s.guild.dust}/{quote.dust}
-          </span>
-          <span className={'rarity-' + quote.rarity}>
-            {quote.materialName} {G.salvageCount(s, quote.rarity)}/
-            {quote.material}
-          </span>
+      <nav className="roster-workshop-operations" aria-label="装备整备项目">
+        {[
+          { id: 'enhance', label: '强化' },
+          { id: 'affix', label: '词条' },
+          ...(G.EQUIPMENT_SETS.some((set) => s.guild.depths[set.region] > 0)
+            ? [{ id: 'set', label: '套装' }]
+            : []),
+          { id: 'salvage', label: '分解' },
+        ].map((entry) => (
+          <button
+            key={entry.id}
+            type="button"
+            aria-pressed={operation === entry.id}
+            onClick={() => setOperation(entry.id)}
+          >
+            {entry.label}
+          </button>
+        ))}
+      </nav>
+      <section hidden={operation !== 'enhance'}>
+        <div className="roster-operation-body">
+          <strong>
+            <Term name="enhancement">装备强化</Term> · 当前 +{item.upgrade}
+          </strong>
         </div>
-        <button
-          className="secondary-button"
-          disabled={!!quote.reason}
-          onClick={() => act((x) => G.reforgeGear(x, item.id, Number(affix)))}
-        >
-          重铸为「{G.AFFIXES[Number(affix)].name}」
-        </button>
-        <small className="gear-action-reason">
-          {quote.reason ||
-            '消耗对应品质材料，确定获得所选词条；保留强化与套装。'}
-        </small>
+        <div className="roster-operation-actions">
+          <RosterBuy
+            s={s}
+            cost={G.enhancementCost(item)}
+            materials={G.enhancementMaterials(s, item)}
+            reason={
+              away
+                ? '该装备正由出征角色携带'
+                : item.upgrade >= 8
+                  ? '强化已达 +8'
+                  : ''
+            }
+            label={`强化至 +${Math.min(8, item.upgrade + 1)}`}
+            onClick={() => act((x) => G.enhanceGear(x, item.id))}
+          />
+        </div>{' '}
       </section>
-      {G.EQUIPMENT_SETS.some((set) => s.guild.depths[set.region] > 0) && (
-        <section>
-          <strong>定向套装改制</strong>
+      <section hidden={operation !== 'affix'}>
+        <div className="roster-operation-body">
+          <strong>
+            <Term name="affix">定向重铸</Term>
+          </strong>
           <Pick
-            label="选择改制套装"
-            value={setChoice}
-            onChange={setSetChoice}
-            options={G.EQUIPMENT_SETS.filter(
-              (set) => s.guild.depths[set.region] > 0 || set.id === item.setId,
-            ).map((set) => ({
-              value: set.id,
-              label: set.name + ' · ' + G.REGIONS[set.region].name,
+            label="选择重铸词条"
+            value={affix}
+            onChange={setAffix}
+            options={G.AFFIXES.map((a, i) => ({
+              value: String(i),
+              label: `${a.name} · ${a.text}`,
             }))}
           />
-          <InfoHint title={chosenSet.name} body={chosenSet.text}>
-            {chosenSet.name} · 套装效果
+          <InfoHint
+            {...affixHelp(Number(affix), s, { ...item, affix: Number(affix) })}
+          >
+            词条预览：{G.AFFIXES[Number(affix)].name}
           </InfoHint>
           <div className="reforge-cost">
-            <span className={'rarity-' + setQuote.essences.rarity}>
-              {setQuote.essences.name}{' '}
-              {G.salvageCount(s, setQuote.essences.rarity)}/
-              {setQuote.essences.amount}
+            <span className={s.guild.dust < quote.dust ? 'shortage' : ''}>
+              锻造尘 {s.guild.dust}/{quote.dust}
+            </span>
+            <span className={'rarity-' + quote.rarity}>
+              {quote.materialName} {G.salvageCount(s, quote.rarity)}/
+              {quote.material}
             </span>
           </div>
-          <Buy
-            s={s}
-            cost={setQuote.cost}
-            materials={setQuote.materials}
-            reason={setQuote.reason}
-            label="改制为所选套装"
-            onClick={() => act((x) => G.reforgeGearSet(x, item.id, setChoice))}
-          />
           <small className="gear-action-reason">
-            保留品质、阶级、词条和强化。使用当地材料及同品质分解产物，确定获得套装归属；四件即可使用独特战斗效果。
+            {quote.reason ||
+              '消耗对应品质材料，确定获得所选词条；保留强化与套装。'}
           </small>
-        </section>
-      )}
-      <section className="gear-dismantle-actions">
-        <strong>分解回收</strong>
-        {owner && (
+        </div>
+        <div className="roster-operation-actions">
           <button
             className="secondary-button"
-            disabled={away}
-            onClick={() =>
-              act((x) =>
-                G.unequipGear(
-                  x,
-                  owner.id,
-                  G.RECIPES.find((r) => r.id === item.recipe)!.slot,
-                ),
-              )
-            }
+            disabled={!!quote.reason}
+            onClick={() => act((x) => G.reforgeGear(x, item.id, Number(affix)))}
           >
-            卸下并归还装备仓库
+            重铸为「{G.AFFIXES[Number(affix)].name}」
           </button>
-        )}
-        <SalvageYield dust={dismantle.dust} salvage={dismantle.salvage} />
-        <button
-          className="secondary-button"
-          disabled={!dismantle.count}
-          onClick={() => {
-            setAllowOverflow(false);
-            setConfirm(true);
-          }}
-        >
-          分解这件装备…
-        </button>
-        <small className="gear-action-reason">
-          {dismantle.skipped[0]?.reason ||
-            dismantle.reason ||
-            '分解会消耗装备；收藏或已穿戴的装备不可分解。'}
-        </small>
+        </div>{' '}
       </section>
-      <Dialog open={confirm} onOpenChange={setConfirm}>
-        <DialogContent className="life-dialog salvage-confirm">
-          <DialogTitle>确认分解这件装备</DialogTitle>
-          <DialogDescription>
-            分解后不能恢复装备，强化投入不返还。
-          </DialogDescription>
-          <strong className={'rarity-' + item.rarity}>
-            {G.gearName(item)}
-          </strong>
-          {(item.setId || item.upgrade > 0) && (
-            <p>
-              这件装备{item.setId ? '属于套装' : ''}
-              {item.setId && item.upgrade > 0 ? '，并且' : ''}
-              {item.upgrade > 0 ? `已强化至 +${item.upgrade}` : ''}。
-            </p>
+      {G.EQUIPMENT_SETS.some((set) => s.guild.depths[set.region] > 0) && (
+        <section hidden={operation !== 'set'}>
+          <div className="roster-operation-body">
+            <strong>定向套装改制</strong>
+            <Pick
+              label="选择改制套装"
+              value={setChoice}
+              onChange={setSetChoice}
+              options={G.EQUIPMENT_SETS.filter(
+                (set) =>
+                  s.guild.depths[set.region] > 0 || set.id === item.setId,
+              ).map((set) => ({
+                value: set.id,
+                label: set.name + ' · ' + G.REGIONS[set.region].name,
+              }))}
+            />
+            <InfoHint title={chosenSet.name} body={chosenSet.text}>
+              {chosenSet.name} · 套装效果
+            </InfoHint>
+            <div className="reforge-cost">
+              <span className={'rarity-' + setQuote.essences.rarity}>
+                {setQuote.essences.name}{' '}
+                {G.salvageCount(s, setQuote.essences.rarity)}/
+                {setQuote.essences.amount}
+              </span>
+            </div>
+            <small className="gear-action-reason">
+              保留品质、阶级、词条和强化。使用当地材料及同品质分解产物，确定获得套装归属；四件即可使用独特战斗效果。
+            </small>
+          </div>
+          <div className="roster-operation-actions">
+            <RosterBuy
+              s={s}
+              cost={setQuote.cost}
+              materials={setQuote.materials}
+              reason={setQuote.reason}
+              label="改制为所选套装"
+              onClick={() =>
+                act((x) => G.reforgeGearSet(x, item.id, setChoice))
+              }
+            />
+          </div>{' '}
+        </section>
+      )}
+      <section
+        className="gear-dismantle-actions"
+        hidden={operation !== 'salvage'}
+      >
+        <div className="roster-operation-body">
+          <strong>分解回收</strong>
+          {owner && (
+            <button
+              className="secondary-button"
+              disabled={away}
+              onClick={() =>
+                act((x) =>
+                  G.unequipGear(
+                    x,
+                    owner.id,
+                    G.RECIPES.find((r) => r.id === item.recipe)!.slot,
+                  ),
+                )
+              }
+            >
+              卸下并归还装备仓库
+            </button>
           )}
           <SalvageYield dust={dismantle.dust} salvage={dismantle.salvage} />
-          <label className="salvage-overflow-choice">
-            <input
-              type="checkbox"
-              checked={allowOverflow}
-              onChange={(e) => setAllowOverflow(e.target.checked)}
-            />
-            允许丢弃超出容量的材料
-          </label>
-          {(dismantle.lostDust > 0 ||
-            Object.values(dismantle.lostSalvage).some((n) => n > 0)) && (
-            <div className="salvage-overflow-warning">
-              <strong>
-                {allowOverflow
-                  ? '确认后将丢弃以下超额材料：'
-                  : '材料容量不足，以下数量无法入库：'}
-              </strong>
-              <SalvageYield
-                dust={dismantle.lostDust}
-                salvage={dismantle.lostSalvage}
-                loss
+          <small className="gear-action-reason">
+            {dismantle.skipped[0]?.reason ||
+              dismantle.reason ||
+              '分解会消耗装备；收藏或已穿戴的装备不可分解。'}
+          </small>
+        </div>
+        <div className="roster-operation-actions">
+          <button
+            className="secondary-button"
+            disabled={!dismantle.count}
+            onClick={() => {
+              setAllowOverflow(false);
+              setConfirm(true);
+            }}
+          >
+            分解这件装备…
+          </button>
+        </div>{' '}
+      </section>
+      <Dialog open={confirm} onOpenChange={setConfirm}>
+        <DialogContent className="life-dialog salvage-confirm roster-dialog">
+          <DialogTitle>确认分解这件装备</DialogTitle>
+          <div className="salvage-confirm-body">
+            <DialogDescription>
+              分解后不能恢复装备，强化投入不返还。
+            </DialogDescription>
+            <strong className={'rarity-' + item.rarity}>
+              {G.gearName(item)}
+            </strong>
+            {(item.setId || item.upgrade > 0) && (
+              <p>
+                这件装备{item.setId ? '属于套装' : ''}
+                {item.setId && item.upgrade > 0 ? '，并且' : ''}
+                {item.upgrade > 0 ? `已强化至 +${item.upgrade}` : ''}。
+              </p>
+            )}
+            <SalvageYield dust={dismantle.dust} salvage={dismantle.salvage} />
+            <label className="salvage-overflow-choice">
+              <input
+                type="checkbox"
+                checked={allowOverflow}
+                onChange={(e) => setAllowOverflow(e.target.checked)}
               />
-            </div>
-          )}
-          {dismantle.reason && <p>{dismantle.reason}</p>}
+              允许丢弃超出容量的材料
+            </label>
+            {(dismantle.lostDust > 0 ||
+              Object.values(dismantle.lostSalvage).some((n) => n > 0)) && (
+              <div className="salvage-overflow-warning">
+                <strong>
+                  {allowOverflow
+                    ? '确认后将丢弃以下超额材料：'
+                    : '材料容量不足，以下数量无法入库：'}
+                </strong>
+                <SalvageYield
+                  dust={dismantle.lostDust}
+                  salvage={dismantle.lostSalvage}
+                  loss
+                />
+              </div>
+            )}
+            {dismantle.reason && <p>{dismantle.reason}</p>}
+          </div>
           <div className="warehouse-confirm-actions">
             <button
               className="secondary-button"

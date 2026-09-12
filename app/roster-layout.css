@@ -1,0 +1,1117 @@
+/* Character workspaces: stable selection, one body scroll, separate actions. */
+.v21-ui.v21-ui.v9-ui .team-desk.roster-layout {
+  display: grid;
+  grid-template-columns: 174px minmax(0, 1fr);
+  height: 100%;
+  min-height: 0;
+  max-height: none;
+  gap: 12px;
+  padding: 10px;
+  overflow: hidden;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .team-roster {
+  min-height: 0;
+  padding-right: 10px;
+  gap: 6px;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .team-roster-list {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .team-roster-row {
+  min-height: 43px;
+  padding: 4px;
+  gap: 7px;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .team-roster > .secondary-button {
+  flex: none;
+  margin-top: 3px;
+  min-height: 30px;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .team-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow: hidden;
+  min-height: 0;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .team-party-line {
+  min-height: 25px;
+  padding-bottom: 5px;
+  gap: 3px 12px;
+  font-size: 12px;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .world-deployment-strip {
+  padding: 2px 0;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .team-overview {
+  display: flex;
+  min-height: 0;
+  gap: 10px;
+  padding: 2px 0 6px;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .team-identity-art {
+  gap: 10px;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .team-identity-art > .hero-portrait {
+  width: 58px;
+  height: 58px;
+  flex: none;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .team-identity-copy {
+  display: grid;
+  gap: 3px;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .team-identity-kicker {
+  margin: 0;
+  line-height: 1.3;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .team-overview h3 {
+  font-size: 19px;
+  line-height: 1.3;
+  margin: 0;
+  gap: 3px 10px;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .hero-quick-stats {
+  gap: 3px 12px;
+  line-height: 1.4;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .hero-quick-stats b {
+  font-size: 14px;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .team-identity-copy .hero-term-line {
+  margin: 0;
+  gap: 3px 10px;
+  font-size: 11px;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .team-assignment {
+  min-width: 95px;
+  max-width: 160px;
+  flex: none;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .team-assignment .primary-button {
+  min-height: 32px;
+  padding: 5px 9px;
+  font-size: 12px;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .team-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.25fr) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.v21-ui.v21-ui.v9-ui
+  .roster-layout
+  .team-columns
+  > :is(.training-actions, .gear-slots, .forge-mini) {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  max-height: none;
+  overflow: hidden;
+  padding: 0 10px;
+  gap: 5px;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .team-columns > .training-actions {
+  padding-left: 0;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .team-columns > .forge-mini {
+  padding-right: 0;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .team-columns .desk-heading {
+  flex: none;
+  min-height: 22px;
+  padding-bottom: 3px;
+  flex-wrap: wrap;
+  gap: 3px 8px;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .roster-section-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+  min-width: 0;
+  gap: 7px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  padding-right: 3px;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .roster-section-body > * {
+  flex: none;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .roster-section-body > p {
+  margin: 0;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .roster-section-actions {
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  gap: 4px;
+  padding-top: 5px;
+  border-top: 1px solid var(--desk-line);
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .team-columns .life-buy {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 3px 7px;
+  margin: 0;
+  padding-block: 2px;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .team-columns .life-buy > .primary-button {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  min-height: 31px;
+  padding: 4px 7px;
+  font-size: 12px;
+  align-self: center;
+}
+.v21-ui.v21-ui.v9-ui
+  .roster-layout
+  .team-columns
+  .life-buy
+  > :is(.life-cost, .material-price) {
+  grid-column: 1;
+  margin: 0;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .team-columns .life-buy > .life-hint {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .team-columns .life-select {
+  min-height: 30px;
+  height: 30px;
+  padding: 4px 7px;
+  font-size: 12px;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .team-kit {
+  flex: none;
+  gap: 3px;
+  padding-top: 5px;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .team-kit > .desk-heading {
+  padding: 0;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .team-experience {
+  gap: 4px;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .equipment-six-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: 0 8px;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .equipment-six-grid .team-gear-slot {
+  padding: 6px 0;
+  gap: 3px;
+  min-height: 0;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .forge-item-preview {
+  padding: 3px 0;
+  gap: 7px;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .forge-slot-filter {
+  display: flex;
+  flex-wrap: wrap;
+  flex: none;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .forge-slot-filter button {
+  min-height: 27px;
+  padding: 4px;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .hero-term-line {
+  line-height: 1.5;
+}
+
+/* Applicant controls never travel with the three naturally sized dossiers. */
+.v21-ui.v21-ui.v9-ui .guild-board.roster-recruitment {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  padding: 10px 12px;
+  gap: 7px;
+  overflow: hidden;
+}
+.v21-ui.v21-ui.v9-ui .roster-recruitment > :not(.guild-candidates) {
+  flex: none;
+}
+.v21-ui.v21-ui.v9-ui .roster-recruitment > .econ-board-head {
+  padding-bottom: 6px;
+}
+.v21-ui.v21-ui.v9-ui .roster-recruitment .guild-recruit-controls {
+  gap: 5px 12px;
+}
+.v21-ui.v21-ui.v9-ui .roster-recruitment > .hero-term-line {
+  gap: 4px 12px;
+}
+.v21-ui.v21-ui.v9-ui .roster-recruitment .guild-candidates {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: max-content;
+  align-content: start;
+  flex: 1;
+  min-height: 0;
+  gap: 10px;
+  overflow: auto;
+  scrollbar-width: thin;
+  overscroll-behavior: contain;
+}
+.v21-ui.v21-ui.v9-ui .roster-recruitment .recruit-card {
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  min-height: max-content;
+  padding: 8px;
+  gap: 7px;
+  overflow: visible;
+}
+.v21-ui.v21-ui.v9-ui .roster-recruitment .guild-card-body {
+  flex: 1 0 auto;
+  min-height: auto;
+  gap: 7px;
+  overflow: visible;
+}
+.v21-ui.v21-ui.v9-ui .roster-recruitment .guild-recruit-identity {
+  gap: 9px;
+  min-height: 0;
+}
+.v21-ui.v21-ui.v9-ui
+  .roster-recruitment
+  .guild-recruit-identity
+  > .hero-portrait {
+  width: 55px;
+  height: 55px;
+  flex: none;
+}
+.v21-ui.v21-ui.v9-ui .roster-recruitment .guild-card-body p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.65;
+}
+.v21-ui.v21-ui.v9-ui .roster-recruitment .recruit-card > .life-buy {
+  flex: none;
+  position: static;
+  margin: 0;
+  padding: 6px 0 0;
+  border-top: 1px solid var(--desk-line);
+}
+
+/* Filters belong to the list, and the recipient belongs to the selected item. */
+.v21-ui.v21-ui.v9-ui .equipment-warehouse.roster-warehouse {
+  padding: 10px;
+  gap: 7px;
+}
+.v21-ui.v21-ui.v9-ui .roster-warehouse .warehouse-heading {
+  min-height: 30px;
+}
+.v21-ui.v21-ui.v9-ui .roster-warehouse .warehouse-heading strong {
+  font-size: 17px;
+}
+.v21-ui.v21-ui.v9-ui .roster-warehouse .warehouse-content {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.v21-ui.v21-ui.v9-ui .roster-warehouse .warehouse-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  gap: 12px;
+  align-items: stretch;
+}
+.v21-ui.v21-ui.v9-ui .roster-warehouse .warehouse-list-area {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+  height: auto;
+  overflow: hidden;
+  align-self: stretch;
+}
+.v21-ui.v21-ui.v9-ui
+  .roster-warehouse
+  .warehouse-list-area
+  > :not(.warehouse-items) {
+  flex: none;
+}
+.v21-ui.v21-ui.v9-ui .roster-warehouse .warehouse-wallet {
+  padding: 3px 0;
+  gap: 3px 9px;
+  font-size: 11px;
+}
+.v21-ui.v21-ui.v9-ui .roster-warehouse .warehouse-filters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+}
+.v21-ui.v21-ui.v9-ui .roster-warehouse .warehouse-filters > .gear-sort-control {
+  grid-column: span 2;
+}
+.v21-ui.v21-ui.v9-ui .roster-warehouse .warehouse-quality {
+  gap: 3px;
+  padding: 0;
+}
+.v21-ui.v21-ui.v9-ui .roster-warehouse .warehouse-quality > button {
+  min-height: 25px;
+  padding: 3px 6px;
+  font-size: 11px;
+}
+.v21-ui.v21-ui.v9-ui .roster-warehouse .warehouse-selection {
+  gap: 4px 9px;
+  padding-bottom: 3px;
+}
+.v21-ui.v21-ui.v9-ui .roster-warehouse .warehouse-items {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+.v21-ui.v21-ui.v9-ui .roster-warehouse .warehouse-detail {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  overflow: hidden;
+  gap: 5px;
+}
+.v21-ui.v21-ui.v9-ui .roster-warehouse .warehouse-detail-heading {
+  flex: none;
+  min-height: 42px;
+}
+.v21-ui.v21-ui.v9-ui .roster-warehouse .warehouse-detail-heading h3 {
+  margin: 2px 0 0;
+  font-size: 15px;
+}
+.v21-ui.v21-ui.v9-ui .roster-warehouse .warehouse-equip {
+  flex: none;
+  margin: 0;
+}
+.v21-ui.v21-ui.v9-ui .roster-warehouse .warehouse-detail-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  gap: 5px;
+  overflow: hidden;
+}
+.v21-ui.v21-ui.v9-ui
+  .roster-warehouse
+  .warehouse-detail-body
+  > .realm-hint-trigger {
+  flex: none;
+  align-self: flex-start;
+  font-size: 11px;
+}
+.v21-ui.v21-ui.v9-ui .roster-warehouse .warehouse-batch-bar {
+  min-height: 36px;
+  padding: 6px 0 0;
+}
+.v21-ui.v21-ui.v9-ui .roster-warehouse .warehouse-batch-summary {
+  gap: 2px 10px;
+}
+
+/* A chosen operation keeps its complete bill and confirmation together. */
+.v21-ui .roster-workshop {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  gap: 6px;
+}
+.v21-ui .roster-workshop > :not(section) {
+  flex: none;
+}
+.v21-ui .roster-workshop .workshop-item-preview {
+  padding: 2px 0;
+  gap: 8px;
+}
+.v21-ui .roster-workshop .workshop-item-preview .game-icon {
+  width: 32px;
+  height: 32px;
+  flex: none;
+}
+.v21-ui .roster-workshop .workshop-item-preview strong {
+  font-size: 12px;
+}
+.v21-ui .roster-workshop .gear-workshop-state {
+  gap: 4px 8px;
+}
+.v21-ui .roster-workshop-operations {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--desk-line);
+}
+.v21-ui .roster-workshop-operations > button {
+  flex: 1;
+  min-height: 29px;
+  padding: 4px 8px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--desk-muted);
+  font-size: 12px;
+}
+.v21-ui .roster-workshop-operations > button[aria-pressed='true'] {
+  color: var(--desk-fire);
+  border-bottom-color: var(--desk-fire);
+}
+.v21-ui .roster-workshop > section {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  gap: 5px;
+  padding: 3px 0 0;
+  border-top: 0;
+}
+.v21-ui .roster-workshop > section[hidden] {
+  display: none;
+}
+.v21-ui .roster-workshop > section > * {
+  flex: none;
+}
+.v21-ui .roster-workshop .gear-action-reason {
+  font-size: 11px;
+  line-height: 1.5;
+}
+.v21-ui .roster-workshop :is(.primary-button, .secondary-button) {
+  min-height: 30px;
+}
+
+/* Portal dialogs have fixed headings and actions, never nested body scrolling. */
+.v21-ui.v21-ui[data-slot='dialog-content'].roster-dialog {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: calc(100dvh - 32px);
+  overflow: hidden;
+  gap: 9px !important;
+  padding: 16px !important;
+}
+.v21-ui.v21-ui[data-slot='dialog-content'].roster-dialog
+  > :not(
+    .roster-dialog-body,
+    .gear-picker-list,
+    .skill-tree-branches,
+    .salvage-confirm-body
+  ) {
+  flex: none;
+}
+.v21-ui.v21-ui[data-slot='dialog-content'].roster-dialog
+  > [data-slot='dialog-title'] {
+  padding-right: 25px;
+}
+.v21-ui.v21-ui[data-slot='dialog-content'].roster-gear-dialog {
+  width: min(640px, calc(100vw - 32px));
+  height: min(540px, calc(100dvh - 32px));
+}
+.v21-ui .roster-dialog-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+.v21-ui.v21-ui[data-slot='dialog-content'].team-gear-picker.roster-dialog {
+  width: min(880px, calc(100vw - 32px));
+  height: min(610px, calc(100dvh - 32px));
+}
+.v21-ui.roster-dialog .gear-picker-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
+  gap: 8px;
+}
+.v21-ui.roster-dialog .gear-picker-list {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  scrollbar-width: thin;
+  overscroll-behavior: contain;
+}
+.v21-ui.roster-dialog .gear-picker-row {
+  min-height: 0;
+  padding: 8px 0;
+  gap: 10px;
+}
+.v21-ui.roster-dialog .gear-picker-actions {
+  align-items: stretch;
+}
+.v21-ui.roster-dialog .gear-picker-actions > button {
+  min-height: 30px;
+  padding: 4px 9px;
+  font-size: 12px;
+}
+.v21-ui.v21-ui[data-slot='dialog-content'].salvage-confirm.roster-dialog {
+  height: auto;
+  max-width: min(680px, calc(100vw - 32px));
+}
+.v21-ui.roster-dialog .salvage-confirm-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+.v21-ui.roster-dialog .salvage-confirm-list {
+  overflow: visible;
+  max-height: none;
+}
+.v21-ui.roster-dialog .warehouse-confirm-actions {
+  flex: none;
+}
+.v21-ui.v21-ui[data-slot='dialog-content'].skill-tree-dialog.roster-dialog {
+  width: min(1080px, calc(100vw - 32px));
+  height: min(650px, calc(100dvh - 32px));
+}
+.v21-ui.roster-dialog .skill-tree-root {
+  min-height: 32px;
+  padding: 6px 10px;
+}
+.v21-ui.roster-dialog .skill-tree-branches {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  flex: 1;
+  min-height: 0;
+  gap: 12px;
+  overflow: auto;
+  scrollbar-width: thin;
+  align-items: start;
+  overscroll-behavior: contain;
+}
+.v21-ui.roster-dialog .skill-tree-branches > section {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+  height: auto;
+  overflow: visible;
+}
+.v21-ui.roster-dialog .skill-tree-branches h3 {
+  margin: 0;
+  font-size: 14px;
+}
+.v21-ui.roster-dialog .skill-tree-node {
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  gap: 6px;
+  padding: 9px;
+}
+.v21-ui.roster-dialog .skill-tree-node .skill-node-effect {
+  min-height: 0;
+  margin: 0;
+  line-height: 1.5;
+  font-size: 12px;
+}
+.v21-ui.roster-dialog .skill-tree-node button {
+  min-height: 30px;
+  margin-top: 0;
+  font-size: 12px;
+  white-space: normal;
+}
+.v21-ui.roster-dialog .skill-tree-footer {
+  flex: none;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--desk-line);
+}
+.v21-ui.roster-dialog .skill-tree-footer span {
+  font-size: 12px;
+}
+
+.v21-ui.v21-ui[data-slot='dialog-content'].roster-relic-dialog {
+  width: min(960px, calc(100vw - 32px));
+  height: min(620px, calc(100dvh - 32px));
+  padding: 16px;
+  gap: 8px;
+  overflow: hidden;
+}
+.v21-ui.roster-relic-dialog > :not(.world-collection) {
+  flex: none;
+}
+.v21-ui.roster-relic-dialog .world-collection {
+  grid-template-columns: 195px minmax(0, 1fr);
+  gap: 14px;
+}
+.v21-ui.roster-relic-dialog .world-collection-list {
+  scrollbar-width: thin;
+  overscroll-behavior: contain;
+}
+.v21-ui.roster-relic-dialog .world-collection-item {
+  padding: 6px;
+  gap: 7px;
+}
+.v21-ui.roster-relic-dialog .world-relic-detail {
+  gap: 8px;
+  min-height: 0;
+  overflow: hidden;
+}
+.v21-ui.roster-relic-dialog .world-relic-identity {
+  flex: none;
+  gap: 10px;
+}
+.v21-ui.roster-relic-dialog .world-relic-identity .world-sigil.large {
+  width: 48px;
+  height: 48px;
+}
+.v21-ui.roster-relic-dialog .world-relic-identity h3 {
+  font-size: 19px;
+  margin: 3px 0;
+}
+.v21-ui.roster-relic-dialog .world-relic-scroll {
+  gap: 9px;
+  scrollbar-width: thin;
+  overscroll-behavior: contain;
+}
+.v21-ui.roster-relic-dialog .world-relic-scroll > * {
+  flex: none;
+}
+.v21-ui.roster-relic-dialog .world-relic-copy {
+  font-size: 13px;
+  line-height: 1.65;
+}
+.v21-ui.roster-relic-dialog .world-relic-config {
+  padding-block: 8px;
+  gap: 8px;
+}
+.v21-ui.roster-relic-dialog .world-relic-detail > footer {
+  flex: none;
+  padding-top: 7px;
+  border-top: 1px solid var(--desk-line);
+}
+
+/* Fixed operation rows contain an action and one complete, hoverable bill. */
+.v21-ui .roster-buy {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  min-width: 0;
+  min-height: 32px;
+  gap: 7px;
+}
+.v21-ui .roster-buy > .roster-bill {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--desk-muted);
+}
+.v21-ui .roster-buy > .roster-bill.shortage {
+  color: #d69c86;
+}
+.v21-ui .roster-buy > .primary-button {
+  min-height: 30px;
+  height: 30px;
+  white-space: nowrap;
+  padding: 4px 8px;
+  margin: 0;
+  font-size: 12px;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .roster-section-actions {
+  gap: 3px;
+  padding-top: 4px;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .team-kit {
+  min-height: 0;
+  padding-top: 3px;
+  gap: 0;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .team-kit-complete {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  align-items: center;
+  min-height: 23px;
+  font-size: 12px;
+  color: var(--desk-muted);
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .hero-loadout {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .hero-loadout > .realm-hint-trigger {
+  font-size: 12px;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .forge-slot-filter {
+  gap: 3px;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+.v21-ui.v21-ui.v9-ui .roster-layout .forge-slot-filter button {
+  flex: 1 0 28px;
+}
+.v21-ui .roster-workshop > section > .roster-operation-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  gap: 5px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  padding-right: 3px;
+}
+.v21-ui .roster-operation-body > * {
+  flex: none;
+}
+.v21-ui .roster-operation-actions {
+  flex: none;
+  min-width: 0;
+  padding-top: 4px;
+  border-top: 1px solid var(--desk-line);
+}
+.v21-ui .roster-operation-actions > :is(.primary-button, .secondary-button) {
+  display: block;
+  width: 100%;
+  min-height: 30px;
+  padding: 4px 8px;
+  margin: 0;
+  font-size: 12px;
+}
+.v21-ui .roster-workshop-compact {
+  gap: 4px;
+}
+.v21-ui .roster-workshop-compact .workshop-item-preview {
+  padding: 0;
+}
+.v21-ui .roster-workshop-compact .gear-workshop-state {
+  gap: 4px 8px;
+  min-height: 26px;
+}
+.v21-ui .roster-workshop-compact .gear-workshop-state > button {
+  min-height: 25px;
+  padding: 3px 7px;
+}
+.v21-ui .roster-workshop-compact .roster-workshop-operations > button {
+  min-height: 27px;
+  padding: 3px 7px;
+}
+.v21-ui.v21-ui.v9-ui
+  .roster-warehouse
+  .warehouse-heading
+  > .realm-hint-trigger {
+  font-size: 12px;
+  margin-left: auto;
+}
+.v21-ui.v21-ui.v9-ui .roster-warehouse .warehouse-list-area {
+  gap: 5px;
+}
+.v21-ui.v21-ui.v9-ui .roster-warehouse .warehouse-filters {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+}
+.v21-ui.v21-ui.v9-ui .roster-warehouse .warehouse-filters > .gear-sort-control {
+  grid-column: span 3;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+}
+.v21-ui.v21-ui.v9-ui
+  .roster-warehouse
+  :is(
+    .warehouse-filters input,
+    .warehouse-filters .life-select,
+    .warehouse-equip .life-select
+  ) {
+  height: 29px;
+  min-height: 29px;
+  padding: 3px 6px;
+  font-size: 12px;
+}
+.v21-ui.v21-ui.v9-ui .roster-warehouse .warehouse-quality-menu {
+  position: relative;
+  min-width: 0;
+}
+.v21-ui.v21-ui.v9-ui .roster-warehouse .warehouse-quality-menu > summary {
+  display: flex;
+  align-items: center;
+  min-height: 29px;
+  padding: 3px 6px;
+  cursor: pointer;
+  border: 1px solid var(--desk-line);
+  border-radius: 3px;
+  font-size: 12px;
+  color: var(--desk-muted);
+}
+.v21-ui.v21-ui.v9-ui
+  .roster-warehouse
+  .warehouse-quality-menu
+  > summary::after {
+  content: '⌄';
+  margin-left: auto;
+}
+.v21-ui.v21-ui.v9-ui
+  .roster-warehouse
+  .warehouse-quality-menu
+  > .warehouse-quality {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 3px);
+  left: 0;
+  width: 285px;
+  padding: 8px;
+  background: var(--desk-surface, #231e17);
+  border: 1px solid var(--desk-line);
+  box-shadow: 0 8px 20px #0007;
+}
+.v21-ui.v21-ui.v9-ui .roster-warehouse .warehouse-selection {
+  flex-wrap: nowrap;
+  min-height: 27px;
+  gap: 5px;
+  padding: 0;
+  font-size: 11px;
+}
+.v21-ui.v21-ui.v9-ui
+  .roster-warehouse
+  .warehouse-selection
+  :is(button, label, span) {
+  white-space: nowrap;
+}
+.v21-ui.v21-ui.v9-ui .roster-warehouse .warehouse-selection > button {
+  min-height: 25px;
+  padding: 3px 5px;
+  font-size: 11px;
+}
+.v21-ui.v21-ui.v9-ui .roster-warehouse .warehouse-detail-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  min-height: 25px;
+}
+.v21-ui.v21-ui.v9-ui .roster-warehouse .warehouse-detail-caption {
+  flex: none;
+  font-size: 11px;
+}
+.v21-ui.v21-ui.v9-ui .roster-warehouse .warehouse-detail-heading h3 {
+  min-width: 0;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.v21-ui.v21-ui.v9-ui .roster-warehouse .warehouse-equip > button {
+  min-height: 29px;
+  padding: 3px 7px;
+}
+.v21-ui.v21-ui.v9-ui
+  .roster-warehouse
+  .warehouse-detail-body
+  > .realm-hint-trigger {
+  align-self: flex-end;
+}
+
+/* Small windows keep one complete detail scroll, not three nested scrolls. */
+@media (max-width: 1100px), (max-height: 650px) {
+  .v21-ui.v21-ui.v9-ui .team-desk.roster-layout {
+    grid-template-columns: 148px minmax(0, 1fr);
+    gap: 9px;
+  }
+  .v21-ui.v21-ui.v9-ui .roster-layout .team-detail {
+    overflow: auto;
+    scrollbar-width: thin;
+    overscroll-behavior: contain;
+  }
+  .v21-ui.v21-ui.v9-ui .roster-layout .team-detail > * {
+    flex: none;
+  }
+  .v21-ui.v21-ui.v9-ui .roster-layout .team-columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: auto;
+    overflow: visible;
+    gap: 12px 0;
+    flex: none;
+  }
+  .v21-ui.v21-ui.v9-ui
+    .roster-layout
+    .team-columns
+    > :is(.training-actions, .gear-slots, .forge-mini) {
+    overflow: visible;
+    height: auto;
+    max-height: none;
+  }
+  .v21-ui.v21-ui.v9-ui .roster-layout .team-columns > .forge-mini {
+    grid-column: 1 / -1;
+    border-left: 0;
+    border-top: 1px solid var(--desk-line);
+    padding: 8px 0 0;
+  }
+  .v21-ui.v21-ui.v9-ui .roster-layout .roster-section-body {
+    flex: none;
+    overflow: visible;
+  }
+  .v21-ui.v21-ui.v9-ui .roster-layout .forge-mini > .roster-section-body {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+  .v21-ui.v21-ui.v9-ui .roster-layout .forge-mini .forge-slot-filter {
+    grid-column: 1 / -1;
+  }
+  .v21-ui.v21-ui.v9-ui .roster-warehouse .warehouse-wallet {
+    gap: 3px 7px;
+  }
+  .v21-ui.v21-ui.v9-ui .roster-warehouse .warehouse-list-area {
+    gap: 4px;
+  }
+}
+@media (max-width: 700px) {
+  .v21-ui.v21-ui.v9-ui .team-desk.roster-layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    padding: 8px;
+  }
+  .v21-ui.v21-ui.v9-ui .roster-layout .team-roster {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 5px 8px;
+    border: 0;
+    padding: 0 0 6px;
+    border-bottom: 1px solid var(--desk-line);
+  }
+  .v21-ui.v21-ui.v9-ui .roster-layout .team-roster > .desk-heading {
+    padding: 0;
+  }
+  .v21-ui.v21-ui.v9-ui .roster-layout .team-roster-list {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    display: flex;
+    flex-direction: row;
+    min-height: 44px;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+  .v21-ui.v21-ui.v9-ui .roster-layout .team-roster-row {
+    flex: 0 0 145px;
+    grid-template-columns: 28px minmax(0, 1fr) auto;
+  }
+  .v21-ui.v21-ui.v9-ui .roster-layout .team-roster-row > .roster-level {
+    display: block;
+  }
+  .v21-ui.v21-ui.v9-ui .roster-layout .team-roster > .secondary-button {
+    grid-column: 2;
+    grid-row: 1;
+    margin: 0;
+    padding: 3px 8px;
+    min-height: 26px;
+    font-size: 12px;
+  }
+  .v21-ui.v21-ui.v9-ui .roster-layout .team-roster > .desk-muted {
+    grid-column: 1 / -1;
+  }
+  .v21-ui.v21-ui.v9-ui .roster-layout .team-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .v21-ui.v21-ui.v9-ui
+    .roster-layout
+    .team-columns
+    > :is(.training-actions, .gear-slots, .forge-mini) {
+    padding: 6px 0;
+    border-left: 0;
+    border-top: 1px solid var(--desk-line);
+  }
+  .v21-ui.v21-ui.v9-ui .roster-layout .team-overview {
+    flex-wrap: wrap;
+  }
+  .v21-ui.v21-ui.v9-ui .roster-layout .team-assignment {
+    min-width: 0;
+    max-width: none;
+    margin-left: auto;
+  }
+  .v21-ui.v21-ui.v9-ui .roster-recruitment .guild-candidates {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .v21-ui.v21-ui.v9-ui .roster-recruitment .guild-recruit-controls {
+    align-items: stretch;
+  }
+  .v21-ui.v21-ui.v9-ui .roster-recruitment .guild-recruit-controls > button {
+    white-space: normal;
+  }
+  .v21-ui.v21-ui.v9-ui .roster-warehouse .warehouse-selection {
+    flex-wrap: wrap;
+  }
+  .v21-ui.v21-ui.v9-ui .roster-warehouse .warehouse-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .v21-ui.v21-ui.v9-ui .roster-warehouse .warehouse-filters > input {
+    grid-column: auto;
+  }
+  .v21-ui.v21-ui.v9-ui
+    .roster-warehouse
+    .warehouse-filters
+    > .gear-sort-control {
+    grid-column: 1 / -1;
+  }
+  .v21-ui.v21-ui.v9-ui .roster-warehouse .warehouse-content {
+    overflow: auto;
+    scrollbar-width: thin;
+  }
+  .v21-ui.v21-ui.v9-ui .roster-warehouse .warehouse-body {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    flex: none;
+    overflow: visible;
+  }
+  .v21-ui.v21-ui.v9-ui .roster-warehouse .warehouse-list-area,
+  .v21-ui.v21-ui.v9-ui .roster-warehouse .warehouse-items,
+  .v21-ui.v21-ui.v9-ui .roster-warehouse .warehouse-detail,
+  .v21-ui.v21-ui.v9-ui .roster-warehouse .warehouse-detail-body,
+  .v21-ui.v21-ui.v9-ui .roster-warehouse .roster-workshop,
+  .v21-ui.v21-ui.v9-ui .roster-warehouse .roster-workshop > section,
+  .v21-ui.v21-ui.v9-ui .roster-warehouse .roster-operation-body {
+    flex: none;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    overflow: visible;
+  }
+  .v21-ui.v21-ui.v9-ui .roster-warehouse .warehouse-detail {
+    border: 0;
+    border-top: 1px solid var(--desk-line);
+    padding: 10px 0 0;
+  }
+  .v21-ui.roster-dialog .gear-picker-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .v21-ui.roster-dialog .skill-tree-branches {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .v21-ui.roster-dialog .skill-tree-footer {
+    flex-wrap: wrap;
+  }
+  .v21-ui.roster-relic-dialog .world-collection {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 68px minmax(0, 1fr);
+    gap: 8px;
+  }
+  .v21-ui.roster-relic-dialog .world-collection-list {
+    display: flex;
+    flex-direction: row;
+    border: 0;
+    border-bottom: 1px solid var(--desk-line);
+    padding: 0 0 5px;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+  .v21-ui.roster-relic-dialog .world-collection-item {
+    flex: 0 0 168px;
+  }
+}

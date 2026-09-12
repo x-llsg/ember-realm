@@ -311,15 +311,21 @@ export function EngineeringBoard({ s, act, go, focus }: Props) {
           <DialogTitle>
             {target?.name} · {choice?.label}
           </DialogTitle>
-          <DialogDescription>
-            {pending && G.chapterProjectCount(s, pending.region) > 0
-              ? '补建需要重新支付下面的物资，原有方案保留，两项效果共同生效。'
-              : '选择先完成哪一项；占领当地第四据点或击败首领后，可以另付物资补建另一项。'}
-          </DialogDescription>
+          <div className="town-confirm-reading">
+            <DialogDescription>
+              {pending && G.chapterProjectCount(s, pending.region) > 0
+                ? '补建需要重新支付下面的物资，原有方案保留，两项效果共同生效。'
+                : '选择先完成哪一项；占领当地第四据点或击败首领后，可以另付物资补建另一项。'}
+            </DialogDescription>
+            {pending && target && choice && (
+              <>
+                <p>{choice.text}</p>
+                <p className="engineering-confirm-effect">{choice.effect}</p>
+              </>
+            )}
+          </div>
           {pending && target && choice && (
-            <>
-              <p>{choice.text}</p>
-              <p className="engineering-confirm-effect">{choice.effect}</p>
+            <footer className="town-confirm-actions">
               <Buy
                 s={s}
                 cost={pendingBill!.cost}
@@ -346,7 +352,7 @@ export function EngineeringBoard({ s, act, go, focus }: Props) {
               >
                 返回比较方案
               </button>
-            </>
+            </footer>
           )}
         </DialogContent>
       </Dialog>
