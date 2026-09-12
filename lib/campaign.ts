@@ -398,6 +398,7 @@ export function toggleWork(s0: State, id: WorkId, enabled?: boolean): State {
 }
 /** Mutates state. Call once per simulated second after ordinary production. */
 export function worldTick(s: State, seconds = 1): void {
+  if (E.relicProcessingTick(s, seconds)) return;
   if (!Number.isFinite(seconds) || seconds <= 0 || !world(s)) return;
   for (const recipe of WORK_RECIPES) {
     if (!world(s).work[recipe.id] || workReason(s, recipe.id)) continue;
@@ -440,6 +441,8 @@ export function worldTick(s: State, seconds = 1): void {
           world(s).materials[id as MaterialId] - n! * batches,
         );
       world(s).materials[recipe.id] += output * batches;
+      s.worldExploration.relics.runtime.arrivals[recipe.id] =
+        (s.worldExploration.relics.runtime.arrivals[recipe.id] || 0) + output * batches;
       s.economy.crafted[recipe.id] += output * batches;
     }
     world(s).workProgress[recipe.id] =

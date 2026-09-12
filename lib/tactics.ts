@@ -2,7 +2,18 @@ import * as G from './realm.ts';
 import { GUARDIANS, BOSS_COMBAT } from './guardian-data.ts';
 import * as Boss from './boss-mechanics.ts';
 import * as Sets from './set-combat.ts';
+import * as Relics from './relic-combat.ts';
+import * as Sites from './site-combat.ts';
+import { combatRelicLoadout } from './relics.ts';
+import { finishSiteBattle } from './site-exploration.ts';
+import type { SiteRun } from './world-types.ts';
 export { setEffectHelp } from './set-combat.ts';
+
+export interface CombatContext {
+  stance: 'balanced' | 'cautious' | 'assault';
+  outpostFactor: number;
+  supplyHeal: number;
+}
 
 export interface CombatUnit {
   id: string;
@@ -34,10 +45,15 @@ export interface CombatUnit {
   cooldownReduction: number;
   setEffect?: Sets.SetEffect;
   projectChoices?: string[];
+  skillIds?: string[];
+  relic?: Relics.CombatRelicState;
+  tunedRound?: number;
 }
 export interface BattleReport {
   region: number;
-  kind: 'boss' | 'guardian';
+  kind: 'boss' | 'guardian' | 'site';
+  siteId?: string;
+  variant?: 'A' | 'B';
   node: number;
   enemy: string;
   won: boolean;
@@ -128,6 +144,7 @@ export function guardianReason(
   if (rematch && guardianRematchWait(s, region))
     return `本地区守敌重整中，还需 ${guardianRematchWait(s, region)} 秒`;
   if (s.expedition) return '队伍在外，可立即撤回后准备';
+  if (s.worldExploration?.activeRun) return '主队正在支线出行，可先撤回';
   if (s.battle) return '先结束当前战斗';
   if (!s.party.length) return '请先编入旅人';
   if (s.recoveryUntil > s.time)
@@ -147,7 +164,7 @@ export function enemyDefinition(
     ? BOSS_COMBAT[region]
     : GUARDIANS[region][Math.min(4, node)];
 }
-export function combatSkills(s: G.State, id: string) {
+function configuredSkills(s: G.State, id: string) {
   const hero = s.heroes.find((h) => h.id === id);
   if (!hero) return [];
   const ids = [
@@ -158,6 +175,14 @@ export function combatSkills(s: G.State, id: string) {
   return [...new Set(ids)].map((key) =>
     G.SKILLS.find((skill) => skill.id === key)!,
   );
+}
+export function combatSkills(s: G.State, id: string) {
+  const ids = s.battle?.units.find((u) => u.id === id)?.skillIds;
+  return ids
+    ? ids
+        .map((key) => G.SKILLS.find((skill) => skill.id === key)!)
+        .filter(Boolean)
+    : configuredSkills(s, id);
 }
 function makeUnits(
   s: G.State,
@@ -173,6 +198,7 @@ function makeUnits(
   const aura =
     ((G.hasRole(s, 'rhea') ? 3 : 0) + (G.hasRole(s, 'orin') ? 6 : 0)) /
     Math.max(1, members.length);
+  const relics = combatRelicLoadout(s);
   return members.map((h) => {
     const a = G.individualStats(s, h),
       tree = G.skillBonuses(h),
@@ -200,9 +226,13 @@ function makeUnits(
       shieldTurns: 0,
       evasion: 0,
       castThisRound: '',
+      skillIds: configuredSkills(s, h.id).map((skill) => skill.id),
       cooldowns: Object.fromEntries(
-        combatSkills(s, h.id).map((skill) => [skill.id, 0]),
+        configuredSkills(s, h.id).map((skill) => [skill.id, 0]),
       ),
+      ...(relics[h.id]
+        ? { relic: Relics.createCombatRelic(relics[h.id]) }
+        : {}),
       ward: 0,
       burn: 0,
       regen: 0,
@@ -319,11 +349,81 @@ export function createCombat(
     history: [
       `${enemy.name}拦住去路。每名存活角色每轮行动一次，随后敌人出手。`,
     ],
+    context: {
+      stance: s.guild.preparation.stance,
+      outpostFactor: 1 - s.guild.outposts[region] * 0.05,
+      supplyHeal:
+        0.38 +
+        (G.hasRole(s, 'luna') ? 0.05 : 0) +
+        (G.hasTalent(s, 'healer') ? 0.05 : 0) +
+        (G.chosen(s, 'bell', 'home') ? 0.05 : 0),
+    },
   };
   sync(b);
   b.target = chooseTarget(b);
   b.dots = [];
   if (kind === 'boss') prepareBoss(b, false);
+  return b;
+}
+/** Departure preview is a full immutable encounter snapshot, without touching town RNG. */
+export function snapshotSiteCombat(
+  s: G.State,
+  siteId: string,
+  variant: 'A' | 'B',
+  seed: number,
+): G.Battle {
+  const def = Sites.siteEnemyDefinition(siteId);
+  const source = G.clone(s);
+  source.battle = null;
+  // Freeze the selected preparation, even if its real potion will be brewed while travelling.
+  // Only the disposable snapshot has a placeholder; confirming assault still pays real stock.
+  const selectedPotion = source.guild.preparation.element;
+  if (selectedPotion !== 'physical')
+    source.guild.potions[selectedPotion] = Math.max(
+      1,
+      source.guild.potions[selectedPotion],
+    );
+  const b = createCombat(source, def.region, 'guardian', def.node);
+  Object.assign(b, {
+    kind: 'site',
+    enemyName: def.name,
+    enemyMaxHp: def.hp,
+    enemyHp: def.hp,
+    enemyAttack: def.attack,
+    enemyDefense: def.defense,
+    enemyCrit: def.crit,
+    enemyDodge: def.dodge,
+    enemyElement: def.element,
+    aoeScale: def.aoeScale,
+    rng: seed >>> 0 || 1,
+    pattern: ['strike'],
+    history: [
+      `${def.name}守在支线地点。敌方意图已公开，战利品在成功归来时结算。`,
+    ],
+    site: {
+      ruleVersion: 1,
+      siteId,
+      variant,
+      runId: 0,
+      preparedRound: 0,
+      intentIndex: 0,
+      rememberedTarget: '',
+    },
+  });
+  Sites.prepareSiteRound(b);
+  return b;
+}
+export function createSiteBattle(_s: G.State, run: SiteRun): G.Battle {
+  const b = structuredClone(run.combatSnapshot);
+  if (
+    !b.site ||
+    b.site.siteId !== run.siteId ||
+    b.site.variant !== run.variant ||
+    !Sites.validSiteRuntime(b)
+  )
+    throw Error('支线出发战斗快照无效');
+  b.site.runId = run.id;
+  b.auto = run.automatic || b.auto;
   return b;
 }
 function prepareBoss(b: G.Battle, rollTarget = true) {
@@ -362,7 +462,10 @@ export function beginBattle(
   )
     return s0;
   const s = G.clone(s0);
-  if (origin !== 'hunt') G.haltHunt(s, '已开始手动挑战');
+  if (origin !== 'hunt') {
+    G.haltHunt(s, '已开始手动挑战');
+    G.haltSiteRepeat(s, '已改为手动挑战');
+  }
   spend(s, G.battlePreparationCost(s));
   s.battle = createCombat(
     s,
@@ -381,6 +484,7 @@ export function beginBattle(
   return s;
 }
 export function enemyIntent(b: G.Battle) {
+  if (b.site) return Sites.siteIntent(b);
   if (b.boss) {
     const r = Boss.bossResolution(b),
       step = r.step;
@@ -479,15 +583,23 @@ export function tacticalReason(s: G.State, command: G.Command) {
   if (!unit) return '请选择出战角色';
   if (unit.hp <= 0) return '该角色已倒下';
   if (b.acted.includes(id)) return '该角色本轮已行动';
+  const mode = Relics.decodeRelicAction(action);
+  const relicReason = Relics.relicActionReason(b, unit, action, target, (who) =>
+    combatSkills(s, who),
+  );
+  if (relicReason) return relicReason;
+  if (mode?.mode === 'charge' || mode?.mode === 'tune') return '';
   const skill: G.SkillDefinition | undefined = combatSkills(s, id).find(
-    (sk) => sk.id === action,
+    (sk) => sk.id === Relics.effectiveSkillId(action),
   );
   if (!['attack', 'guard', 'break', 'heal'].includes(action) && !skill)
     return '未携带这项技能';
   if (skill && unit.cooldowns[skill.id] > 0)
     return `个人冷却 ${unit.cooldowns[skill.id]} 回合`;
-  const cost = skill?.energy || (action === 'break' ? 2 : 0);
-  if (b.energy < cost) return `需要 ${cost} 点士气`;
+  if (unit.relic?.debt && (skill || action === 'break'))
+    return '先用本人的攻击或防守偿清士气债务';
+  const cost = Relics.actionEnergy(skill, action);
+  if (mode?.mode !== 'borrow' && b.energy < cost) return `需要 ${cost} 点士气`;
   if ((action === 'heal' || skill?.supply) && b.supplies <= 0)
     return '药囊已用尽';
   if (action === 'heal' && b.healCooldown > 0)
@@ -515,7 +627,15 @@ export function tacticalReason(s: G.State, command: G.Command) {
         skill.target !== 'party')) &&
     patient.hp === patient.maxHp &&
     !patient.burn &&
-    !Sets.canPrepareOverflow(unit, patient)
+    !Sets.canPrepareOverflow(unit, patient) &&
+    !(
+      mode?.mode === 'split' &&
+      alive(b).some(
+        (u) =>
+          u.id === mode.aux &&
+          (u.hp < u.maxHp || Sets.canPrepareOverflow(unit, u)),
+      )
+    )
   )
     return '所选治疗目标生命已满';
   if (
@@ -557,8 +677,28 @@ export function setCombatAuto(s0: G.State, enabled: boolean) {
   const s = G.clone(s0);
   s.combatAuto = enabled;
   if (!enabled) G.haltHunt(s, '已切换为手动战斗');
+  if (!enabled && s.battle?.site) G.haltSiteRepeat(s, '已手动接管支线战斗');
   if (s.battle) s.battle.auto = enabled;
   return s;
+}
+export function setRelicAutoCharge(s0: G.State, id: string, enabled: boolean) {
+  if (
+    typeof enabled !== 'boolean' ||
+    s0.battle?.units.find((u) => u.id === id)?.relic?.id !== 'R02'
+  )
+    return s0;
+  const s = G.clone(s0);
+  s.battle!.units.find((u) => u.id === id)!.relic!.autoCharge = enabled;
+  return s;
+}
+export function combatRelicOptions(s: G.State, id: string) {
+  const b = s.battle,
+    u = b?.units.find((x) => x.id === id);
+  return b && u
+    ? Relics.relicOptions(b, u, (who) => combatSkills(s, who)).map(
+        (option) => ({ ...option, reason: tacticalReason(s, option.command) }),
+      )
+    : [];
 }
 function healUnit(
   b: G.Battle,
@@ -590,7 +730,18 @@ function finish(s: G.State, won: boolean, retreat = false) {
     hp: b.units.reduce((total, u) => total + u.hp, 0),
     maxHp: b.maxHp,
     loot: null,
+    ...(b.site ? { siteId: b.site.siteId, variant: b.site.variant } : {}),
   };
+  if (b.kind === 'site') {
+    finishSiteBattle(s, won, retreat);
+    s.battle = null;
+    G.log(
+      s,
+      `${b.enemyName} · ${won ? '胜利，正在归程' : retreat ? '已撤退' : '战败'}，${b.round}回合；支线收获在归程结束时结算。`,
+      won ? 'good' : 'danger',
+    );
+    return s;
+  }
   if (won) {
     if (b.kind === 'guardian') {
       if (firstGuardian) {
@@ -631,6 +782,7 @@ function finish(s: G.State, won: boolean, retreat = false) {
       s.guild.bossHunts.wins[b.region]++;
       s.guild.bossHunts.readyAt[b.region] = s.time + 180;
     }
+    G.discoverSites(s);
     G.log(
       s,
       `${b.enemyName} · 胜利，${b.round} 回合，${alive(b).length}/${b.units.length} 人仍能战斗。`,
@@ -653,7 +805,7 @@ function finish(s: G.State, won: boolean, retreat = false) {
 export function incomingDamage(s: G.State, unit: CombatUnit, critical = false) {
   const b = s.battle!,
     w = enemyIntent(b),
-    boss = b.boss ? Boss.bossResolution(b) : null;
+    boss = b.boss ? Boss.bossResolution(b) : Sites.siteResolution(b);
   let damage =
     b.enemyAttack *
     (boss
@@ -673,13 +825,9 @@ export function incomingDamage(s: G.State, unit: CombatUnit, critical = false) {
   if (!boss && b.interrupted && w.kind === 'channel') damage *= 0.2;
   if (w.heavy && battleChosen(s, 'bell', 'alarm')) damage *= 0.85;
   if (battleChosen(s, 'key', 'chorus')) damage *= 0.9;
-  damage *= 1 - s.guild.outposts[b.region] * 0.05;
-  damage *=
-    s.guild.preparation.stance === 'cautious'
-      ? 0.9
-      : s.guild.preparation.stance === 'assault'
-        ? 1.12
-        : 1;
+  damage *= b.context?.outpostFactor ?? 1 - s.guild.outposts[b.region] * 0.05;
+  const stance = b.context?.stance ?? s.guild.preparation.stance;
+  damage *= stance === 'cautious' ? 0.9 : stance === 'assault' ? 1.12 : 1;
   return Math.max(1, Math.round(damage));
 }
 function enemyTurn(s: G.State) {
@@ -691,7 +839,7 @@ function enemyTurn(s: G.State) {
     note(b, `持续伤害造成 ${b.poison}。`);
     if (b.enemyHp <= 0) return finish(s, true);
   }
-  const boss = b.boss ? Boss.bossResolution(b) : null;
+  const boss = b.boss ? Boss.bossResolution(b) : Sites.siteResolution(b);
   for (const effect of b.dots || [])
     if (effect.turns > 0) {
       const hit = Boss.absorbBossBarrier(b.enemyShield, effect.damage);
@@ -726,7 +874,7 @@ function enemyTurn(s: G.State) {
     !Sets.sealPurified(b)
   )
     b.sealed = boss ? boss.sealRounds : 2;
-  if (!b.boss && warning.kind === 'channel' && b.interrupted) {
+  if (!b.boss && !b.site && warning.kind === 'channel' && b.interrupted) {
     b.marked = 2;
     note(b, '咏唱被打断，留下两次攻击破绽。');
   }
@@ -804,6 +952,7 @@ function enemyTurn(s: G.State) {
         healUnit(b, unit, unit.regen);
       unit.regenTurns--;
     }
+    Relics.advanceRelicRound(b, unit);
     for (const key of Object.keys(unit.cooldowns))
       if (key !== unit.castThisRound)
         unit.cooldowns[key] = Math.max(0, unit.cooldowns[key] - 1);
@@ -826,6 +975,7 @@ function enemyTurn(s: G.State) {
   sync(b);
   if (!b.hp || b.round > 60) return finish(s, false);
   if (b.boss) prepareBoss(b);
+  else if (b.site) Sites.prepareSiteRound(b);
   else b.target = chooseTarget(b);
   return s;
 }
@@ -841,27 +991,66 @@ export function tacticalCombat(
     G.haltHunt(s, '已手动接管战斗');
     b.auto = false;
   }
+  if (!automatic && b.site) {
+    G.haltSiteRepeat(s, '已手动接管支线战斗');
+    b.auto = false;
+  }
   if (command === 'retreat') return finish(s, false, true);
   const { id, action, target } = parse(s, command),
     u = b.units.find((x) => x.id === id)!;
+  const relicAction = Relics.decodeRelicAction(action);
+  const pureRelic =
+    relicAction?.mode === 'charge' || relicAction?.mode === 'tune';
   if (target) b.healTarget = target;
-  const skill: G.SkillDefinition | undefined = combatSkills(s, id).find(
-    (x) => x.id === action,
-  );
+  const skill: G.SkillDefinition | undefined = pureRelic
+    ? undefined
+    : combatSkills(s, id).find((x) => x.id === Relics.effectiveSkillId(action));
   const warning = enemyIntent(b);
   const exposedBefore = b.boss ? Boss.bossResolution(b).exposeHits : 0;
+  const interruptedBefore = b.interrupted;
+  const directScale = Relics.directMultiplier(b, u, skill?.id || '', action);
   let multiplier = 0,
     projectile = false;
+  if (relicAction?.mode === 'charge') {
+    u.relic!.charge = { skillId: relicAction.skillId, round: b.round };
+    note(
+      b,
+      `${u.name}放弃本轮行动，积蓄「${combatSkills(s, id).find((x) => x.id === relicAction.skillId)!.name}」；只在下一轮生效。`,
+    );
+  }
+  if (relicAction?.mode === 'tune') {
+    const friend = b.units.find((x) => x.id === target)!;
+    b.energy -= 2;
+    friend.cooldowns[relicAction.skillId] = Math.max(
+      0,
+      friend.cooldowns[relicAction.skillId] - 1,
+    );
+    friend.tunedRound = b.round;
+    u.cooldowns[relicAction.aux] = 2;
+    u.castThisRound = relicAction.aux;
+    Object.assign(u.relic!, {
+      cooldown: 3,
+      usedRound: b.round,
+      sealed: { skillId: relicAction.aux, remaining: 2 },
+    });
+    note(
+      b,
+      `${u.name}调律：${friend.name}的一项技能冷却减少1轮，本人抵押技能封存2轮，消耗2士气。`,
+    );
+  }
   if (action === 'attack') {
     multiplier = 1;
-    b.energy = Math.min(10, b.energy + 1);
+    const paid = Relics.addMorale(b, u, 1);
+    if (paid) note(b, `${u.name}偿还${paid}点士气债务。`);
   }
   if (action === 'guard') {
     u.guard = 0.25;
-    b.energy = Math.min(
-      10,
-      b.energy + 1 + (battleChosen(s, 'array', 'shields') ? 1 : 0),
+    const paid = Relics.addMorale(
+      b,
+      u,
+      1 + (battleChosen(s, 'array', 'shields') ? 1 : 0),
     );
+    if (paid) note(b, `${u.name}偿还${paid}点士气债务。`);
     note(b, `${u.name}坚守，本轮承伤降低75%。`);
   }
   if (action === 'break') {
@@ -882,10 +1071,11 @@ export function tacticalCombat(
       b,
       target,
       target.maxHp *
-        (0.38 +
-          (G.hasRole(s, 'luna') ? 0.05 : 0) +
-          (G.hasTalent(s, 'healer') ? 0.05 : 0) +
-          (battleChosen(s, 'bell', 'home') ? 0.05 : 0)),
+        (b.context?.supplyHeal ??
+          0.38 +
+            (G.hasRole(s, 'luna') ? 0.05 : 0) +
+            (G.hasTalent(s, 'healer') ? 0.05 : 0) +
+            (battleChosen(s, 'bell', 'home') ? 0.05 : 0)),
       u,
     );
     target.burn = 0;
@@ -893,27 +1083,44 @@ export function tacticalCombat(
     b.healCooldown = 2;
   }
   if (skill) {
-    b.energy -= skill.energy;
-    u.cooldowns[skill.id] = Math.max(
-      1,
-      Math.ceil(skill.cooldown * (1 - u.cooldownReduction)),
-    );
+    if (relicAction?.mode === 'borrow') {
+      u.relic!.debt = skill.energy - b.energy;
+      b.energy = 0;
+      note(b, `${u.name}借支${u.relic!.debt}点士气，之后由本人偿还。`);
+    } else b.energy -= Relics.actionEnergy(skill, action);
+    u.cooldowns[skill.id] =
+      Math.max(1, Math.ceil(skill.cooldown * (1 - u.cooldownReduction))) +
+      (relicAction ? 1 : 0);
     u.castThisRound = skill.id;
     multiplier =
       skill.damage * (b.region >= 4 ? skill.lateBossMultiplier || 1 : 1);
-    projectile = !!skill.projectile;
+    projectile = !!skill.projectile || relicAction?.mode === 'project';
     note(b, `${u.name}使用「${skill.name}」。`);
+    if (directScale !== 1)
+      note(
+        b,
+        `${directScale > 1 ? '回响积蓄' : '猎月牵射'}：本次技能直接数值×${directScale.toFixed(2)}。`,
+      );
     if (skill.interrupt) b.interrupted = true;
     if (skill.shatter) b.shattered = true;
     const targets =
       skill.target === 'party'
         ? alive(b)
         : [skill.target === 'ally' ? healTarget(b) : u];
+    const protectionTargets =
+      relicAction?.mode === 'transfer'
+        ? [b.units.find((x) => x.id === target)!]
+        : targets;
+    if (relicAction?.mode === 'transfer')
+      note(
+        b,
+        `${u.name}将本次自用防护交给${protectionTargets[0].name}，本人不再受益。`,
+      );
     if (skill.incomingMultiplier)
-      for (const target of targets)
+      for (const target of protectionTargets)
         target.guard = Math.min(target.guard, skill.incomingMultiplier);
     if (skill.wardHits)
-      for (const friend of targets)
+      for (const friend of protectionTargets)
         friend.ward = Math.max(friend.ward, skill.wardHits);
     if (skill.cleanseBurn) {
       const cleansed = targets.some((friend) => friend.burn > 0);
@@ -922,7 +1129,7 @@ export function tacticalCombat(
       if (cleansed || seal) Sets.dawnResponse(b, u, seal);
     }
     if (skill.preventBurn)
-      for (const friend of targets) friend.preventBurn = true;
+      for (const friend of protectionTargets) friend.preventBurn = true;
     if (skill.healing)
       for (const target of targets)
         healUnit(
@@ -931,11 +1138,30 @@ export function tacticalCombat(
           (u.attack * skill.healing.actorAttack +
             u.maxHp * skill.healing.actorHp +
             target.maxHp * skill.healing.targetHp) *
-            u.healing,
+            u.healing *
+            directScale *
+            (relicAction?.mode === 'split' ? 0.7 : 1),
           u,
         );
+    if (skill.healing && relicAction?.mode === 'split') {
+      const friend = b.units.find((x) => x.id === relicAction.aux)!;
+      healUnit(
+        b,
+        friend,
+        (u.attack * skill.healing.actorAttack +
+          u.maxHp * skill.healing.actorHp +
+          friend.maxHp * skill.healing.targetHp) *
+          u.healing *
+          0.35,
+        u,
+      );
+      note(
+        b,
+        `共鸣分写：${targets[0].name}70%、${friend.name}35%；额外1士气及1轮冷却。`,
+      );
+    }
     if (skill.shield)
-      for (const target of targets) {
+      for (const target of protectionTargets) {
         target.shield = Math.min(
           Math.round(target.maxHp * 0.6),
           Math.max(
@@ -943,7 +1169,8 @@ export function tacticalCombat(
             Math.round(
               (u.attack * skill.shield.actorAttack +
                 u.maxHp * skill.shield.actorHp) *
-                u.shieldPower,
+                u.shieldPower *
+                directScale,
             ),
           ),
         );
@@ -957,7 +1184,11 @@ export function tacticalCombat(
       const effect = {
         source: u.id,
         kind: skill.dot.kind,
-        damage: Math.round(u.attack * skill.dot.actorAttack),
+        damage: Math.round(
+          u.attack *
+            skill.dot.actorAttack *
+            (relicAction?.mode === 'project' ? 0.75 : 1),
+        ),
         turns: skill.dot.rounds,
       };
       if (existing) Object.assign(existing, effect);
@@ -975,17 +1206,29 @@ export function tacticalCombat(
         );
         target.regenTurns = Math.max(target.regenTurns, skill.regen.rounds);
       }
-    if (skill.evasion) u.evasion = skill.evasion;
-    if (skill.taunt) b.taunt = u.id;
+    if (skill.evasion)
+      (relicAction?.mode === 'transfer' ? protectionTargets[0] : u).evasion =
+        skill.evasion;
+    if (skill.taunt)
+      b.taunt =
+        relicAction?.mode === 'transfer' ? protectionTargets[0].id : u.id;
     if (skill.supply) b.supplies -= skill.supply;
-    if (skill.energyRefund)
-      b.energy = Math.min(10, b.energy + skill.energyRefund);
+    if (skill.energyRefund) Relics.addMorale(b, u, skill.energyRefund);
   }
-  if (b.boss && b.shattered) {
+  if ((b.boss || b.site) && b.shattered) {
     if (b.enemyShield > 0) {
       b.enemyShield = 0;
       note(b, '结界已击碎。');
     }
+  }
+  if (
+    b.site &&
+    warning.kind === 'channel' &&
+    b.interrupted &&
+    !interruptedBefore
+  ) {
+    b.marked = Math.max(b.marked, 2);
+    note(b, '咏唱被反制，留下两次攻击破绽；重复打断不再追加。');
   }
   if (b.boss && (action === 'break' || skill?.shatter || skill?.interrupt)) {
     const expose = Boss.bossResolution(b).exposeHits;
@@ -1018,7 +1261,7 @@ export function tacticalCombat(
     const storedPower = Sets.takeStoredPower(u);
     const weakPierce = Sets.consumeWeakness(b, u);
     let damage =
-      (u.attack * multiplier + storedPower) *
+      (u.attack * multiplier * directScale + storedPower) *
       b.bonus *
       (marked ? 1.2 : 1) *
       (critical ? u.critDamage : 1);
@@ -1026,14 +1269,21 @@ export function tacticalCombat(
       100 /
       (100 +
         b.enemyDefense *
-          (b.boss ? Boss.bossResolution(b).armorScale : 1) *
+          (b.boss
+            ? Boss.bossResolution(b).armorScale
+            : Sites.siteResolution(b)?.armorScale || 1) *
           (1 -
             Math.min(0.75, u.pierce + (skill?.pierceBonus || 0) + weakPierce)) *
           (battleChosen(s, 'dragon', 'spear') ? 0.5 : 1));
     if (b.boss) damage *= Boss.bossPlayerDamageScale(b, projectile, u.ranged);
-    if (!b.boss && warning.kind === 'flight' && !projectile)
+    if (
+      ((!b.boss && !b.site && warning.kind === 'flight') ||
+        Sites.siteResolution(b)?.flying) &&
+      !projectile
+    )
       damage *= 0.25 + 0.75 * u.ranged;
-    if (!b.boss && warning.kind === 'ward' && !b.shattered) damage *= 0.4;
+    if (!b.boss && !b.site && warning.kind === 'ward' && !b.shattered)
+      damage *= 0.4;
     damage = dodged ? 0 : Math.max(1, Math.round(damage));
     const barrierHit = Boss.absorbBossBarrier(b.enemyShield, damage);
     b.enemyShield = barrierHit.remaining;
@@ -1052,6 +1302,7 @@ export function tacticalCombat(
     }
   }
   if (skill?.markHits) b.marked = skill.markHits;
+  Relics.afterRelicAction(b, u, action);
   b.acted.push(id);
   b.actionCount++;
   sync(b);
@@ -1060,7 +1311,7 @@ export function tacticalCombat(
   return s;
 }
 /** Deterministic heuristic; uses visible intent and attributes, never future random rolls. */
-export function autoCommand(s: G.State): G.Command {
+function ordinaryAutoCommand(s: G.State): G.Command {
   const b = s.battle;
   if (!b) return 'attack';
   const units = alive(b).filter((u) => !b.acted.includes(u.id)),
@@ -1086,9 +1337,12 @@ export function autoCommand(s: G.State): G.Command {
     if (cleanser) return cleanser.command;
   }
   if (
-    ['channel', 'restore', 'ward', ...(b.boss ? ['flight'] : [])].includes(
-      w.kind,
-    ) &&
+    [
+      'channel',
+      'restore',
+      'ward',
+      ...(b.boss || b.site ? ['flight'] : []),
+    ].includes(w.kind) &&
     !(w.kind === 'ward' ? b.shattered : b.interrupted)
   ) {
     const counter = options
@@ -1144,7 +1398,10 @@ export function autoCommand(s: G.State): G.Command {
     if (protector) return protector.command;
     const threatened = units.find(
       (u) =>
-        incomingDamage(s, u) * (b.boss ? Boss.bossResolution(b).hits : 1) >
+        incomingDamage(s, u) *
+          (b.boss
+            ? Boss.bossResolution(b).hits
+            : Sites.siteResolution(b)?.hits || 1) >
         u.hp * 0.42,
     );
     if (threatened) return commandFor(threatened.id, 'guard');
@@ -1153,7 +1410,10 @@ export function autoCommand(s: G.State): G.Command {
   if (
     !w.heavy &&
     target &&
-    incomingDamage(s, target) * (b.boss ? Boss.bossResolution(b).hits : 1) >
+    incomingDamage(s, target) *
+      (b.boss
+        ? Boss.bossResolution(b).hits
+        : Sites.siteResolution(b)?.hits || 1) >
       target.hp * 0.7
   )
     return commandFor(target.id, 'guard');
@@ -1207,6 +1467,217 @@ export function autoCommand(s: G.State): G.Command {
     'attack',
   );
 }
+/** Relics may answer visible emergencies; they never inspect or reroll future RNG. */
+export function autoCommand(s: G.State): G.Command {
+  const base = ordinaryAutoCommand(s),
+    b = s.battle;
+  if (!b || !b.units.some((u) => u.relic)) return base;
+  const w = enemyIntent(b),
+    living = alive(b),
+    units = living.filter((u) => !b.acted.includes(u.id));
+  const hits = b.boss
+    ? Boss.bossResolution(b).hits
+    : Sites.siteResolution(b)?.hits || 1;
+  const target = living.find((u) => u.id === (b.taunt || b.target));
+  const exposed = w.heavy ? living : target ? [target] : [];
+  const threatened = exposed.filter(
+    (u) => incomingDamage(s, u) * hits > u.hp * 0.7,
+  );
+  const needsCounter =
+    [
+      'channel',
+      'restore',
+      'ward',
+      ...(b.boss || b.site ? ['flight'] : []),
+    ].includes(w.kind) && !(w.kind === 'ward' ? b.shattered : b.interrupted);
+  const baseAction = parse(s, base);
+  const baseSkill = combatSkills(s, baseAction.id).find(
+    (x) => x.id === baseAction.action,
+  );
+  const counters = (skill: G.SkillDefinition | undefined) =>
+    w.kind === 'ward' ? !!skill?.shatter : !!skill?.interrupt;
+  if (needsCounter && (baseAction.action === 'break' || counters(baseSkill)))
+    return base;
+  const options = units.flatMap((u) =>
+    combatRelicOptions(s, u.id)
+      .filter((x) => !x.reason)
+      .map((x) => ({ ...x, u })),
+  );
+  const lowest = [...living].sort((a, c) => a.hp / a.maxHp - c.hp / c.maxHp)[0];
+  // Borrow only for a counter or a needed restorative skill, never routine damage.
+  const borrow = options.find((x) => {
+    if (x.mode !== 'borrow') return false;
+    const parsed = parse(s, x.command),
+      skill = combatSkills(s, x.u.id).find(
+        (v) => v.id === Relics.effectiveSkillId(parsed.action),
+      );
+    return (
+      (needsCounter && counters(skill)) ||
+      (threatened.includes(lowest) &&
+        !!skill?.healing &&
+        (skill.target === 'party' ||
+          parsed.target === lowest.id ||
+          (skill.target === 'self' && x.u.id === lowest.id)) &&
+        !(baseSkill?.healing || baseAction.action === 'heal'))
+    );
+  });
+  if (borrow) return borrow.command;
+  const tune = options.find((x) => {
+    if (x.mode !== 'tune') return false;
+    const parsed = parse(s, x.command),
+      decoded = Relics.decodeRelicAction(parsed.action)!;
+    const friend = living.find((u) => u.id === parsed.target)!;
+    const next = combatSkills(s, friend.id).find(
+      (v) => v.id === decoded.skillId,
+    )!;
+    const pledge = combatSkills(s, x.u.id).find((v) => v.id === decoded.aux)!;
+    if (
+      friend.cooldowns[next.id] !== 1 ||
+      b.energy - 2 < next.energy ||
+      pledge.interrupt ||
+      pledge.shatter ||
+      pledge.healing ||
+      pledge.shield ||
+      pledge.wardHits ||
+      pledge.incomingMultiplier ||
+      pledge.preventBurn ||
+      pledge.cleanseBurn
+    )
+      return false;
+    // A reduced cooldown is useful only if the promised follow-up is actually legal.
+    // In particular, another hero's tuning cannot forgive private morale debt.
+    const followUp: G.State = {
+      ...s,
+      battle: {
+        ...b,
+        energy: b.energy - 2,
+        units: b.units.map((u) =>
+          u.id === friend.id
+            ? { ...u, cooldowns: { ...u.cooldowns, [next.id]: 0 } }
+            : u,
+        ),
+      },
+    };
+    if (
+      tacticalReason(
+        followUp,
+        commandFor(
+          friend.id,
+          next.id,
+          next.target === 'ally' ? lowest?.id : undefined,
+        ),
+      )
+    )
+      return false;
+    return (
+      (needsCounter && counters(next)) ||
+      (threatened.length > 0 &&
+        !!next.healing &&
+        !(baseSkill?.healing || baseAction.action === 'heal'))
+    );
+  });
+  if (tune) return tune.command;
+  const split = options.find((x) => {
+    if (x.mode !== 'split') return false;
+    const parsed = parse(s, x.command),
+      decoded = Relics.decodeRelicAction(parsed.action)!;
+    const skill = combatSkills(s, x.u.id).find(
+      (v) => v.id === decoded.skillId,
+    )!;
+    const main = living.find((u) => u.id === parsed.target)!,
+      other = living.find((u) => u.id === decoded.aux)!;
+    const h = skill.healing!;
+    const amount = (u: CombatUnit) =>
+      (x.u.attack * h.actorAttack +
+        x.u.maxHp * h.actorHp +
+        u.maxHp * h.targetHp) *
+      x.u.healing;
+    return (
+      main.id === lowest.id &&
+      main.hp < main.maxHp * 0.65 &&
+      other.hp < other.maxHp * 0.75 &&
+      main.hp + amount(main) * 0.7 >= incomingDamage(s, main) * hits &&
+      other.hp + amount(other) * 0.35 >= incomingDamage(s, other) * hits &&
+      (!needsCounter || b.energy - skill.energy - 1 >= 2)
+    );
+  });
+  if (split) return split.command;
+  if (threatened.length && !w.heavy && target) {
+    const transfer = options.find((x) => {
+      if (x.mode !== 'transfer' || x.u.id === target.id) return false;
+      const parsed = parse(s, x.command),
+        skill = combatSkills(s, x.u.id).find(
+          (v) => v.id === Relics.effectiveSkillId(parsed.action),
+        )!;
+      if (
+        parsed.target !== target.id ||
+        target.guard < (skill.incomingMultiplier || 1)
+      )
+        return false;
+      const protection = skill.shield
+        ? (x.u.attack * skill.shield.actorAttack +
+            x.u.maxHp * skill.shield.actorHp) *
+          x.u.shieldPower
+        : 0;
+      const reduced =
+        incomingDamage(s, target) *
+        Math.min(1, (skill.incomingMultiplier || 1) / target.guard) *
+        (skill.wardHits && !target.ward ? 0.55 : 1) *
+        hits;
+      return (
+        reduced - Math.max(target.shield, protection) < target.hp * 0.85 &&
+        x.u.hp > incomingDamage(s, x.u)
+      );
+    });
+    if (transfer) return transfer.command;
+  }
+  if (needsCounter || threatened.length) return base;
+  // Use a charged skill when safe; an emergency above may intentionally forfeit it.
+  for (const u of units)
+    if (u.relic?.charge?.round === b.round - 1) {
+      const command = commandFor(u.id, u.relic.charge.skillId);
+      if (!tacticalReason(s, command)) return command;
+    }
+  const project = options.find(
+    (x) =>
+      x.mode === 'project' &&
+      x.u.id === baseAction.id &&
+      Relics.effectiveSkillId(parse(s, x.command).action) ===
+        baseAction.action &&
+      (b.boss
+        ? Boss.bossResolution(b).flying
+        : b.site
+          ? Sites.siteResolution(b)?.flying
+          : w.kind === 'flight') &&
+      0.25 + 0.75 * x.u.ranged < 0.75,
+  );
+  if (project) return project.command;
+  // Only site sequences expose a deterministic next-round window. Boss transitions may depend on damage.
+  if (b.site) {
+    const next = Sites.siteStepAt(
+      b.site.siteId,
+      b.site.variant,
+      b.round + 1,
+    ).step;
+    if ((next.armor || 1) < 1 || next.exposed) {
+      const charge = options.find(
+        (x) =>
+          x.mode === 'charge' &&
+          x.u.relic?.autoCharge &&
+          x.u.hp > incomingDamage(s, x.u) * hits * 2 &&
+          (() => {
+            const skill = combatSkills(s, x.u.id).find(
+              (v) =>
+                v.id === Relics.effectiveSkillId(parse(s, x.command).action),
+            )!;
+            return skill.damage > 0 && b.energy >= skill.energy;
+          })(),
+      );
+      if (charge) return charge.command;
+    }
+  }
+  return base;
+}
 export function migrateBattle(s: G.State) {
   const old = s.battle!,
     seed = s.rng,
@@ -1221,6 +1692,8 @@ export function migrateBattle(s: G.State) {
   for (const unit of battle.units) {
     delete unit.setEffect;
     delete unit.projectChoices;
+    delete unit.relic;
+    delete unit.skillIds;
     unit.hp = Math.max(1, Math.round(unit.maxHp * hpRatio));
     for (const key of Object.keys(unit.cooldowns))
       unit.cooldowns[key] = old.cooldowns[unit.id] || 0;
@@ -1250,7 +1723,11 @@ export function validateBattleReport(s: G.State) {
     !Number.isInteger(r.region) ||
     r.region < 0 ||
     r.region > 5 ||
-    !['boss', 'guardian'].includes(r.kind) ||
+    !['boss', 'guardian', 'site'].includes(r.kind) ||
+    (r.kind === 'site' &&
+      (Sites.siteCombatIndex(r.siteId || '') < 0 ||
+        !['A', 'B'].includes(r.variant || '') ||
+        r.loot != null)) ||
     !Number.isInteger(r.node) ||
     r.node < 0 ||
     r.node > 5 ||
@@ -1289,6 +1766,19 @@ export function validateBattleReport(s: G.State) {
 }
 export function validateBattle(s: G.State) {
   const b = s.battle!;
+  if (!Sites.validSiteRuntime(b)) throw Error('支线战斗意图快照无效');
+  if (!Relics.validCombatRelics(b)) throw Error('战斗遗物状态无效');
+  if (
+    b.context &&
+    (!['balanced', 'cautious', 'assault'].includes(b.context.stance) ||
+      !Number.isFinite(b.context.outpostFactor) ||
+      b.context.outpostFactor < 0.5 ||
+      b.context.outpostFactor > 1 ||
+      !Number.isFinite(b.context.supplyHeal) ||
+      b.context.supplyHeal < 0.38 ||
+      b.context.supplyHeal > 1)
+  )
+    throw Error('出发战斗准备快照无效');
   if (
     b.boss !== undefined &&
     (b.kind !== 'boss' || !Boss.validBossRuntime(b.boss, b.round))
@@ -1326,7 +1816,7 @@ export function validateBattle(s: G.State) {
     typeof b.healTarget !== 'string' ||
     !['physical', 'shadow', 'fire', 'radiant'].includes(b.enemyElement) ||
     b.system !== 2 ||
-    !['boss', 'guardian'].includes(b.kind) ||
+    !['boss', 'guardian', 'site'].includes(b.kind) ||
     !i(b.node, 0, 5) ||
     !Array.isArray(b.units) ||
     b.units.length !== s.party.length ||
@@ -1393,6 +1883,17 @@ export function validateBattle(s: G.State) {
       !n(u.healing, 0.1, 3) ||
       !n(u.shieldPower, 0.1, 3) ||
       !n(u.cooldownReduction, 0, 0.3) ||
+      (u.skillIds !== undefined &&
+        (!Array.isArray(u.skillIds) ||
+          !u.skillIds.length ||
+          u.skillIds.length > 3 ||
+          new Set(u.skillIds).size !== u.skillIds.length ||
+          u.skillIds.some(
+            (id) =>
+              !G.SKILLS.some(
+                (skill) => skill.id === id && skill.role === u.role,
+              ),
+          ))) ||
       !Sets.validSetEffect(u.setEffect, b.round, u.attack) ||
       ((u.projectChoices !== undefined ||
         b.units[0].projectChoices !== undefined) &&
@@ -1409,7 +1910,8 @@ export function validateBattle(s: G.State) {
       Object.keys(u.cooldowns).length !== combatSkills(s, u.id).length ||
       Object.entries(u.cooldowns).some(
         ([key, v]) =>
-          !combatSkills(s, u.id).some((sk) => sk.id === key) || !i(v, 0, 8),
+          !combatSkills(s, u.id).some((sk) => sk.id === key) ||
+          !i(v, 0, u.relic ? 9 : 8),
       )
     )
       throw Error('角色血条或冷却记录无效');

@@ -1,5 +1,6 @@
 'use client';
 import { PinPlan } from './planning-board';
+import { RelicCollectionButton, RelicDeploymentStrip } from './relic-collection';
 import { SkillTreePanel } from './skill-tree-panel';
 import { GearLabel, GearStats, GearWearer } from './gear-presentation';
 import { DEFAULT_GEAR_SORT, GearSortControl } from './gear-sort-control';
@@ -228,7 +229,7 @@ export function GuildTeam({ s, act, go, focus }: Props) {
     [slotFilter, setSlotFilter] = useState('all'),
     [gearSort, setGearSort] = useState(DEFAULT_GEAR_SORT),
     [picker, setPicker] = useState(false);
-  const busy = !!s.battle || !!s.expedition,
+  const busy = !!s.battle || !!s.expedition || !!s.worldExploration.activeRun,
     h = s.heroes.find((member) => member.id === selected) || s.heroes[0],
     stats = G.partyStats(s),
     profile = G.partyProfile(s),
@@ -305,6 +306,7 @@ export function GuildTeam({ s, act, go, focus }: Props) {
       </aside>
       <section className="team-detail" aria-label="选中角色详情">
         <div className="team-party-line">
+          <RelicCollectionButton s={s} act={act} kind="combat" go={go} initialId={focus?.relic} />
           <strong>
             出战 {s.party.length}/4 · <Term name="partyPower">战力</Term>{' '}
             {stats.power}
@@ -319,6 +321,7 @@ export function GuildTeam({ s, act, go, focus }: Props) {
             {Math.round(profile.radiant * 100)}%
           </small>
         </div>
+        <RelicDeploymentStrip s={s} act={act} kind="combat" />
         {h && personal ? (
           <>
             <div className="team-overview">
@@ -631,9 +634,8 @@ export function GuildTeam({ s, act, go, focus }: Props) {
                 </div>
                 {chosen ? (
                   <>
-                    <div
+                    <fieldset
                       className="forge-slot-filter"
-                      role="group"
                       aria-label="按装备部位筛选锻造配方"
                     >
                       {forgeSlots.map((slot) => (
@@ -648,7 +650,7 @@ export function GuildTeam({ s, act, go, focus }: Props) {
                           {G.SLOT_NAMES[slot]}
                         </button>
                       ))}
-                    </div>
+                    </fieldset>
                     <Pick
                       label={G.SLOT_NAMES[chosen.slot] + '配方'}
                       value={chosen.id}

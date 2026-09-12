@@ -1,7 +1,7 @@
 import * as G from './realm.ts';
 import { combatRecommendation } from './combat-recommendation.ts';
 
-export type PlanKind = 'building' | 'technology' | 'research' | 'development' | 'gear' | 'guardian' | 'boss';
+export type PlanKind = 'building' | 'technology' | 'research' | 'development' | 'gear' | 'guardian' | 'boss' | 'relic' | 'facility' | 'site';
 export interface PlanTarget {
   kind: PlanKind;
   id: string;
@@ -19,7 +19,7 @@ export interface PlanQuote {
   checks: { text: string; ready: boolean }[];
   destination: G.Objective & {tier?:number;guardian?:number};
 }
-const kinds: PlanKind[] = ['building','technology','research','development','gear','guardian','boss'];
+const kinds: PlanKind[] = ['building','technology','research','development','gear','guardian','boss','relic','facility','site'];
 export const planKey = (p: PlanTarget) => [p.kind,p.id,p.level,p.tier,p.serial].join(':');
 export function makePlan(s: G.State, kind: PlanKind, id: string, tier = G.gearTier(s)): PlanTarget {
   return { kind, id, level: kind === 'building' ? (s.buildings[id as G.BuildingId] || 0) + 1 : kind === 'development' ? G.developmentLevel(s,id as G.DevelopmentId) + 1 : kind === 'guardian' ? Math.min(5,(s.guild.depths[Number(id)] || 0)+1) : 1, tier: kind === 'gear' ? tier : 1, serial: kind === 'gear' ? s.guild.serial : 0 };
@@ -34,6 +34,9 @@ function known(p: PlanTarget): boolean {
   if (p.kind === 'research') return G.RESEARCH.some(t=>t.id===p.id);
   if (p.kind === 'development') return G.DEVELOPMENTS.some(t=>t.id===p.id) && p.level <= G.DEVELOPMENT_MAX;
   if (p.kind === 'gear') return G.RECIPES.some(t=>t.id===p.id);
+  if (p.kind === 'relic') return p.level===1&&G.RELICS.some(t=>t.id===p.id);
+  if (p.kind === 'facility') return p.level===1&&!!G.siteDefinition(p.id);
+  if (p.kind === 'site') return p.level===1&&/^S(0[1-9]|1[0-2]):(assault|clever)$/.test(p.id);
   return /^[0-5]$/.test(p.id) && (p.kind !== 'guardian' || p.level <= 5);
 }
 export function validatePlans(s: G.State): void {
@@ -68,6 +71,29 @@ export function planQuote(s: G.State, p: PlanTarget): PlanQuote {
     prerequisite=G.recipeUnlockReason(s,p.id,p.tier);
     done=s.guild.inventory.some(g=>g.recipe===p.id && g.tier>=p.tier && Number(g.id.replace('gear-',''))>p.serial);
     destination={title,detail:'',view:'heroes',tab:'forge',recipe:p.id,tier:p.tier};
+  } else if(p.kind==='relic'||p.kind==='facility') {
+    const relic=p.kind==='relic'?G.RELICS.find(r=>r.id===p.id):undefined;
+    const siteId=relic?.siteId||p.id,site=G.siteDefinition(siteId)!;
+    const owned=relic?s.worldExploration.relics.owned[p.id]:s.worldExploration.facilities[p.id];
+    const q=relic?G.relicRepairQuote(s,p.id):G.facilityRepairQuote(s,p.id);
+    title='修复'+(relic?.name||site.name);done=!!owned?.repaired;
+    if(owned?.operation){checks.push({text:`修复中 · 还需 ${Math.ceil(owned.operation.remainingSeconds)} 秒`,ready:false});prerequisite='后方正在修复，费用已付';}
+    else{cost=q.cost;materials=q.materials;prerequisite=relic?!owned?'先从对应地点取得遗物':'':!s.worldExploration.sites[siteId]?.firstCompleted?'先完成这处地点':'';}
+    destination={title,detail:'',view:relic?(relic.kind==='town'?'town':'heroes'):'town',tab:relic?.kind==='combat'?undefined:'workshop',site:relic?undefined:siteId,relic:relic?.id,region:site.region};
+  } else if(p.kind==='site') {
+    const [id,rawMethod]=p.id.split(':'),method=rawMethod as G.SiteMethod,site=G.siteDefinition(id)!;
+    const travel=G.siteTravelQuote(s,id),extra=G.siteRouteQuote(s,id,method);
+    cost={...travel.cost};for(const[k,n]of Object.entries(extra.cost))cost[k as G.Resource]=(cost[k as G.Resource]||0)+n!;
+    materials={...extra.materials};title=site.name+' · '+(method==='assault'?'强攻备料':'巧解备料');
+    prerequisite=s.worldExploration.sites[id]?'':'先发现这处地点';
+    let potionsReady=true;
+    if(method==='assault'&&s.guild.preparation.element!=='physical'){
+      const potion=G.POTIONS.find(p=>p.id===s.guild.preparation.element)!;potionsReady=G.potionCount(s,potion.id)>0;
+      checks.push({text:potion.name+' · '+G.potionCount(s,potion.id)+'份',ready:potionsReady});
+      if(!potionsReady){for(const[k,n]of Object.entries(potion.cost))cost[k as G.Resource]=(cost[k as G.Resource]||0)+n!;for(const[k,n]of Object.entries(potion.materials))materials[k as G.MaterialId]=(materials[k as G.MaterialId]||0)+n!;}
+    }
+    done=!prerequisite&&potionsReady&&G.canPay(s,cost)&&!G.materialReason(s,materials);
+    destination={title,detail:'备齐只作提示，不会自动出发或扣费。',view:'explore',region:site.region,site:id};
   } else {
     const r=Number(p.id), rec=combatRecommendation(r,p.kind==='boss'?6:p.level);
     title=G.REGIONS[r].name+' · '+(p.kind==='boss'?'首领决战':'第'+p.level+'处守敌');
@@ -89,7 +115,7 @@ export function planQuote(s: G.State, p: PlanTarget): PlanQuote {
     checks.push({text:'技能点已安排',ready:party.length>0 && party.every(h=>G.skillPoints(h)===0)});
     destination={title,detail:'',view:'explore',region:r,tab:p.kind==='boss'?'boss':'frontier',guardian:p.kind==='guardian'?p.level-1:undefined};
   }
-  if(done) {cost={}; materials={}; prerequisite='';}
+  if(done && p.kind!=='site') {cost={}; materials={}; prerequisite='';}
   return {target:p,title,cost,materials,done,prerequisite,checks,destination};
 }
 export function pinPlan(s0:G.State,p:PlanTarget):G.State {
@@ -107,6 +133,9 @@ export function availablePlans(s:G.State):PlanTarget[] {
     ...G.DEVELOPMENTS.filter(d=>G.developmentDiscovered(s,d.id) && G.developmentLevel(s,d.id)<G.DEVELOPMENT_MAX).map(d=>makePlan(s,'development',d.id)),
     ...G.RECIPES.filter(r=>G.recipeDiscovered(s,r.id)).map(r=>makePlan(s,'gear',r.id)),
     ...G.REGIONS.flatMap((_,r)=>!G.regionOpen(s,r)?[]:[...(s.guild.depths[r]<5?[makePlan(s,'guardian',String(r))]:[]),...(!s.cleared.includes(r)?[makePlan(s,'boss',String(r))]:[])]),
+    ...G.RELICS.filter(r=>s.worldExploration.relics.owned[r.id]&&!s.worldExploration.relics.owned[r.id].repaired).map(r=>makePlan(s,'relic',r.id)),
+    ...G.SITES.filter(d=>s.worldExploration.sites[d.id]?.firstCompleted&&!s.worldExploration.facilities[d.id].repaired).map(d=>makePlan(s,'facility',d.id)),
+    ...G.SITES.filter(d=>s.worldExploration.sites[d.id]).flatMap(d=>[makePlan(s,'site',d.id+':clever'),makePlan(s,'site',d.id+':assault')]),
   ];
 }
 export function planDemand(s:G.State,targets=s.plans || []) {
@@ -117,7 +146,7 @@ export function planDemand(s:G.State,targets=s.plans || []) {
     const q=planQuote(s,p);
     for(const [k,n] of Object.entries(q.cost))cost[k as G.Resource]=(cost[k as G.Resource]||0)+n!;
     for(const [k,n] of Object.entries(q.materials))materials[k as G.MaterialId]=(materials[k as G.MaterialId]||0)+n!;
-    if(!q.done && potion && (p.kind==='guardian' || p.kind==='boss')) {
+    if(potion && ((!q.done && (p.kind==='guardian' || p.kind==='boss')) || (p.kind==='site' && p.id.endsWith(':assault')))) {
       doses++;
       // Replace per-target potion quotes with one shared inventory allocation.
       if(!G.potionCount(s,potion.id)) {

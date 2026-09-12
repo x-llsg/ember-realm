@@ -67,3 +67,39 @@ test('暂停估算只推演恢复后的城镇，不推进外出战斗或扣出�
   const before=JSON.stringify(s);const estimate=G.forecastPlan(s,[G.makePlan(s,'boss','1')],60);
   assert.equal(estimate.paused,true);assert.equal(JSON.stringify(s),before);
 });
+
+test('遗物和设施规划使用真实修复报价，付款后等完工才完成',()=>{
+  let s=recommendedFixture(0,3);G.discoverSites(s);s.world.materials.timber=10;
+  s.guild.preparation={stance:'balanced',element:'physical',remedy:false};
+  s=G.startSite(s,'S01');s=G.advance(s,s.worldExploration.activeRun.remaining);
+  s=G.chooseSiteRoute(s,'clever');s=G.advance(s,120);
+  for(const [kind,id,quote,action] of [['relic','R01',G.relicRepairQuote,G.repairRelic],['facility','S01',G.facilityRepairQuote,G.repairFacility]]) {
+    const p=G.makePlan(s,kind,id),q=G.planQuote(s,p),real=quote(s,id);
+    assert.equal(q.done,false);assert.deepEqual(q.cost,real.cost);assert.deepEqual(q.materials,real.materials);
+    let paid=action(s,id);assert.notEqual(paid,s,kind);
+    assert.equal(G.planQuote(paid,p).done,false);assert.deepEqual(G.planQuote(paid,p).cost,{});
+    paid=G.advance(paid,real.seconds);assert.equal(G.planQuote(paid,p).done,true);
+    const pinned=G.pinPlan(paid,p);assert.deepEqual(G.decodeSave(JSON.stringify(pinned)).plans,pinned.plans);
+  }
+});
+
+test('支线准备规划仅报价，和主线目标合计时共享实际药剂库存',()=>{
+  const s=recommendedFixture(1,3);G.discoverSites(s);const potion=G.POTIONS.find(x=>x.id===s.guild.preparation.element);assert.ok(potion);
+  const p=G.makePlan(s,'site','S03:assault'),boss=G.makePlan(s,'boss','1');
+  s.resources.food=0;const before=JSON.stringify(s),travel=G.siteTravelQuote(s,'S03'),extra=G.siteRouteQuote(s,'S03','assault');
+  const q=G.planQuote(s,p);assert.equal(q.done,false);assert.equal(q.destination.site,'S03');assert.equal(JSON.stringify(s),before);
+  s.guild.potions[potion.id]=1;
+  const bill=G.planDemand(s,[p,boss]),main=G.battlePreparationCost(s);
+  for(const k of Object.keys(s.resources))assert.equal(bill.cost[k]||0,(travel.cost[k]||0)+(extra.cost[k]||0)+(main[k]||0)+(potion.cost[k]||0));
+});
+
+test('两份单独备齐的支线仍需合计预算，不能复用一份库存和药剂',()=>{
+  const s=recommendedFixture(1,3);G.discoverSites(s);const potion=G.POTIONS.find(x=>x.id===s.guild.preparation.element);
+  s.guild.depths[1]=3;G.discoverSites(s);s.guild.preparation.remedy=false;
+  s.resources.food=30;s.resources.gold=20;s.guild.potions[potion.id]=1;
+  const targets=['S03:assault','S04:assault'].map(id=>G.makePlan(s,'site',id));
+  assert.ok(targets.every(p=>G.planQuote(s,p).done));
+  const bill=G.planDemand(s,targets);
+  assert.equal(bill.cost.food,60+potion.cost.food);assert.equal(bill.cost.gold,40+potion.cost.gold);
+  assert.deepEqual(bill.materials,potion.materials);
+});

@@ -1,6 +1,14 @@
 import type { State, Hero } from './realm.ts';
 import { production, talentExperience } from './realm.ts';
 import * as Civic from './civic.ts';
+import {
+  facilityWorkers,
+  facilityLines,
+  relicWorkers,
+  quoteInputsReason,
+  payEconomyQuote,
+} from './site-economy.ts';
+import type { ProcessingBatch } from './site-economy-types.ts';
 import type { Cost, Resource } from './realm-data.ts';
 import { RESOURCE_NAMES } from './realm-data.ts';
 import {
@@ -304,11 +312,14 @@ export const transportWorkers = (s: State) =>
 export const freeEconomyWorkers = (s: State) =>
   s.population -
   Object.values(s.jobs).reduce((a, b) => a + b, 0) -
-  transportWorkers(s);
+  transportWorkers(s) -
+  facilityWorkers(s) -
+  relicWorkers(s);
 export const transportSlots = (s: State) =>
   2 + Math.floor(developmentLevel(s, 'logistics') / 4);
 export const transportLines = (s: State) =>
-  economy(s).routes.filter((r) => r.enabled && r.crew > 0).length;
+  economy(s).routes.filter((r) => r.enabled && r.crew > 0).length +
+  facilityLines(s);
 export const regionalDepth = (s: State, r: number) => s.guild.depths[r] || 0;
 export const routeDiscovered = (s: State, r: number) =>
   Number.isInteger(r) &&
@@ -380,6 +391,10 @@ export function assignRoute(s0: State, r: number, delta: number): State {
   s.economy.routes[r].crew += delta;
   if (delta > 0) s.economy.routes[r].enabled = true;
   if (!s.economy.routes[r].crew) s.economy.routes[r].enabled = false;
+  if (!s.economy.routes[r].enabled && s.worldExploration)
+    s.worldExploration.relics.town = s.worldExploration.relics.town.filter(
+      (x) => x.id !== 'R05' || !x.routes?.includes(r),
+    );
   return s;
 }
 export function toggleRoute(s0: State, r: number): State {
@@ -389,6 +404,10 @@ export function toggleRoute(s0: State, r: number): State {
   if (!route.enabled && transportLines(s0) >= transportSlots(s0)) return s0;
   const s = structuredClone(s0);
   s.economy.routes[r].enabled = !route.enabled;
+  if (!s.economy.routes[r].enabled && s.worldExploration)
+    s.worldExploration.relics.town = s.worldExploration.relics.town.filter(
+      (x) => x.id !== 'R05' || !x.routes?.includes(r),
+    );
   return s;
 }
 export function dutyHero(s: State, duty: Duty): Hero | undefined {
@@ -472,6 +491,15 @@ export function transportPlan(s: State): {
       ),
     ),
   );
+  const scheduler = s.worldExploration?.relics.town.find((r) => r.id === 'R05');
+  if (scheduler?.routes && scheduler.counts) {
+    const [a, b] = scheduler.routes,
+      position = s.worldExploration.relics.runtime.routeIndex;
+    const wanted = scheduler.routes[position],
+      other = scheduler.routes[1 - position];
+    const active = yields[wanted] > 0 ? wanted : other;
+    yields[active === a ? b : a] = 0;
+  }
   const food = yields.reduce((n, y, r) => n + y * (3 + r), 0),
     gold = yields.reduce((n, y, r) => n + y * (1 + r * 0.5), 0);
   const reserve = economy(s).reserve,
@@ -610,6 +638,8 @@ export function setWorkVariant(s0: State, id: WorkId, variant: string): State {
   s.economy.variants[id] = variant;
   // Inputs are paid on completion, so unfinished time cannot be transferred to a new bill.
   s.world.workProgress[id] = 0;
+  if (s.worldExploration)
+    delete s.worldExploration.relics.runtime.processing[id];
   say(
     s,
     `${C.MATERIAL_NAMES[id]}改用「${processingRecipe(s, id).name}」。本批重新开始；之后按新配方支付原料。`,
@@ -678,6 +708,8 @@ export function setWorkMode(s0: State, id: WorkId, mode: WorkMode): State {
   if (s.economy.modes[id] === mode) return s;
   s.economy.modes[id] = mode;
   s.world.workProgress[id] = 0;
+  if (s.worldExploration)
+    delete s.worldExploration.relics.runtime.processing[id];
   return s;
 }
 export function setWorkTarget(s0: State, id: WorkId, target: number): State {
@@ -778,6 +810,23 @@ export function economyTick(s: State): void {
     s.world.materials[REGION_MATERIALS[r]] += n;
     e.routes[r].delivered += n;
   });
+  const scheduler = s.worldExploration?.relics.town.find((r) => r.id === 'R05');
+  if (scheduler?.routes && scheduler.counts) {
+    const rt = s.worldExploration.relics.runtime,
+      index = scheduler.routes.findIndex((r) => plan.yields[r] > 0);
+    if (index >= 0) {
+      rt.routeIndex = index as 0 | 1;
+      rt.routeSeconds += Math.min(
+        1,
+        plan.yields[scheduler.routes[index]] /
+          Math.max(1e-12, routeYield(s, scheduler.routes[index])),
+      );
+      if (rt.routeSeconds + 1e-8 >= scheduler.counts[index]) {
+        rt.routeSeconds = 0;
+        rt.routeIndex = (1 - index) as 0 | 1;
+      }
+    }
+  }
   if (e.orderActive && !orderReason(s)) {
     e.orderProgress++;
     const order = civicOrder(s);
@@ -818,6 +867,173 @@ export function economyTick(s: State): void {
       }
     }
   }
+}
+/** Alternate processing scheduler only when a deployed relic or unfinished
+ * relic batch needs it. The campaign bridge must return immediately on true. */
+export function relicProcessingTick(s: State, seconds = 1): boolean {
+  const w = s.worldExploration;
+  if (!w) return false;
+  const rt = w.relics.runtime;
+  const relevant = w.relics.town.some((r) =>
+    ['R01', 'R03', 'R11'].includes(r.id),
+  );
+  if (!relevant && !Object.keys(rt.processing).length) return false;
+  if (s.paused || !Number.isFinite(seconds) || seconds <= 0) return true;
+  const eps = 1e-8;
+  const buildBatch = (id: WorkId): ProcessingBatch => {
+    const bill = processingBill(s, id),
+      output = processingOutput(s, id);
+    return {
+      variant: s.economy.variants?.[id] || 'original',
+      cost: bill.cost,
+      materials: bill.materials,
+      seconds: C.workDuration(s, id),
+      output,
+      wholeOutput: output,
+      remaining: output,
+      split:
+        w.relics.town.some((r) => r.id === 'R03' && r.target === id) &&
+        output >= 2,
+    };
+  };
+  const subBill = (b: ProcessingBatch) => {
+    const count = b.split ? 1 : b.remaining,
+      ratio = count / b.wholeOutput;
+    return {
+      cost: Object.fromEntries(
+        Object.entries(b.cost).map(([k, n]) => [
+          k,
+          Math.ceil(n! * ratio - eps),
+        ]),
+      ),
+      materials: Object.fromEntries(
+        Object.entries(b.materials).map(([k, n]) => [k, n! * ratio]),
+      ),
+      count,
+      seconds: b.seconds * ratio,
+    };
+  };
+  const batchReason = (id: WorkId, b: ProcessingBatch) => {
+    const q = subBill(b);
+    return !s.world.work[id]
+      ? '加工已暂停'
+      : processingVariantReason(s, id, b.variant) ||
+          quoteInputsReason(s, q) ||
+          reserveReason(s, q.cost) ||
+          (s.world.materials[id] + q.count > workshopTarget(s, id) + eps
+            ? '成品空间不足'
+            : '');
+  };
+  for (let elapsed = 0; elapsed < seconds; elapsed += 1) {
+    const dt = Math.min(1, seconds - elapsed),
+      sequence = w.relics.town.find((r) => r.id === 'R11');
+    for (const id of WORK_IDS) {
+      if (
+        !s.world.work[id] ||
+        processingVariantReason(s, id, s.economy.variants?.[id] || 'original')
+      )
+        continue;
+      if (rt.processing[id]) continue;
+      if (sequence?.target === id && sequence.recipes && sequence.counts) {
+        if (rt.sequenceBatches >= sequence.counts[rt.sequenceIndex]) {
+          rt.sequenceBatches = 0;
+          rt.sequenceIndex = (1 - rt.sequenceIndex) as 0 | 1;
+        }
+        // Existing paid progress belongs to its old whole batch until finished.
+        if (s.world.workProgress[id] <= eps) {
+          s.economy.variants![id] = sequence.recipes[rt.sequenceIndex];
+          if (sequence.skipBlocked && batchReason(id, buildBatch(id))) {
+            const other = (1 - rt.sequenceIndex) as 0 | 1,
+              previous = s.economy.variants![id];
+            s.economy.variants![id] = sequence.recipes[other];
+            if (!batchReason(id, buildBatch(id))) {
+              rt.sequenceIndex = other;
+              rt.sequenceBatches = 0;
+            } else s.economy.variants![id] = previous;
+          }
+        }
+      }
+      rt.processing[id] = buildBatch(id);
+    }
+    const support = w.relics.town.find((r) => r.id === 'R01'),
+      target = support?.target as WorkId | undefined,
+      source = support?.source;
+    let extra = 0,
+      borrowTime = 0;
+    if (
+      target &&
+      rt.processing[target] &&
+      !batchReason(target, rt.processing[target]!)
+    ) {
+      let eligible = support?.mode === 'hand';
+      if (
+        support?.mode === 'lend' &&
+        source &&
+        source !== target &&
+        rt.processing[source] &&
+        !batchReason(source, rt.processing[source]!)
+      )
+        eligible = true;
+      if (eligible) {
+        const maintenance = { cost: { food: 6 }, materials: {} };
+        if (rt.handSeconds <= eps && !quoteInputsReason(s, maintenance, true)) {
+          payEconomyQuote(s, maintenance);
+          rt.handSeconds = 60;
+        }
+        const supplied = Math.min(dt, rt.handSeconds);
+        if (supplied > 0 && !batchReason(target, rt.processing[target]!)) {
+          if (support?.mode === 'hand') extra = supplied * 0.25;
+          else if (source) {
+            extra =
+              supplied *
+              Math.min(
+                0.5,
+                (0.5 * rt.processing[target]!.seconds) /
+                  rt.processing[source]!.seconds,
+              );
+            borrowTime = supplied;
+          }
+          rt.handSeconds = Math.max(0, rt.handSeconds - supplied);
+        }
+      }
+    }
+    for (const id of WORK_IDS) {
+      let remainingTime =
+          dt + (target === id ? extra : 0) - (source === id ? borrowTime : 0),
+        loops = 0;
+      while (remainingTime > eps && loops++ < 100) {
+        const b = rt.processing[id];
+        if (!b || batchReason(id, b)) break;
+        const q = subBill(b),
+          before = s.world.workProgress[id],
+          used = Math.min(remainingTime, Math.max(0, q.seconds - before));
+        s.world.workProgress[id] = before + used;
+        remainingTime -= used;
+        if (s.world.workProgress[id] + eps < q.seconds) break;
+        if (batchReason(id, b)) break;
+        payEconomyQuote(s, q);
+        s.world.materials[id] += q.count;
+        s.economy.crafted[id] += q.count;
+        rt.arrivals[id] = (rt.arrivals[id] || 0) + q.count;
+        s.world.workProgress[id] = 0;
+        b.remaining -= q.count;
+        if (b.remaining <= eps) {
+          delete rt.processing[id];
+          if (sequence?.target === id && sequence.recipes && sequence.counts) {
+            rt.sequenceBatches++;
+            if (rt.sequenceBatches >= sequence.counts[rt.sequenceIndex]) {
+              rt.sequenceBatches = 0;
+              rt.sequenceIndex = (1 - rt.sequenceIndex) as 0 | 1;
+            }
+            s.economy.variants![id] = sequence.recipes[rt.sequenceIndex];
+          }
+          if (!relevant) break;
+          rt.processing[id] = buildBatch(id);
+        }
+      }
+    }
+  }
+  return true;
 }
 export function migrateEconomy(s: State): void {
   s.economy = freshEconomy();

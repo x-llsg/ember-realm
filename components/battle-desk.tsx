@@ -1,9 +1,17 @@
 'use client';
 
 import '@/app/expedition-art.css';
-import { EnemyPortrait, HeroPortrait, RegionScene } from './game-art';
+import {
+  EnemyPortrait,
+  HeroPortrait,
+  RegionScene,
+  SiteEnemyPortrait,
+} from './game-art';
 import { useState } from 'react';
 import * as G from '@/lib/realm';
+import * as Tactics from '@/lib/tactics';
+import * as Relics from '@/lib/relic-combat';
+import { siteResolution } from '@/lib/site-combat';
 import { InfoHint } from './info-hint';
 import type { Act } from './realm-panels';
 import {
@@ -16,12 +24,18 @@ import {
 /** The engine owns personal actions, complete rounds and automatic stepping. */
 export function BattleDesk({ s, act }: { s: G.State; act: Act }) {
   const [showHistory, setShowHistory] = useState(false);
+  const [relicSkill, setRelicSkill] = useState('');
+  const [relicSecondary, setRelicSecondary] = useState('');
+  const [relicPledge, setRelicPledge] = useState('');
   if (!s.battle) return null;
   const b = s.battle;
   const selected = b.units.find((u) => u.id === b.selected) || b.units[0];
   const intent = G.enemyIntent(b);
   const currentArmor =
-    b.enemyDefense * (b.boss ? G.bossResolution(b).armorScale : 1);
+    b.enemyDefense *
+    (b.boss
+      ? G.bossResolution(b).armorScale
+      : siteResolution(b)?.armorScale || 1);
   const target = b.units.find((u) => u.id === (b.taunt || b.target));
   const living = b.units.filter((u) => u.hp > 0);
   const roleName = (role: string) =>
@@ -31,6 +45,73 @@ export function BattleDesk({ s, act }: { s: G.State; act: Act }) {
   const pct = (n: number, max: number) =>
     Math.min(100, Math.max(0, (n / Math.max(1, max)) * 100));
   const skills = selected ? G.combatSkills(s, selected.id) : [];
+  const relic = selected?.relic;
+  const relicHelp = relic ? Relics.RELIC_COMBAT_HELP[relic.id] : null;
+  const relicMode: Relics.RelicMode | null = relic
+    ? (
+        {
+          R02: 'charge',
+          R04: 'split',
+          R06: 'transfer',
+          R08: 'borrow',
+          R10: 'project',
+          R12: 'tune',
+        } as const
+      )[relic.id]
+    : null;
+  const friend =
+    living.find((u) => u.id === b.healTarget) ||
+    [...living].sort((a, c) => a.hp / a.maxHp - c.hp / c.maxHp)[0];
+  const relicSkills =
+    relicMode === 'tune'
+      ? friend
+        ? G.combatSkills(s, friend.id).filter(
+            (sk) => friend.cooldowns[sk.id] > 0,
+          )
+        : []
+      : skills.filter((sk) =>
+          relicMode === 'charge'
+            ? Relics.directSkill(sk)
+            : relicMode === 'split'
+              ? sk.target === 'ally' && sk.healing
+              : relicMode === 'transfer'
+                ? Relics.canTransfer(sk)
+                : relicMode === 'project'
+                  ? sk.damage > 0 && !sk.projectile && sk.target === 'enemy'
+                  : relicMode === 'borrow'
+                    ? sk.energy <= 4
+                    : false,
+        );
+  const selectedRelicSkill =
+    relicSkills.find((sk) => sk.id === relicSkill) || relicSkills[0];
+  const secondaryOptions = living.filter((u) => u.id !== friend?.id);
+  const second =
+    secondaryOptions.find((u) => u.id === relicSecondary) ||
+    secondaryOptions[0];
+  const pledges = skills.filter(
+    (sk) => sk.cooldown >= 2 && !selected.cooldowns[sk.id],
+  );
+  const pledge = pledges.find((sk) => sk.id === relicPledge) || pledges[0];
+  const relicCommand =
+    relicMode && selectedRelicSkill
+      ? Relics.relicCommand(
+          selected.id,
+          relicMode,
+          selectedRelicSkill.id,
+          ['split', 'transfer', 'tune'].includes(relicMode) ||
+            selectedRelicSkill.target === 'ally'
+            ? friend?.id
+            : '',
+          relicMode === 'split'
+            ? second?.id
+            : relicMode === 'tune'
+              ? pledge?.id
+              : '',
+        )
+      : null;
+  const relicReason = relicCommand
+    ? G.commandReason(s, relicCommand)
+    : '当前没有适用技能';
   // Manual input pauses automatic execution before issuing exactly one action.
   const execute = (command: G.Command) =>
     act((current) =>
@@ -77,7 +158,11 @@ export function BattleDesk({ s, act }: { s: G.State; act: Act }) {
         <div>
           <span className="battle-location">{G.REGIONS[b.region].name}</span>
           <strong>
-            {b.kind === 'guardian' ? `第 ${b.node + 1} 据点守卫` : '首领决战'}
+            {b.kind === 'site'
+              ? '支线遭遇'
+              : b.kind === 'guardian'
+                ? `第 ${b.node + 1} 据点守卫`
+                : '首领决战'}
           </strong>
         </div>
         <span className="battle-round">
@@ -93,11 +178,15 @@ export function BattleDesk({ s, act }: { s: G.State; act: Act }) {
           >
             <RegionScene region={b.region} className="battle-region-scene" />
             <span className="battle-enemy-portrait" aria-hidden="true">
-              <EnemyPortrait
-                region={b.region}
-                node={b.kind === 'guardian' ? b.node : 5}
-                size={b.boss ? 'lg' : 'md'}
-              />
+              {b.kind === 'site' && b.site ? (
+                <SiteEnemyPortrait siteId={b.site.siteId} size="md" />
+              ) : (
+                <EnemyPortrait
+                  region={b.region}
+                  node={b.kind === 'boss' ? 5 : b.node}
+                  size={b.boss ? 'lg' : 'md'}
+                />
+              )}
             </span>
             <div className="battle-enemy-detail">
               {b.boss && (
@@ -151,8 +240,8 @@ export function BattleDesk({ s, act }: { s: G.State; act: Act }) {
                 <div className="boss-barrier">
                   <span>结界 {number(b.enemyShield)} · 破盾可拆除</span>
                   <progress
-                    aria-label="首领结界"
-                    max={b.enemyMaxHp * 0.08}
+                    aria-label="敌方结界"
+                    max={b.enemyMaxHp * (b.site ? 0.1 : 0.08)}
                     value={b.enemyShield}
                   />
                 </div>
@@ -187,6 +276,11 @@ export function BattleDesk({ s, act }: { s: G.State; act: Act }) {
                   : '',
                 unit.setEffect?.weakness
                   ? `猎痕 ${unit.setEffect.weakness}`
+                  : '',
+                unit.relic?.charge ? '积蓄待发' : '',
+                unit.relic?.debt ? `士气欠付 ${unit.relic.debt}` : '',
+                unit.relic?.sealed
+                  ? `抵押封存 ${unit.relic.sealed.remaining}轮`
                   : '',
               ]
                 .filter(Boolean)
@@ -328,6 +422,120 @@ export function BattleDesk({ s, act }: { s: G.State; act: Act }) {
           </div>
 
           <div className="battle-actions" aria-label="当前角色行动">
+            {relic && relicHelp && (
+              <div
+                className="battle-action-cell skill"
+                style={{ gridColumn: '1 / -1' }}
+              >
+                <InfoHint title={relicHelp.name} body={relicHelp.text}>
+                  <span>
+                    {relicHelp.name}
+                    {relic.debt
+                      ? ` · 欠付${relic.debt}士气`
+                      : relic.charge
+                        ? ' · 已积蓄，下一轮施放选定技能'
+                        : relic.cooldown
+                          ? ` · 冷却${relic.cooldown}轮`
+                          : ''}
+                  </span>
+                </InfoHint>
+                <div
+                  style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                    gap: 6,
+                  }}
+                >
+                  <select
+                    aria-label={
+                      relicMode === 'tune'
+                        ? '需要调律的队友技能'
+                        : '遗物作用技能'
+                    }
+                    value={selectedRelicSkill?.id || ''}
+                    onChange={(e) => setRelicSkill(e.target.value)}
+                  >
+                    {!relicSkills.length && (
+                      <option value="">没有适用技能</option>
+                    )}
+                    {relicSkills.map((sk) => (
+                      <option key={sk.id} value={sk.id}>
+                        {sk.name}
+                      </option>
+                    ))}
+                  </select>
+                  {relicMode === 'split' && (
+                    <select
+                      aria-label="分写副目标"
+                      value={second?.id || ''}
+                      onChange={(e) => setRelicSecondary(e.target.value)}
+                    >
+                      {secondaryOptions.map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {u.name} · 副目标35%
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  {relicMode === 'tune' && (
+                    <select
+                      aria-label="本人抵押技能"
+                      value={pledge?.id || ''}
+                      onChange={(e) => setRelicPledge(e.target.value)}
+                    >
+                      {!pledges.length && (
+                        <option value="">没有可抵押技能</option>
+                      )}
+                      {pledges.map((sk) => (
+                        <option key={sk.id} value={sk.id}>
+                          封存 {sk.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  {['split', 'transfer', 'tune'].includes(relicMode || '') && (
+                    <small>目标：上方援护目标</small>
+                  )}
+                  {relic.id === 'R02' && (
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={relic.autoCharge}
+                        onChange={(e) =>
+                          act((current) =>
+                            Tactics.setRelicAutoCharge(
+                              current,
+                              selected.id,
+                              e.target.checked,
+                            ),
+                          )
+                        }
+                      />{' '}
+                      公开窗口自动蓄势
+                    </label>
+                  )}
+                  <button
+                    type="button"
+                    disabled={!!relicReason || !relicCommand}
+                    onClick={() => relicCommand && execute(relicCommand)}
+                    aria-label={`${selected.name}：使用${relicHelp.name}${relicReason ? '，' + relicReason : ''}`}
+                  >
+                    {relicReason ||
+                      (
+                        {
+                          charge: '蓄势',
+                          split: '分写治疗',
+                          transfer: '交出防护',
+                          borrow: '借支施法',
+                          project: '牵射',
+                          tune: '调律',
+                        } as const
+                      )[relicMode!]}
+                  </button>
+                </div>
+              </div>
+            )}
             {commands.map((action) => {
               const command = G.commandFor(selected!.id, action.id);
               const reason = G.commandReason(s, command);

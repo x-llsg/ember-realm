@@ -69,7 +69,8 @@ function fixture(mode) {
   }
   s.party = s.heroes.slice(0, 4).map((h) => h.id);
   const reserve = s.heroes.slice(4).map((h) => h.id);
-  for (const id of G.MATERIAL_IDS) s.world.materials[id] = Math.min(200, G.materialCapacity(s, id));
+  for (const id of G.MATERIAL_IDS)
+    s.world.materials[id] = Math.min(200, G.materialCapacity(s, id));
   const idle = [gear(s, 'blade'), gear(s, 'plate')];
   assert.deepEqual(
     reload(s),
@@ -142,7 +143,11 @@ function adjustments(start, reserve, idle) {
   s = allowed(s, (x) => G.reforgeGear(x, transfer, 3), 'reserve reforge');
   s = allowed(s, (x) => G.unequipGear(x, a, 'armor'), 'reserve unload one');
   s = allowed(s, (x) => G.unequipAllGear(x, a), 'reserve unload all');
-  s = allowed(s, (x) => G.dismantleGear(x, idle[0], { includeEnhanced: true }), 'idle dismantle');
+  s = allowed(
+    s,
+    (x) => G.dismantleGear(x, idle[0], { includeEnhanced: true }),
+    'idle dismantle',
+  );
   s = allowed(s, (x) => G.dismissHero(x, b), 'reserve dismiss');
   return s;
 }
@@ -191,9 +196,14 @@ test('reserve training, mastery and overcoming flaws charge exact costs without 
     ]) {
       const next = allowed(s, action, `${mode}/${JSON.stringify(name)}`);
       charged(s, next, cost);
-      const materials = name === 'mastery' ? G.masteryMaterials(s, hero(s, id)) : {};
+      const materials =
+        name === 'mastery' ? G.masteryMaterials(s, hero(s, id)) : {};
       for (const key of G.MATERIAL_IDS)
-        assert.equal(s.world.materials[key] - next.world.materials[key], materials[key] || 0, `${name}: ${key}`);
+        assert.equal(
+          s.world.materials[key] - next.world.materials[key],
+          materials[key] || 0,
+          `${JSON.stringify(name)}: ${key}`,
+        );
       check(hero(next, id));
     }
   }
@@ -255,7 +265,10 @@ test('reserve and idle enhancements/reforges work; dismantling still requires an
       );
       assert.equal(item(s, target).affix, 3);
       assert.equal(s.guild.dust, dust - 40 * original.tier * original.rarity);
-      assert.equal(s.guild.salvage[original.rarity], fragments - 2 * original.tier);
+      assert.equal(
+        s.guild.salvage[original.rarity],
+        fragments - 2 * original.tier,
+      );
     }
     blocked(
       s,
@@ -264,7 +277,11 @@ test('reserve and idle enhancements/reforges work; dismantling still requires an
     );
     const unworn = copy(item(s, idle[1])),
       dust = s.guild.dust;
-    s = allowed(s, (x) => G.dismantleGear(x, idle[1], { includeEnhanced: true }), 'idle dismantle');
+    s = allowed(
+      s,
+      (x) => G.dismantleGear(x, idle[1], { includeEnhanced: true }),
+      'idle dismantle',
+    );
     assert.equal(item(s, idle[1]), undefined);
     assert.equal(s.guild.dust, dust + unworn.tier * unworn.rarity * 4);
     s = allowed(
@@ -387,4 +404,67 @@ test('reserve edits leave every subsequent recommended combat command and round 
   assert.deepEqual(adjusted.cleared, baseline.cleared);
   assert.equal(adjusted.recoveryUntil, baseline.recoveryUntil);
   assert.deepEqual(reload(adjusted), adjusted);
+});
+
+// The first-completion and repaired-relic flags are arranged fixture state;
+// assignment, dismissal and re-assignment below are all public actions.
+function giveCombatRelic(s, relicId, heroId) {
+  G.discoverSites(s, false);
+  const siteId = 'S' + relicId.slice(1);
+  s.worldExploration.sites[siteId].firstCompleted = true;
+  s.worldExploration.sites[siteId].routesCompleted = ['clever'];
+  G.awardSiteRelic(s, siteId);
+  s.worldExploration.relics.owned[relicId].repaired = true;
+  s = G.assignCombatRelic(s, relicId, heroId);
+  assert.equal(s.worldExploration.relics.combat[relicId], heroId);
+  assert.deepEqual(reload(s), s);
+  return s;
+}
+
+test('dismissing a reserve returns its relic to the collection and preserves other assignments and saves', () => {
+  for (const mode of ['idle', ...modes]) {
+    const initial = fixture(mode === 'idle' ? 'expedition' : mode);
+    const { reserve } = initial;
+    let { s } = initial;
+    if (mode === 'idle') s = G.recallExpedition(s);
+    const [a, b] = reserve;
+    s = giveCombatRelic(s, 'R02', a);
+    s = giveCombatRelic(s, 'R04', b);
+    const owned = copy(s.worldExploration.relics.owned);
+    const inventory = copy(s.guild.inventory);
+    s = allowed(s, (x) => G.dismissHero(x, a), `${mode}: dismiss relic bearer`);
+    assert.equal(hero(s, a), undefined);
+    assert.equal(s.worldExploration.relics.combat.R02, undefined);
+    assert.equal(s.worldExploration.relics.combat.R04, b);
+    assert.deepEqual(s.worldExploration.relics.owned, owned);
+    assert.deepEqual(s.guild.inventory, inventory);
+    blocked(s, (x) => G.dismissHero(x, a), 'duplicate dismissal');
+    s = G.assignCombatRelic(s, 'R04', null);
+    s = G.assignCombatRelic(s, 'R02', b);
+    assert.equal(
+      s.worldExploration.relics.combat.R02,
+      b,
+      'returned relic can be assigned again',
+    );
+    assert.deepEqual(reload(s), s);
+  }
+});
+
+test('a deployed relic bearer cannot be dismissed or lose the assigned relic', () => {
+  let { s } = fixture('expedition');
+  s = G.recallExpedition(s);
+  const id = s.party[0];
+  s = giveCombatRelic(s, 'R02', id);
+  s = G.advance(s, 30);
+  const attempts = [
+    G.expedition(s, 3, 'survey'),
+    G.startBattle(s, 3),
+    G.startSite(s, 'S01'),
+  ];
+  for (const away of attempts) {
+    assert.equal(G.heroAway(away, id), true);
+    blocked(away, (x) => G.dismissHero(x, id), 'deployed relic bearer');
+    assert.equal(away.worldExploration.relics.combat.R02, id);
+    assert.deepEqual(reload(away), away);
+  }
 });

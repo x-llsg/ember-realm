@@ -110,9 +110,9 @@ function stageState(stage) {
   return s;
 }
 
-test('fresh v10 civic state has three invitations and no automatic resources, workers or effects', () => {
+test('fresh v11 civic state has three invitations and no automatic resources, workers or effects', () => {
   const s = G.freshState(1);
-  assert.equal(s.version, 10);
+  assert.equal(s.version, 11);
   assert.deepEqual(s.civic, G.freshCivic());
   assert.equal(s.civic.invitations, 3);
   const after = advance(s, 600);
@@ -135,7 +135,12 @@ test('v8 migration preserves paid progress, old early five stars, candidates, RN
     loaded = reload(s);
   assert.deepEqual(s, before);
   const { civic, ...body } = loaded;
-  assert.deepEqual(body, { ...before, version: 10 });
+  const { worldExploration: oldWorld, ...oldBody } = before;
+  assert.deepEqual(oldWorld.relics.owned, {});
+  const { worldExploration, ...preservedBody } = body;
+  assert.deepEqual(preservedBody, { ...oldBody, version: 11 });
+  assert.deepEqual(worldExploration.relics.owned, {});
+  assert.ok(Object.values(worldExploration.facilities).every(f => !f.repaired && !f.enabled));
   assert.equal(civic.invitations, 200);
   assert.deepEqual(civic.trainingCredit, { gold: 0, food: 0 });
   assert.deepEqual(reload(loaded), loaded);

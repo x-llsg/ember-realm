@@ -768,7 +768,7 @@ function combatReady(r){
   }catch(e){if(e instanceof NeedProgress){results.deferred.push({time:s.time,region:r,reason:e.message});return false;}throw e;}
 }
 try{
- assert.equal(s.version, 10,'current save schema');
+ assert.equal(s.version, 11,'current save schema');
  results.order=order;results.deferred=[];results.milestones=[];results.technologyMilestones=[];results.dragonTraining=[];
  assert.equal(s.population,0);assert.deepEqual(s.jobs,blank());assert.deepEqual(s.resources,blank());
  act(x=>G.gather(x,'wood'),'gather:opening');build('fire');

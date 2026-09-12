@@ -297,7 +297,7 @@ test('v9 migration preserves old positive-negative combinations and paid temperi
     const base = G.individualStats(baseline, baseline.heroes[0]);
     const loaded = reload(s),
       a = G.individualStats(loaded, loaded.heroes[0]);
-    assert.equal(loaded.version, 10);
+    assert.equal(loaded.version, 11);
     assert.equal(loaded.heroes[0].talentVersion, undefined);
     close(a.attack, base.attack * 1.08 * (flaw === 'hesitant' ? 0.94 : 1));
     close(a.hp, base.hp * (flaw === 'frail' ? 0.92 : 1));

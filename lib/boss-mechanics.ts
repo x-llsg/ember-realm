@@ -59,7 +59,7 @@ export interface BossUnitView {
   attack: number;
 }
 export interface BossBattleView {
-  kind: 'boss' | 'guardian';
+  kind: 'boss' | 'guardian' | 'site';
   region: number;
   round: number;
   enemyHp: number;

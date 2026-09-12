@@ -433,7 +433,7 @@ test('v9 in-flight combat keeps legacy cycle, stats, RNG and next actions exactl
     s.version = 9;
     const oldBattle = copy(s.battle),
       loaded = reload(s);
-    assert.equal(loaded.version, 10);
+    assert.equal(loaded.version, 11);
     assert.equal(loaded.battle.boss, undefined);
     assert.deepEqual(loaded.battle, oldBattle);
     let control = copy(loaded),

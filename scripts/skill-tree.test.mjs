@@ -216,7 +216,7 @@ test('all twelve v6 selected skills survive migration; free old choices grant no
     const s=town([role.id],15);s.version=6;hero(s).activeSkill=selected;delete hero(s).learnedNodes;
     delete s.lastMap;delete s.combatAuto;
     const before=copy(s),loaded=reload(s),h=hero(loaded);
-    assert.deepEqual(s,before);assert.equal(loaded.version, 10);assert.equal(h.activeSkill,selected);
+    assert.deepEqual(s,before);assert.equal(loaded.version, 11);assert.equal(h.activeSkill,selected);
     assert.equal(h.legacySkill,selected===role.root?undefined:selected);
     assert.equal(G.spentSkillPoints(h),0);assert.equal(G.skillPoints(h),3);
     assert.ok(!h.learnedNodes?.length);assert.doesNotThrow(()=>G.validateHeroTree(h));

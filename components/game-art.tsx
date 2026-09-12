@@ -14,6 +14,20 @@ const roles = [
   'vera',
 ];
 const regions = ['forest', 'ruins', 'desert', 'abyss', 'dragon', 'heaven'];
+const siteEnemies = [
+  'S01',
+  'S02',
+  'S03',
+  'S04',
+  'S05',
+  'S06',
+  'S07',
+  'S08',
+  'S09',
+  'S10',
+  'S11',
+  'S12',
+];
 type ArtSize = 'sm' | 'md' | 'lg';
 type HeroIdentity = {
   role?: string;
@@ -69,6 +83,30 @@ export function EnemyPortrait({
         backgroundImage: `var(--art-enemies-${regions[safeIndex(region, 5)]})`,
         backgroundSize: '300% 200%',
         backgroundPosition: `${(index % 3) * 50}% ${Math.floor(index / 3) * 100}%`,
+      }}
+    />
+  );
+}
+
+/** Twelve independent location enemies, ordered left to right across the 4-by-3 atlas. */
+export function SiteEnemyPortrait({
+  siteId,
+  size = 'md',
+  className = '',
+}: {
+  siteId: string;
+  size?: ArtSize;
+  className?: string;
+}) {
+  const index = Math.max(0, siteEnemies.indexOf(siteId));
+  return (
+    <span
+      aria-hidden="true"
+      className={`game-portrait enemy-portrait site-enemy-portrait art-${size} ${className}`}
+      style={{
+        backgroundImage: 'var(--art-enemies-sites)',
+        backgroundSize: '400% 300%',
+        backgroundPosition: `${(index % 4) * (100 / 3)}% ${Math.floor(index / 4) * 50}%`,
       }}
     />
   );

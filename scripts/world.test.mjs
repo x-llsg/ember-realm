@@ -181,7 +181,7 @@ const oldCases = [
 for (const [label, old] of oldCases) test(`v4 migration preserves investment and progress: ${label}`, () => {
   assert.equal(old.version, 4);
   const raw = JSON.stringify(old), migrated = G.decodeSave(raw);
-  assert.equal(migrated.version, 10);
+  assert.equal(migrated.version, 11);
   for (const key of ['resources', 'legacyStock', 'buildings', 'heroes', 'party', 'cleared', 'projects', 'research', 'kit', 'rebuild'])
     assert.deepEqual(migrated[key], old[key], key);
   for (const key of ['inventory', 'dust', 'crafts', 'serial', 'doctrine', 'depths', 'progress', 'intel', 'outposts', 'applicants'])
@@ -217,7 +217,7 @@ test('v5 accepts nonlinear cleared ordering and preserves it through repeated sa
   for (const [base, order] of cases) {
     const legacy = clone(base); legacy.cleared = order;
     const first = G.decodeSave(JSON.stringify(legacy));
-    assert.equal(first.version, 10);
+    assert.equal(first.version, 11);
     assert.deepEqual(first.cleared, order);
     const second = G.decodeSave(JSON.stringify(first)), third = G.decodeSave(JSON.stringify(second));
     assert.deepEqual(second, first); assert.deepEqual(third, second);

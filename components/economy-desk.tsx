@@ -2,10 +2,12 @@
 import * as G from '@/lib/realm';
 import { InfoHint, MaterialName, ResourceName } from './info-hint';
 import { GameIcon } from './game-art';
+import { RelicCollectionButton, RelicDeploymentStrip } from './relic-collection';
+import { SiteFacilities } from './site-facilities';
 import { PotionWorkshop } from './potion-workshop';
 import { Pick, type Act, type Destination, short } from './realm-panels';
 
-type Props = { s: G.State; act: Act; go?: (d: Destination) => void };
+type Props = { s: G.State; act: Act; go?: (d: Destination) => void; initialRelic?: string; initialSite?:string };
 function Bill({
   s,
   cost,
@@ -36,7 +38,7 @@ function Bill({
     </span>
   );
 }
-export function EconomyDesk({ s, act, go }: Props) {
+export function EconomyDesk({ s, act, go, initialRelic, initialSite }: Props) {
   const recipes = G.WORK_RECIPES.filter((w) => s.world.tech.includes(w.tech));
   const routes = G.REGIONS.map((region, r) => ({ region, r })).filter(({ r }) =>
     G.routeDiscovered(s, r),
@@ -52,6 +54,7 @@ export function EconomyDesk({ s, act, go }: Props) {
     <section className="econ-board flow-desk" aria-label="城镇经营">
       <header className="econ-board-head">
         <strong>城镇经营</strong>
+        <RelicCollectionButton s={s} act={act} kind="town" go={go} initialId={initialRelic} />
         <span>
           <button onClick={() => go?.({ view: 'town', tab: 'workers' })}>
             调配住民 · 空闲 {G.idleWorkers(s)} →
@@ -64,6 +67,7 @@ export function EconomyDesk({ s, act, go }: Props) {
           </button>
         </span>
       </header>
+      <RelicDeploymentStrip s={s} act={act} kind="town" />
       <div className="flow-stock">
         {G.MATERIAL_IDS.filter((id) => G.materialDiscovered(s, id)).map(
           (id) => (
@@ -90,7 +94,11 @@ export function EconomyDesk({ s, act, go }: Props) {
               variants = G.processingVariants(s, w.id),
               output = G.processingOutput(s, w.id),
               seconds = G.workDuration(s, w.id),
-              reason = G.workReason(s, w.id);
+              reason = G.workReason(s, w.id),
+              support = s.worldExploration.relics.town.find(
+                (r) => r.id === 'R01' &&
+                  (r.target === w.id || (r.mode === 'lend' && r.source === w.id)),
+              );
             return (
               <article className="flow-work" key={w.id}>
                 <div className="flow-line">
@@ -115,9 +123,20 @@ export function EconomyDesk({ s, act, go }: Props) {
                       <strong>{w.name}</strong>
                     </span>
                   </InfoHint>
-                  <span>
-                    {((output * 60) / seconds).toFixed(1)} 件/分 · {seconds}
-                    秒/批
+                  <span className="world-processing-rate">
+                    <span>
+                      基础 {((output * 60) / seconds).toFixed(1)} 件/分 · {seconds} 秒/批
+                    </span>
+                    {support && (
+                      <InfoHint
+                        title="工匠机关台"
+                        body={G.RELICS.find((r) => r.id === 'R01')!.description}
+                      >
+                        <small>
+                          机关台 · {support.target !== w.id ? '工时借出' : support.mode === 'hand' ? '手摇支援' : '借工支援'}
+                        </small>
+                      </InfoHint>
+                    )}
                   </span>
                   <button
                     className={
@@ -324,6 +343,7 @@ export function EconomyDesk({ s, act, go }: Props) {
               主队推进与后勤同时运行。修路 → 装卸营地 → 常驻驿站 → 地区商道。
             </div>
           )}
+          <SiteFacilities s={s} act={act} go={go} initialSite={initialSite} />
         </div>
         <div className="flow-column flow-management">
           <div className="flow-section-title">

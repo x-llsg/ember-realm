@@ -3,6 +3,8 @@ import './planning.css';
 import './visual-theme.css';
 import { PlanningBoard } from '@/components/planning-board';
 import { HuntActivity } from '@/components/hunt-controls';
+import { SiteActivity } from '@/components/site-explore-desk';
+import { rememberSite } from '@/lib/site-exploration';
 import { useEffect, useRef, useState } from 'react';
 import { GAME_VERSION } from '@/lib/version';
 import {
@@ -126,7 +128,7 @@ export default function Home() {
     if (d.view === 'heroes' && !ref.current.heroes.length && d.tab !== 'inventory')
       d = { ...d, view: 'recruit' };
     if (d.view === 'explore' && d.region !== undefined) {
-      const next = G.rememberMap(ref.current, d.region);
+      const next = d.site !== undefined ? rememberSite(ref.current, d.region, d.site) : G.rememberMap(ref.current, d.region);
       if (next !== ref.current) {
         commit(next, false);
         persist(next);
@@ -534,7 +536,8 @@ export default function Home() {
             {!(view === 'explore' && s.battle) && <PlanningBoard s={s} act={act} go={go} />}
             <LootNotice s={s} act={act} go={go} />
           </div>
-          <HuntActivity s={s} act={act} go={go} />
+          {!s.worldExploration.activeRun && <HuntActivity s={s} act={act} go={go} />}
+          <SiteActivity s={s} act={act} go={go} />
           {(e || s.order.enabled) && view !== 'explore' && (
             <div className="life-activity">
               {e && (

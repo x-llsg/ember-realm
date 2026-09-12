@@ -42,7 +42,7 @@ function inputs(s) {return {resources:copy(s.resources),materials:copy(s.world.m
 
 test('v8 new game starts with zero stock, zero workers, zero transport/work/order income',()=>{
   const s=G.freshState(1),after=G.advance(s,600);
-  assert.equal(s.version, 10);assert.deepEqual(after.resources,s.resources);assert.deepEqual(after.world.materials,s.world.materials);
+  assert.equal(s.version, 11);assert.deepEqual(after.resources,s.resources);assert.deepEqual(after.world.materials,s.world.materials);
   assert.equal(G.transportWorkers(after),0);assert.equal(G.transportLines(after),0);
   assert.ok(after.economy.routes.every(r=>!r.enabled&&!r.crew&&!r.level&&!r.delivered));
   assert.deepEqual(G.production(after),s.resources);assert.deepEqual(after.economy.production,s.economy.production);
@@ -215,8 +215,10 @@ test('v7 migration preserves heroes, applicants, equipment, RNG, progression, pa
   let s=town();s.guild.depths[0]=5;s=G.startBattle(s,0);assert.ok(s.battle);
   s=G.combat(s,G.commandFor(s.party[0],'attack'));s.world.work.boards=true;s.world.workProgress.boards=3;
   s.version=7;delete s.economy;
-  const before=copy(s),loaded=reload(s);assert.deepEqual(s,before);assert.equal(loaded.version, 10);
-  const {economy,civic,...body}=loaded;const {civic:oldCivic,...oldBody}=before;assert.deepEqual(body,{...oldBody,version:10});
+  const before=copy(s),loaded=reload(s);assert.deepEqual(s,before);assert.equal(loaded.version, 11);
+  const {economy,civic,worldExploration,...body}=loaded;const {civic:oldCivic,worldExploration:oldExploration,...oldBody}=before;assert.deepEqual(body,{...oldBody,version:11});
+  assert.deepEqual(worldExploration.relics.owned,{});assert.equal(Object.keys(oldExploration.relics.owned).length,0);
+  assert.ok(Object.values(worldExploration.sites).every(site=>!site.firstCompleted));
   assert.deepEqual(civic,{...oldCivic,invitations:Math.min(200,3+before.explored.reduce((a,b)=>a+b,0))});
   assert.equal(loaded.rng,before.rng);assert.deepEqual(loaded.heroes,before.heroes);assert.deepEqual(loaded.guild.applicants,before.guild.applicants);
   assert.ok(economy.routes.every(r=>r.level>0&&!r.crew&&!r.enabled&&r.delivered===0));

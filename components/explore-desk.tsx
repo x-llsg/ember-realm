@@ -4,6 +4,7 @@ import { EnemyPortrait, RegionScene } from './game-art';
 import { PinPlan } from './planning-board';
 import { BattleLoot } from './loot-notice';
 import { HuntControl } from './hunt-controls';
+import { SiteExploreDesk, SiteNavigation, rememberedSite } from './site-explore-desk';
 
 import { InfoHint } from './info-hint';
 import { CombatRecommendation } from './combat-recommendation';
@@ -177,7 +178,7 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
   const modifiers = G.battleModifiers(s, region),
     prep = s.guild.preparation;
   const reason = G.bossReason(s, region),
-    preparationLocked = !!s.expedition || !!s.battle;
+    preparationLocked = !!s.expedition || !!s.battle || !!s.worldExploration.activeRun;
   const party = G.partyStats(s);
 
   // Exclude the ticking clock and ordinary stock growth. Include every preparation
@@ -499,6 +500,9 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
     );
   }
 
+  const siteId = rememberedSite(s, region, focus.site);
+  if (siteId) return <SiteExploreDesk key={siteId} s={s} act={act} go={go} siteId={siteId} />;
+
   return (
     <>
       <div className="explore-desk" data-focus={focus.tab || 'mission'}>
@@ -574,6 +578,7 @@ export function ExploreDesk({ s, act, go, focus }: ExploreDeskProps) {
           className="explore-center"
           aria-labelledby="explore-region-title"
         >
+          <SiteNavigation s={s} go={go} region={region} />
           <header className="explore-heading">
             <RegionScene region={region} className="explore-region-scene" />
             <div className="explore-heading-copy">

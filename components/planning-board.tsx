@@ -4,7 +4,7 @@ import * as G from '@/lib/realm';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog';
 import { Pick, type Act, type Destination, short } from './realm-panels';
 type Props={s:G.State;act:Act;go:(d:Destination)=>void};
-const GROUPS=[{value:'building',label:'城镇建设'},{value:'technology',label:'城镇工艺'},{value:'research',label:'研究'},{value:'development',label:'产线改良'},{value:'gear',label:'装备打造'},{value:'guardian',label:'守敌准备'},{value:'boss',label:'首领准备'}];
+const GROUPS=[{value:'building',label:'城镇建设'},{value:'technology',label:'城镇工艺'},{value:'research',label:'研究'},{value:'development',label:'产线改良'},{value:'gear',label:'装备打造'},{value:'guardian',label:'守敌准备'},{value:'boss',label:'首领准备'},{value:'site',label:'地点探索'},{value:'facility',label:'地区设施'},{value:'relic',label:'遗物修复'}];
 export function PinPlan({s,act,kind,id,tier}:{s:G.State;act:Act;kind:G.PlanKind;id:string;tier?:number}) {
   const p=G.makePlan(s,kind,id,tier),pinned=s.plans?.some(x=>G.planKey(x)===G.planKey(p));
   return <button className="plan-pin" title={pinned?'已加入发展目标':'加入发展目标'} aria-label={(pinned?'已追踪 ':'追踪 ')+G.planQuote(s,p).title} disabled={pinned || (s.plans?.length || 0)>=3} onClick={()=>act(x=>G.pinPlan(x,p))}>{pinned?'已追踪':'+ 目标'}</button>;

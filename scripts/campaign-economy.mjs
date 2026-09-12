@@ -6,7 +6,7 @@ import { createHash } from 'node:crypto';
 
 // Every campaign mutation goes through a public action. Forecasts only inspect clones.
 const routeOrder = process.env.V12_ROUTE_ORDER || 'standard';
-const outputDir = new URL(`../.test-results/v020-${routeOrder}-balanced/`, import.meta.url);
+const outputDir = new URL(`../.test-results/v030-${routeOrder}-balanced/`, import.meta.url);
 mkdirSync(outputDir, { recursive: true });
 const seed = Number(process.env.REALM_TEST_SEED || 123456789);
 assert.ok(
@@ -25,8 +25,8 @@ const processingSnapshot = () => G.WORK_IDS.map((id) => ({
   available: G.processingVariants(s, id).map((recipe) => recipe.variant),
 }));
 const results = {
-  version: 10,
-  rulesRevision: 'v020-six-chapter-development',
+  version: 11,
+  rulesRevision: 'v030-six-chapter-world-exploration',
   visitorDeferred: [],
   visitorChoices: [],
   researchInvestments: [],
@@ -1020,7 +1020,7 @@ function combatReady(r){
   }catch(e){if(e instanceof NeedProgress){results.deferred.push({time:s.time,region:r,reason:e.message});return false;}throw e;}
 }
 try{
- assert.equal(s.version,10,'current save schema');
+ assert.equal(s.version,11,'current save schema');
  results.order=order;results.deferred=[];results.milestones=[];results.technologyMilestones=[];results.dragonTraining=[];
  assert.equal(s.population,0);assert.deepEqual(s.jobs,blank());assert.deepEqual(s.resources,blank());
  act(x=>G.gather(x,'wood'),'gather:opening');build('fire');

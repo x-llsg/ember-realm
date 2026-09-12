@@ -285,7 +285,7 @@ test('v6 shared-health combat migrates HP percentages, enemy percentage, supplie
     attack:stats.attack,defense:stats.defense,round:5,energy:3,supplies:2,healCooldown:1,
     cooldowns:{[ids[0]]:3,[ids[1]]:1},...G.battleModifiers(original,0),ward:1,marked:2,burn:1,enemyShield:0,sealed:1,history:['旧战斗记录']};
   const before=copy(original),migrated=reload(original);
-  assert.deepEqual(original,before); assert.equal(migrated.version, 10); assert.equal(migrated.rng,original.rng);
+  assert.deepEqual(original,before); assert.equal(migrated.version, 11); assert.equal(migrated.rng,original.rng);
   const b=migrated.battle;assert.equal(b.system,2);assert.equal(b.kind,'boss');assert.equal(b.round,5);
   assert.equal(b.auto,false);assert.equal(migrated.combatAuto,false);assert.equal(b.energy,3);assert.equal(b.supplies,2);
   assert.equal(b.healCooldown,1);assert.equal(b.marked,2);assert.equal(b.sealed,1);

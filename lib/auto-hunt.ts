@@ -26,6 +26,7 @@ function targetReason(s: G.State, region: number, kind: HuntKind, node: number) 
 
 /** Starting can queue through normal cooldown/recovery, but never through missing supplies. */
 export function huntReason(s: G.State, region: number, kind: HuntKind, node = 0) {
+  if (s.worldExploration.activeRun) return '小队正在支线出行，可先立即撤回';
   const target = targetReason(s, region, kind, node);
   if (target) return target;
   // These temporary views only suppress time gates; all normal party, potion,
@@ -77,6 +78,7 @@ export function startHunt(s0: G.State, region: number, kind: HuntKind, node = 0)
   const s = G.clone(s0);
   s.hunt = { enabled: true, region, kind, node, wins: 0, drops: 0, reason: '' };
   s.order.enabled = false;
+  G.haltSiteRepeat(s, '已改为连续刷怪');
   s.order.reason = '已改为连续刷怪';
   G.log(s, `开始连续刷怪：${huntStatus(s).target}。每场照常消耗补给，等待重整后再次挑战。`);
   return s.paused ? s : huntTick(s);
@@ -133,7 +135,7 @@ export function validateHunt(s: G.State) {
       typeof h.reason !== 'string' || h.reason.length > 300 ||
       (s.battle?.hunt !== undefined && typeof s.battle.hunt !== 'boolean') ||
       (s.battle?.hunt && (!huntBattleMatches(s) || targetReason(s, h.region, h.kind, h.node))) ||
-      (h.enabled && (h.reason !== '' || s.expedition || s.order.enabled ||
+      (h.enabled && (h.reason !== '' || s.expedition || s.order.enabled || s.worldExploration.activeRun || s.worldExploration.repeatPlan?.enabled ||
         targetReason(s, h.region, h.kind, h.node) ||
         (s.battle && (!huntBattleMatches(s) || !s.battle.auto)))))
     throw Error('连续刷怪记录无效');

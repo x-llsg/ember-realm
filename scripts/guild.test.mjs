@@ -368,7 +368,7 @@ test('v3 migration preserves old names, growth, upgrades, party and completed re
   delete old.guild;
   delete old.world;
   const migrated = reload(old);
-  assert.equal(migrated.version, 10);
+  assert.equal(migrated.version, 11);
   assert.equal(G.townRank(migrated), 3);
   assert.deepEqual(migrated.resources, old.resources);
   assert.deepEqual(migrated.party, old.party);

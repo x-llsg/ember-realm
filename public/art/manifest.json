@@ -4,6 +4,66 @@
   "note": "职业画像表现职业原型，随机旅人共享对应职业画像。图集由CSS定位；SVG物品图由代码绘制。",
   "assets": [
     {
+      "id": "enemies-sites",
+      "generator": "OpenAI built-in imagegen",
+      "prompt": "Use case: stylized-concept. Asset type: ONE production-ready western fantasy enemy portrait SPRITE ATLAS for a dark illustrated text RPG. Exactly 4 columns by 3 rows, 12 equal square cells, landscape aspect 4:3, no gaps no outer margin no dividers no text no lettering. Each portrait centered head and upper body independently inside its tile; no shapes crossing tile boundaries. Refined traditional oil and ink illustration with elegant brushwork, charcoal near-black atmospheric background in EVERY cell, readable silhouettes, antique brass, muted green, ivory, subtle warm fire and cold moon highlights. Original fantasy creatures, not anime or glossy 3D. Row 1 left to right: (1) rusted bronze gear-driven workshop guardian automaton with one glowing amber lens and sawtooth shoulders (2) thorn-covered predatory wolf beast with mossy bark armor (3) weathered stone timekeeper statue with a sunken bronze bell as its helmet and clock pendulum chest (4) faceless hooded spectral librarian holding an ink-stained quill and chained book. Row 2 left to right: (5) massive chain-bound mine hauling iron golem with rail wheels at shoulders and ore basket (6) sand shark fin raider bursting through a dune, angular ochre scales (7) ember-lit furnace oath guardian in cracked forged plate with a burning rune chest (8) spectral dark knight shadow bound to an iron gate by black ribbons. Row 3 left to right: (9) frost-winged ivory griffin tower sentinel with icy feathers (10) sleeping dragon-scaled ancient stone sentinel with stone horns and lichen (11) celestial brass orrery guardian statue with broken orbital rings and stars (12) solemn ivory judgment effigy with a single radiant mouth slit and halo fragments. Consistent scale and composition, each creature face and recognizable features centered within the middle 75% of its own cell, clean precisely uniform atlas grid suitable for CSS cropping. All twelve subjects distinct, high-quality game illustration, no UI no watermark.",
+      "columns": 4,
+      "rows": 3,
+      "width": 1448,
+      "height": 1086,
+      "file": "enemies-sites.webp",
+      "entries": [
+        {
+          "id": "S01",
+          "name": "锈齿看守机"
+        },
+        {
+          "id": "S02",
+          "name": "荆棘追猎兽"
+        },
+        {
+          "id": "S03",
+          "name": "沉钟校时像"
+        },
+        {
+          "id": "S04",
+          "name": "缄言抄录官"
+        },
+        {
+          "id": "S05",
+          "name": "缚轨搬运者"
+        },
+        {
+          "id": "S06",
+          "name": "沙鳍巡掠者"
+        },
+        {
+          "id": "S07",
+          "name": "誓炉铸卫"
+        },
+        {
+          "id": "S08",
+          "name": "缚门誓影"
+        },
+        {
+          "id": "S09",
+          "name": "霜翼台卫"
+        },
+        {
+          "id": "S10",
+          "name": "眠鳞石卫"
+        },
+        {
+          "id": "S11",
+          "name": "断律轨道卫"
+        },
+        {
+          "id": "S12",
+          "name": "独声裁决像"
+        }
+      ]
+    },
+    {
       "id": "portraits",
       "prompt": "Use case: stylized-concept. Create ONE production-ready RPG character portrait SPRITE ATLAS, a single square image, exactly 3 columns by 3 rows of equal square cells, no gaps, no outer margins, no borders, no text or lettering. Nine distinct front-facing bust portraits, each centered completely inside its own cell, consistent framing from top of head to mid chest, cropped chest at bottom. Original hand-painted western fantasy, refined oil and ink, realistic expressive faces, elegant painterly brushwork, muted charcoal/umber backgrounds, warm ivory skin highlights, antique brass and restrained jewel accents, beautifully detailed and readable small. Not anime, not glossy 3D. Row1 left to right: a resolute female wandering swordswoman with dark auburn hair and weathered leather/steel armor; a male half-elf ranger with pointed ears and forest green hood and bow; a compassionate female fallen nun/healer with silver hair, ivory veil and a small warm lantern. Row2 left to right: a male star mage with midnight robes, short dark hair and faint violet constellation light; an older male oath knight in worn plate armor with silver beard and shield; an androgynous dragon-blood hunter with subtle horn ridges, copper eyes and red leather cloak. Row3 left to right: a female shadow assassin with black hood, dark hair and twin daggers; a male woodland druid with antler branches, braided hair, moss and green cloak; a female travelling alchemist with curly brown hair, goggles, amber potion vials and leather apron. Every square cell has its own subdued near-black background. Absolutely uniform 3x3 layout so CSS can select each portrait, all faces centered in their own tile and no elements crossing into another cell. High quality game asset, no UI, no watermark.",
       "columns": 3,

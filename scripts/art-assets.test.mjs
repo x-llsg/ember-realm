@@ -7,6 +7,7 @@ import path from 'node:path';
 import { TREE_ROLES } from '../lib/skill-tree-data.ts';
 import { REGIONS } from '../lib/realm-data.ts';
 import { GUARDIANS } from '../lib/guardian-data.ts';
+import { SITES } from '../lib/sites-data.ts';
 import { embedLocalArtwork, assertSelfContainedCss } from './make-portable.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
@@ -72,14 +73,14 @@ function webpSize(bytes) {
   assert.fail('WebP has no image dimensions');
 }
 
-test('art manifest contains unique documented atlases and all 51 illustrated subjects', () => {
+test('art manifest contains unique documented atlases and all 63 illustrated subjects', () => {
   assert.match(manifest.generator, /imagegen/i);
-  assert.equal(manifest.assets.length, 8);
-  assert.equal(new Set(manifest.assets.map((asset) => asset.id)).size, 8);
-  assert.equal(new Set(manifest.assets.map((asset) => asset.file)).size, 8);
+  assert.equal(manifest.assets.length, 9);
+  assert.equal(new Set(manifest.assets.map((asset) => asset.id)).size, 9);
+  assert.equal(new Set(manifest.assets.map((asset) => asset.file)).size, 9);
   assert.equal(
     manifest.assets.reduce((sum, asset) => sum + asset.entries.length, 0),
-    51,
+    63,
   );
   for (const asset of manifest.assets) {
     assert.match(asset.file, /^[a-z0-9][a-z0-9_-]*\.webp$/);
@@ -99,6 +100,40 @@ test('art manifest contains unique documented atlases and all 51 illustrated sub
         /[\u3400-\u9fff]/,
         entry.id + ' needs a Chinese label',
       );
+  }
+});
+
+test('independent site atlas covers all twelve location enemies in row-major order', async () => {
+  const atlas = byId('enemies-sites');
+  assert.equal(atlas.columns, 4);
+  assert.equal(atlas.rows, 3);
+  assert.equal(SITES.length, 12);
+  assert.match(atlas.generator, /OpenAI built-in imagegen/);
+  assert.deepEqual(
+    atlas.entries.map((entry) => entry.id),
+    SITES.map((site) => site.id),
+  );
+  assert.deepEqual(
+    atlas.entries.map((entry) => entry.name),
+    SITES.map((site) => site.enemy),
+  );
+  assert.deepEqual(
+    componentIds('siteEnemies'),
+    atlas.entries.map((entry) => entry.id),
+  );
+  assert.deepEqual(
+    webpSize(await readFile(path.join(root, 'public/art', atlas.file))),
+    { width: 1448, height: 1086 },
+  );
+  assert.match(component, /backgroundImage: 'var\(--art-enemies-sites\)'/);
+  assert.match(component, /backgroundSize: '400% 300%'/);
+  for (const file of ['battle-desk.tsx', 'site-explore-desk.tsx']) {
+    const ui = await readFile(path.join(root, 'components', file), 'utf8');
+    assert.match(
+      ui,
+      /<SiteEnemyPortrait\s+siteId=/,
+      `${file} uses the independent site artwork`,
+    );
   }
 });
 
@@ -276,18 +311,34 @@ test('existing embedded artwork and local SVG filter references remain self-cont
 });
 
 test('bundled UI font covers current Chinese game text and retains its license', async () => {
-  const metadata = JSON.parse(await readFile(path.join(root, 'public/fonts/manifest.json'), 'utf8'));
+  const metadata = JSON.parse(
+    await readFile(path.join(root, 'public/fonts/manifest.json'), 'utf8'),
+  );
   const font = await readFile(path.join(root, 'public/fonts/ember-ui.woff2'));
   assert.equal(font.toString('ascii', 0, 4), 'wOF2');
-  assert.equal(createHash('sha256').update(font).digest('hex'), metadata.sha256);
-  assert.match(await readFile(path.join(root, 'public/fonts/OFL.txt'), 'utf8'), /SIL OPEN FONT LICENSE Version 1.1/);
+  assert.equal(
+    createHash('sha256').update(font).digest('hex'),
+    metadata.sha256,
+  );
+  assert.match(
+    await readFile(path.join(root, 'public/fonts/OFL.txt'), 'utf8'),
+    /SIL OPEN FONT LICENSE Version 1.1/,
+  );
   const points = new Set(metadata.codepoints);
   for (const directory of ['app', 'components', 'lib']) {
-    for (const file of await readdir(path.join(root, directory), { recursive: true })) {
+    for (const file of await readdir(path.join(root, directory), {
+      recursive: true,
+    })) {
       if (!/\.tsx?$/.test(file)) continue;
       const source = await readFile(path.join(root, directory, file), 'utf8');
-      const missing = [...new Set(source.match(/[\u3400-\u9fff]/gu) ?? [])].filter(c => !points.has(c.codePointAt(0)));
-      assert.deepEqual(missing, [], `${directory}/${file}: rebuild the UI font subset for new characters`);
+      const missing = [
+        ...new Set(source.match(/[\u3400-\u9fff]/gu) ?? []),
+      ].filter((c) => !points.has(c.codePointAt(0)));
+      assert.deepEqual(
+        missing,
+        [],
+        `${directory}/${file}: rebuild the UI font subset for new characters`,
+      );
     }
   }
 });
@@ -298,5 +349,9 @@ test('portable build embeds exact UI font bytes without a font server', async ()
   assertSelfContainedCss(embedded);
   const font = embedded.match(/data:font\/woff2;base64,([A-Za-z0-9+/=]+)/);
   assert.ok(font);
-  assert.ok(Buffer.from(font[1], 'base64').equals(await readFile(path.join(root, 'public/fonts/ember-ui.woff2'))));
+  assert.ok(
+    Buffer.from(font[1], 'base64').equals(
+      await readFile(path.join(root, 'public/fonts/ember-ui.woff2')),
+    ),
+  );
 });

@@ -132,7 +132,7 @@ export function setHeroSkill(s0: G.State, id: string, skillId: string) {
 }
 /** Party membership stays frozen while away; town residents and their gear remain editable. */
 export function heroAway(s: G.State, id: string) {
-  return !!(s.expedition || s.battle) && s.party.includes(id);
+  return !!s.worldExploration?.activeRun?.partyIds.includes(id) || !!(s.expedition || s.battle) && s.party.includes(id);
 }
 export function heroAwayReason(s: G.State, id: string) {
   return heroAway(s, id) ? '该角色正在出征，归来后可调整' : '';
@@ -296,7 +296,7 @@ export function hireApplicant(s0: G.State, id: string) {
   spend(s, recruitmentCost(h));
   s.heroes.push(structuredClone(h));
   s.guild.applicants = s.guild.applicants.filter((x) => x.id !== h.id);
-  if (s.party.length < 4 && !s.expedition && !s.battle) s.party.push(h.id);
+  if (s.party.length < 4 && !s.expedition && !s.battle && !s.worldExploration.activeRun) s.party.push(h.id);
   say(
     s,
     `${h.name}加入名册，携带天赋「${D.TALENTS.find((t) => t.id === h.talent)!.name}」。${G.characterTalentHelp(h).body.split('\n')[0]}`,
@@ -322,6 +322,8 @@ export function dismissHero(s0: G.State, id: string) {
   );
   for (const [duty, hero] of Object.entries(s.economy.duties))
     if (hero === id) delete s.economy.duties[duty as G.Duty];
+  for (const [relic, hero] of Object.entries(s.worldExploration.relics.combat))
+    if (hero === id) delete s.worldExploration.relics.combat[relic];
   s.party = s.party.filter((x) => x !== id);
   say(
     s,

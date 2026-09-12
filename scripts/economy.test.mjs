@@ -337,7 +337,7 @@ test('v1 and v2 surplus is conserved, capped, and reloadable; new production doe
   delete v2.buildings.warehouse;
   for (const k of resources) v2.resources[k] = 1e8;
   const converted = G.decodeSave(JSON.stringify(v2));
-  assert.equal(converted.version, 10);
+  assert.equal(converted.version, 11);
   assert.deepEqual(G.decodeSave(JSON.stringify(converted)), converted);
   for (const k of resources)
     assert.equal(converted.resources[k] + converted.legacyStock[k], 1e8);

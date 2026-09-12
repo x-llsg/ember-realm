@@ -14,6 +14,12 @@ import * as Civic from './civic.ts';
 import * as Hunt from './auto-hunt.ts';
 import * as Planning from './planning.ts';
 import * as ChapterProjects from './chapter-projects.ts';
+import * as Sites from './site-exploration.ts';
+import * as SiteEconomy from './site-economy.ts';
+export * from './site-exploration.ts';
+export * from './site-economy.ts';
+export * from './relics.ts';
+export * from './relic-data.ts';
 export * from './planning.ts';
 export * from './chapter-projects.ts';
 export * from './auto-hunt.ts';
@@ -95,6 +101,8 @@ export interface Order {
   reason: string;
 }
 export interface Battle {
+  site?: import('./site-combat.ts').SiteCombatRuntime;
+  context?: import('./tactics.ts').CombatContext;
   hunt?: boolean;
   boss?: import('./boss-mechanics.ts').BossRuntime;
   dots?: {
@@ -104,7 +112,7 @@ export interface Battle {
     turns: number;
   }[];
   system: 2;
-  kind: 'boss' | 'guardian';
+  kind: 'boss' | 'guardian' | 'site';
   node: number;
   units: Tactics.CombatUnit[];
   acted: string[];
@@ -151,7 +159,8 @@ export interface Battle {
   history: string[];
 }
 export interface State {
-  version: 10;
+  version: 11;
+  worldExploration: import('./world-types.ts').WorldExplorationState;
   plans?: Planning.PlanTarget[];
   projectExtensions?: Record<string, string>;
   hunt?: Hunt.HuntState;
@@ -244,7 +253,8 @@ export const freshState = (
   legacy = 0,
   journeys = 0,
 ): State => ({
-  version: 10,
+  version: 11,
+  worldExploration: Sites.freshWorldExploration(),
   plans: [],
   hunt: Hunt.freshHunt(),
   civic: Civic.freshCivic(),
@@ -553,6 +563,7 @@ export function netProduction(s: State): Record<Resource, number> {
   sim.resources = productionStep(sim);
   Economy.economyTick(sim);
   Campaign.worldTick(sim);
+  SiteEconomy.siteEconomyTick(sim, 1);
   const next = sim.resources;
   return Object.fromEntries(
     Object.keys(next).map((k) => [
@@ -567,6 +578,7 @@ export function advancePlanningTown(s: State): void {
   s.resources = productionStep(s);
   Economy.economyTick(s);
   Campaign.worldTick(s);
+  SiteEconomy.siteEconomyTick(s, 1);
 }
 export function productionFormula(s: State, k: Resource) {
   const unavailable = jobReason(s, k);
@@ -724,6 +736,7 @@ export function recruit(s0: State, id: string) {
 }
 export function toggleParty(s0: State, id: string) {
   if (
+    s0.worldExploration.activeRun ||
     s0.battle ||
     s0.expedition ||
     !s0.heroes.some((h) => h.id === id) ||
@@ -1049,6 +1062,7 @@ export function dispatchReason(
   route = s.order.route,
   reserve = s.order.reserve,
 ) {
+  if (s.worldExploration.activeRun) return '小队正在支线出行，可先立即撤回';
   if (!regionOpen(s, r)) return Campaign.regionReason(s, r);
   if (!s.party.length) return '等待编入至少一位伙伴';
   if (s.battle) return '首领战结束后继续委托';
@@ -1096,6 +1110,7 @@ export function expedition(s0: State, r: number, route: Route = 'survey') {
     return s0;
   const s = clone(s0);
   Hunt.haltHunt(s, '已改为远征');
+  Sites.haltSiteRepeat(s, '已改为远征');
   dispatch(s, r, route);
   log(
     s,
@@ -1135,6 +1150,7 @@ export function setOrder(
   >,
 ) {
   const next = { ...s0.order, ...patch };
+  if (next.enabled && s0.worldExploration.activeRun) return s0;
   if (
     !Number.isInteger(next.region) ||
     next.region < 0 ||
@@ -1147,12 +1163,13 @@ export function setOrder(
     return s0;
   const s = clone(s0);
   s.order = next;
+  if (next.enabled) Sites.haltSiteRepeat(s, '已改为远征委托');
   if (next.enabled) Hunt.haltHunt(s, '已改为远征委托');
   if (!s.expedition && s.order.enabled) resumeOrder(s);
   return s;
 }
 function resumeOrder(s: State) {
-  if (!s.order.enabled || s.expedition || s.battle) return;
+  if (!s.order.enabled || s.expedition || s.battle || s.worldExploration.activeRun) return;
   const info = routeInfo(s, s.order.region, s.order.route);
   if (
     s.order.autoBuy &&
@@ -1345,11 +1362,14 @@ export function advance(s0: State, seconds: number) {
       );
     Economy.economyTick(s);
     Campaign.worldTick(s);
+    SiteEconomy.siteEconomyTick(s, 1);
+    Sites.siteTick(s, 1);
     if (s.expedition && s.time >= s.expedition.end) settleExpedition(s);
     s = Hunt.huntTick(s);
     if (
       !s.battle &&
       !s.expedition &&
+      !s.worldExploration.activeRun &&
       s.combatAuto &&
       s.order.enabled &&
       s.order.route === 'frontier' &&
@@ -1359,6 +1379,7 @@ export function advance(s0: State, seconds: number) {
     if (s.battle?.auto) s = Tactics.tacticalCombat(s, Tactics.autoCommand(s), true);
     resumeOrder(s);
     s = Discovery.settleStory(s);
+    Sites.discoverSites(s);
     if (s.event === null) {
       const n = pendingEvent(s);
       if (n !== null && n >= 0) {
@@ -1372,6 +1393,7 @@ export function advance(s0: State, seconds: number) {
   return s;
 }
 export function bossReason(s: State, r: number) {
+  if (s.worldExploration.activeRun) return '小队正在支线出行，可先立即撤回';
   if (!regionOpen(s, r)) return '先打通通往这里的道路';
   const ready = s.guild.bossHunts?.readyAt[r] || 0;
   if (s.cleared.includes(r) && ready > s.time)
@@ -1495,6 +1517,8 @@ export type Objective = {
   tier?: number;
   work?: Campaign.WorkId;
   route?: Route;
+  site?: string;
+  relic?: string;
 };
 function fundingGoal(
   s: State,
@@ -2286,6 +2310,11 @@ export function decodeSave(raw: string): State {
     );
   }
   if (data?.version === 9) data.version = 10;
+  const upgradingSites = data?.version === 10;
+  if (upgradingSites) {
+    data.version = 11;
+    data.worldExploration = Sites.freshWorldExploration();
+  }
   const s = data as State,
     n = (v: unknown, a = 0, b = 1e8) =>
       typeof v === 'number' && Number.isFinite(v) && v >= a && v <= b,
@@ -2303,7 +2332,7 @@ export function decodeSave(raw: string): State {
   const fresh = freshState();
   if (
     !s ||
-    s.version !== 10 ||
+    s.version !== 11 ||
     !i(s.lastMap, 0, 5) ||
     typeof s.combatAuto !== 'boolean' ||
     !strings(s.chronicle) ||
@@ -2494,6 +2523,8 @@ export function decodeSave(raw: string): State {
   Hunt.validateHunt(s);
   Planning.validatePlans(s);
   ChapterProjects.validateChapterProjects(s);
+  if (upgradingSites) Sites.discoverSites(s, false);
+  Sites.validateWorldExploration(s);
   if (s.expedition && !i(s.expedition.outcome, 0, 3))
     throw Error('远征结果记录无效');
   if (s.lastExpedition !== null) {

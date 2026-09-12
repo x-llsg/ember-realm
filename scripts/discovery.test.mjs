@@ -287,7 +287,7 @@ const migrationCases = [
 for (const [label, old] of migrationCases) test(`actual v5 regression fixture retains wealth, research and equipment: ${label}`, () => {
   assert.equal(old.version, 5, 'this case must remain an actual v5 regression input');
   const before = clone(old), migrated = G.decodeSave(JSON.stringify(old));
-  assert.equal(migrated.version, 10);
+  assert.equal(migrated.version, 11);
   for (const key of ['resources', 'legacyStock', 'buildings', 'heroes', 'party', 'cleared', 'projects', 'research', 'kit', 'rebuild', 'world'])
     assert.deepEqual(migrated[key], old[key], key);
   const {fiveStarMisses,potions,salvage,lootHistory,lootReadSerial,lootSerial,achievements,...preservedGuild}=migrated.guild;

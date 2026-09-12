@@ -18,7 +18,6 @@ import {
   Check,
   ArrowRight,
   Compass,
-  Swords,
 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
@@ -50,6 +49,8 @@ export type Destination = {
   guardian?: number;
   work?: G.WorkId;
   route?: G.Route;
+  site?: string | null;
+  relic?: string;
 };
 export type Act = (fn: (s: G.State) => G.State, message?: string) => void;
 type Props = {
@@ -490,7 +491,7 @@ export function TownPanel({ s, act, go, focus }: Props) {
         <BuildingBoard s={s} act={act} go={go} focus={focus} />
       </Pane>
       <Pane value="workshop">
-        <EconomyDesk s={s} act={act} go={go} />
+        <EconomyDesk s={s} act={act} go={go} initialRelic={focus.relic} initialSite={focus.site ?? undefined} />
       </Pane>
       <Pane value="workers">
         <div className="life-card">
